@@ -9,6 +9,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  video_player: ^2.9.1
 
   # Navigation
   go_router: ^13.2.0

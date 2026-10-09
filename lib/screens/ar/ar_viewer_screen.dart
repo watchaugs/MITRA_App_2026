@@ -17,7 +17,14 @@ import '../../theme/theme_provider.dart';
 
 class ArViewerScreen extends ConsumerStatefulWidget {
   final String topicId;
-  const ArViewerScreen({super.key, required this.topicId});
+
+  /// Real GLB model URL for this topic (from ArAPI.asset / arTopics'
+  /// `flutter_url`). When null — e.g. demo mode, or a topic with no asset
+  /// wired yet — the viewer falls back to the bundled sample model, so
+  /// this stays fully backward-compatible with existing callers.
+  final String? modelUrl;
+
+  const ArViewerScreen({super.key, required this.topicId, this.modelUrl});
   @override
   ConsumerState<ArViewerScreen> createState() => _ArViewerScreenState();
 }
@@ -32,6 +39,14 @@ class _ArViewerScreenState extends ConsumerState<ArViewerScreen>
   bool _show3DViewer =
       true; // ✨ Defaults strictly to the 3D Model Viewer on screen
   String? _cachedModelPath; // ✨ NEW: Holds the local file path
+
+  // Bundled sample used only when no real model URL is supplied.
+  static const String _fallbackGlbUrl =
+      'https://modelviewer.dev/shared-assets/models/Astronaut.glb';
+
+  // The model actually loaded: the topic's real asset when provided,
+  // otherwise the sample.
+  String get _glbUrl => widget.modelUrl ?? _fallbackGlbUrl;
   // Cached in didChangeDependencies so dispose() can use it safely
   // (ref must not be read after the widget is unmounted)
   dynamic _cachedTelemetry;
@@ -50,8 +65,7 @@ class _ArViewerScreenState extends ConsumerState<ArViewerScreen>
 
   // ✨ NEW: Downloads the model to the phone permanently
   Future<void> _cache3DModel() async {
-    const String glbUrl =
-        'https://modelviewer.dev/shared-assets/models/Astronaut.glb';
+    final String glbUrl = _glbUrl;
 
     try {
       // Downloads once, then reads from local phone storage forever
@@ -108,9 +122,8 @@ class _ArViewerScreenState extends ConsumerState<ArViewerScreen>
       _show3DViewer = false; // Close 3D viewer if it was open
     });
 
-    // TODO: Swap this for your Cloudflare R2 URL later: 'https://cdn.mitra.in/models/${widget.topicId}.glb'
-    const String glbUrl =
-        'https://modelviewer.dev/shared-assets/models/Astronaut.glb';
+    // Uses the topic's real model when supplied, else the bundled sample.
+    final String glbUrl = _glbUrl;
 
     if (Platform.isAndroid) {
       // ✨ CRITICAL FIX: The 3D model URL *must* be properly URL-encoded!

@@ -177,7 +177,11 @@ class UsersAPI {
 }
 
 class CurriculumAPI {
-  static Future<Response> tree() => api.get('/api/curriculum/tree');
+  static Future<Response> tree({String? state}) => api.get(
+        '/api/curriculum/tree',
+        queryParameters:
+            (state != null && state.isNotEmpty) ? {'state': state} : null,
+      );
 
   static Future<Response> arTopics(Map<String, String> params) =>
       api.get('/api/curriculum/ar-topics', queryParameters: params);

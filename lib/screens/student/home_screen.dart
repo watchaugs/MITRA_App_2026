@@ -14,6 +14,7 @@ import '../../demo/demo_data.dart';
 import '../../theme/theme_provider.dart';
 import '../../services/quotes_service.dart';
 import '../../services/brain_spark_service.dart';
+import 'widgets/sponsor_banner.dart';
 
 // ═══════════════════════════════════════════════════════
 // MODELS
@@ -118,7 +119,10 @@ final subjectsProvider = FutureProvider<List<Subject>>((ref) async {
     ];
   }
 
-  final res = await CurriculumAPI.tree();
+  // Geofence subjects by the student's state so the dashboard's
+  // target_states scoping applies here too.
+  final user = ref.read(currentUserProvider);
+  final res = await CurriculumAPI.tree(state: user?.assignedState);
   final allNodes = res.data['nodes'] as List<dynamic>? ?? [];
   final rawSubjects = allNodes
       .where((n) => (n as Map<String, dynamic>)['node_type'] == 'subject')
@@ -153,6 +157,11 @@ class HomeScreen extends ConsumerWidget {
     final firstName = user?.firstName ?? 'Student';
     final subjectsAsync = ref.watch(subjectsProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    // Show the geofenced sponsor ad as a full-screen overlay once per launch.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      maybeShowSponsorInterstitial(context, ref);
+    });
 
     final glassColor = isDark
         ? Colors.white.withValues(alpha: 0.08)
@@ -1087,4 +1096,3 @@ class _GlowingAchievementTextState extends State<_GlowingAchievementText>
     );
   }
 }
-

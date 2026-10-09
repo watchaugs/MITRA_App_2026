@@ -313,7 +313,9 @@ class ApiQuizRepository implements QuizRepository {
 
 /// Repository instance — override in tests with a mock.
 final quizRepositoryProvider = Provider<QuizRepository>((ref) {
-  return kPresentationMode ? const DemoQuizRepository() : const ApiQuizRepository();
+  return kPresentationMode
+      ? const DemoQuizRepository()
+      : const ApiQuizRepository();
 });
 
 /// Derives quiz filter params from the current user profile.
@@ -325,6 +327,81 @@ final quizFilterParamsProvider = Provider<QuizFilterParams>((ref) {
     state: user?.assignedState ?? '',
     language: user?.languagePreference ?? '',
   );
+});
+
+// ═══════════════════════════════════════════════════════════
+// DATA: AR catalog — live + geofenced, with demo fallback
+// ═══════════════════════════════════════════════════════════
+
+/// One AR lesson tile's data. Structurally identical to the inline record
+/// used by [_SubjectSection]/[_ArTile], so the two are interchangeable.
+typedef ArLessonRec = ({
+  String id,
+  String title,
+  String topic,
+  String languageTag,
+});
+
+/// The AR lessons to show (grouped by subject) plus a side map of each
+/// topic id -> its real GLB model URL (empty in demo mode).
+class ArCatalog {
+  final Map<String, List<ArLessonRec>> bySubject;
+  final Map<String, String> glbById;
+  const ArCatalog({required this.bySubject, required this.glbById});
+}
+
+/// Live AR topics from the dashboard, scoped to the student's state (so the
+/// dashboard's geofencing applies), with the hardcoded demo map as a safe
+/// fallback — the list is never empty on stage. In presentation mode it
+/// returns the demo map unchanged and no network call is made.
+final arCatalogProvider = FutureProvider<ArCatalog>((ref) async {
+  if (kPresentationMode) {
+    return const ArCatalog(
+      bySubject: LearnScreen._arLessonsBySubject,
+      glbById: {},
+    );
+  }
+
+  final user = ref.watch(currentUserProvider);
+  final state = user?.assignedState ?? '';
+  final lang = ref.watch(translationProvider).langCode;
+
+  final res = await CurriculumAPI.arTopics({
+    if (state.isNotEmpty) 'state': state,
+    if (lang.isNotEmpty) 'lang': lang,
+  });
+
+  final raw = res.data is Map ? res.data['data'] : null;
+  final bySubject = <String, List<ArLessonRec>>{};
+  final glbById = <String, String>{};
+
+  if (raw is List) {
+    for (final item in raw) {
+      if (item is! Map) continue;
+      final m = Map<String, dynamic>.from(item);
+      final id = (m['id'] ?? m['topic_id'] ?? '').toString();
+      if (id.isEmpty) continue;
+      final subject = (m['subject'] ?? 'Other').toString();
+      bySubject.putIfAbsent(subject, () => []).add((
+        id: id,
+        title: (m['title'] ?? id).toString(),
+        topic: (m['topic'] ?? subject).toString(),
+        languageTag: (m['language_tag'] ?? m['language'] ?? 'all').toString(),
+      ));
+      final glb =
+          (m['flutter_url'] ?? m['glb_url'] ?? m['model_url'] ?? '').toString();
+      if (glb.isNotEmpty) glbById[id] = glb;
+    }
+  }
+
+  // Nothing came back → keep the demo list so the screen isn't blank.
+  if (bySubject.isEmpty) {
+    return const ArCatalog(
+      bySubject: LearnScreen._arLessonsBySubject,
+      glbById: {},
+    );
+  }
+  return ArCatalog(bySubject: bySubject, glbById: glbById);
 });
 
 /// Async quiz feed notifier — exposes typed errors through
@@ -472,6 +549,14 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
                       ref.read(quizFeedProvider(params).notifier).refresh(),
                 ),
                 data: (quizzes) {
+                  // Live-or-demo AR catalog (geofenced by state when live),
+                  // with the demo map as fallback so the list is never empty.
+                  final arCatalog = ref.watch(arCatalogProvider).valueOrNull;
+                  final arBySubject =
+                      arCatalog?.bySubject ?? LearnScreen._arLessonsBySubject;
+                  final arGlbById =
+                      arCatalog?.glbById ?? const <String, String>{};
+
                   final filteredQuizzes = quizzes.where((q) {
                     return q.languageTag == currentLang ||
                         q.languageTag == 'all';
@@ -480,7 +565,7 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
                   final grouped =
                       LearnScreen._groupQuizzesBySubject(filteredQuizzes);
 
-                  for (final subject in LearnScreen._arLessonsBySubject.keys) {
+                  for (final subject in arBySubject.keys) {
                     grouped.putIfAbsent(subject, () => []);
                   }
 
@@ -601,8 +686,7 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
                             ),
                             children: displayEntries.map((entry) {
                               final arLessonsForSubject =
-                                  LearnScreen._arLessonsBySubject[entry.key] ??
-                                      [];
+                                  arBySubject[entry.key] ?? [];
 
                               final filteredArLessons =
                                   arLessonsForSubject.where((ar) {
@@ -623,7 +707,17 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
                                     'All', // ✨ Hides redundant headings when filtered!
                                 onQuizTap: (id) =>
                                     LearnScreen._navigateToQuiz(context, id),
-                                onArTap: (id) => context.push('/ar/$id'),
+                                onArTap: (id) {
+                                  // Fixes the old '/ar/$id' route (no such
+                                  // route existed) and carries the real model
+                                  // URL when the dashboard supplied one.
+                                  final glb = arGlbById[id];
+                                  context.push(
+                                    glb != null && glb.isNotEmpty
+                                        ? '/student/ar/$id?glb=${Uri.encodeComponent(glb)}'
+                                        : '/student/ar/$id',
+                                  );
+                                },
                               );
                             }).toList(),
                           ),
@@ -1233,4 +1327,3 @@ class _RetryButton extends StatelessWidget {
     );
   }
 }
-

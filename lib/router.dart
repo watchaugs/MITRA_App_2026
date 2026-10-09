@@ -208,6 +208,9 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/student/ar/:topicId',
         builder: (context, state) => ArViewerScreen(
           topicId: state.pathParameters['topicId'] ?? '',
+          // Optional real model URL, e.g. /student/ar/cell-division?glb=<url>.
+          // Absent for current callers, so the viewer uses its sample model.
+          modelUrl: state.uri.queryParameters['glb'],
         ),
       ),
     ],

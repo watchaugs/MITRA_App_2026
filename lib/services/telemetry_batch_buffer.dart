@@ -134,6 +134,7 @@ class TelemetryBatchBuffer {
             'batched_events': group.map((e) => e.value.data).toList(),
             'event_count': group.length,
             'batch_flushed_at': DateTime.now().toIso8601String(),
+            'processed': false,
           });
           flushedKeys.addAll(group.map((e) => e.key));
         } catch (e) {
