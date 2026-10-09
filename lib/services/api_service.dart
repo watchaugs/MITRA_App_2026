@@ -269,36 +269,50 @@ class TelemetryAPI {
 }
 
 class ConsentAPI {
-  /// Check if consent is needed (backend is source of truth)
-  static Future<Response> status() async {
+  /// Current consent policy version the app presents. Bump this string
+  /// whenever the consent wording changes so re-consent is triggered.
+  static const String consentVersion = '1.0';
+
+  /// Check consent status for a student. Passing student_id makes the
+  /// backend return THIS student's real record (not a generic default).
+  static Future<Response> status({String? studentId}) async {
     final token = await FirebaseAuth.instance.currentUser?.getIdToken();
     return api.get(
       '/api/consent/status',
+      queryParameters: studentId != null ? {'student_id': studentId} : null,
       options: Options(headers: {
         if (token != null) 'Authorization': 'Bearer $token',
       }),
     );
   }
 
-  /// Grant DPDPA consents — data_collection is mandatory
-  static Future<Response> grant(List<String> consents) async {
+  /// Grant DPDPA consents. student_id + version are REQUIRED by the backend.
+  static Future<Response> grant(
+    String studentId,
+    List<String> consents,
+  ) async {
     final token = await FirebaseAuth.instance.currentUser?.getIdToken();
     return api.post(
       '/api/consent/grant',
-      data: {'consents': consents},
+      data: {
+        'student_id': studentId,
+        'consents': consents,
+        'version': consentVersion,
+      },
       options: Options(headers: {
         if (token != null) 'Authorization': 'Bearer $token',
       }),
     );
   }
 
-  /// Withdraw consent for the current student.
+  /// Withdraw (revoke) consent. Flips granted=false on the backend —
+  /// this is reversible and does NOT delete the account.
   static Future<Response> withdraw(String studentId) =>
       api.post('/api/consent/revoke', data: {'student_id': studentId});
 
-  /// Check consent status for a student (backend is source of truth).
-  static Future<Response> parentalStatus(String studentId) => api
-      .get('/api/consent/status', queryParameters: {'student_id': studentId});
+  /// Alias kept for the onboarding consent flow that reads status.
+  static Future<Response> parentalStatus(String studentId) =>
+      status(studentId: studentId);
 }
 
 class AdsAPI {

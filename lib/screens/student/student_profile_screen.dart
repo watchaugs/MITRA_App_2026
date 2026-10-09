@@ -5,6 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../constants/colors.dart';
 import '../../stores/auth_store.dart';
 import '../../theme/theme_provider.dart';
+import 'widgets/consent_manager.dart';
+import 'package:go_router/go_router.dart';
+import 'widgets/settings_group.dart';
 
 class StudentProfileScreen extends ConsumerWidget {
   const StudentProfileScreen({super.key});
@@ -52,6 +55,23 @@ class StudentProfileScreen extends ConsumerWidget {
                           fontFamily: 'Mukta',
                           fontSize: 13,
                           color: MitraColors.textMuted)),
+                  const SizedBox(height: 12),
+                  OutlinedButton.icon(
+                    onPressed: () => context.push('/student/edit-profile'),
+                    icon: const Icon(Icons.edit, size: 16),
+                    label: const Text('Edit Profile'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Theme.of(context).colorScheme.onSurface,
+                      side: BorderSide(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onSurface
+                              .withValues(alpha: 0.3)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius:
+                              BorderRadius.circular(MitraRadius.pill)),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -71,6 +91,10 @@ class StudentProfileScreen extends ConsumerWidget {
                         emoji: '🔥',
                         label: 'Day Streak',
                         value: '${user?.currentStreakDays ?? 0}'),
+                    const SizedBox(height: 32),
+
+                    // ── Data Consent (DPDPA) ───────────────────────────
+                    const ConsentManager(),
                     const SizedBox(height: 32),
 
                     // ── Theme Selector ─────────────────────────────────
@@ -206,7 +230,12 @@ class StudentProfileScreen extends ConsumerWidget {
                       ),
                     ),
 
-                    const SizedBox(height: 40),
+                    const SizedBox(height: 24),
+
+                    // ── Settings (App / Progress / Legal / Support) ────
+                    const SettingsGroup(),
+
+                    const SizedBox(height: 24),
 
                     // ── Sign Out ───────────────────────────────────────
                     SizedBox(
