@@ -95,7 +95,7 @@ const _kRights = [
 class _ConsentPersistence {
   const _ConsentPersistence();
 
-  Future<bool> saveConsent() async {
+  Future<bool> saveConsent({String? uid}) async {
     try {
       // 1. Save locally first — no network dependency
       final prefs = await SharedPreferences.getInstance();
@@ -107,11 +107,13 @@ class _ConsentPersistence {
 
       // 2. Register with backend dashboard (best-effort)
       try {
-        await ConsentAPI.grant([
-          'data_collection', // mandatory
-          'analytics', // optional
-          'communications', // optional
-        ]);
+        if (uid != null) {
+          await ConsentAPI.grant(uid, [
+            'data_collection', // mandatory
+            'analytics', // optional
+            'communications', // optional
+          ]);
+        }
       } catch (e) {
         debugPrint(
             '⚠️ ConsentAPI.grant failed: $e — proceeding with local save');
@@ -225,7 +227,8 @@ class _ConsentScreenState extends ConsumerState<ConsentScreen> {
       _errorMessage = null;
     });
 
-    final success = await _persistence.saveConsent();
+    final success =
+        await _persistence.saveConsent(uid: ref.read(currentUserProvider)?.id);
 
     if (!mounted) return;
 

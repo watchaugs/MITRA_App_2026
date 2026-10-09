@@ -29,6 +29,10 @@ import '../stores/auth_store.dart';
 import '../screens/auth/consent_screen.dart';
 import '../screens/auth/location_screen.dart';
 import '../screens/auth/greeting_screen.dart';
+import 'screens/student/edit_profile_screen.dart';
+import 'screens/legal/policy_screen.dart';
+import 'config/legal_config.dart';
+import 'screens/legal/grievance_screen.dart';
 
 // ── Shell navigator keys ───────────────────────────────
 // ✅ Exposed as public so main.dart can use rootNavigatorKey.currentContext
@@ -71,6 +75,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/',
         builder: (context, state) => const SplashScreen(),
+      ),
+      GoRoute(
+        path: '/legal/grievance',
+        builder: (c, s) => const GrievanceScreen(),
       ),
       GoRoute(
         path: '/onboarding',
@@ -125,6 +133,9 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
               path: '/student/profile',
               builder: (c, s) => const StudentProfileScreen()),
+          GoRoute(
+              path: '/student/edit-profile',
+              builder: (c, s) => const EditProfileScreen()),
         ],
       ),
 
@@ -171,6 +182,23 @@ final routerProvider = Provider<GoRouter>((ref) {
             '/quiz/:quizId', // ✨ FIX: Dynamic route placed beneath the static result route
         builder: (context, state) => QuizScreen(
           quizId: state.pathParameters['quizId'] ?? '',
+        ),
+      ),
+
+      GoRoute(
+        path: '/legal/privacy',
+        builder: (c, s) => const PolicyScreen(
+          title: 'Privacy Policy',
+          body: LegalConfig.privacyPolicyText,
+          externalUrl: LegalConfig.privacyPolicyUrl,
+        ),
+      ),
+      GoRoute(
+        path: '/legal/terms',
+        builder: (c, s) => const PolicyScreen(
+          title: 'Terms of Use',
+          body: LegalConfig.termsText,
+          externalUrl: LegalConfig.termsUrl,
         ),
       ),
 
