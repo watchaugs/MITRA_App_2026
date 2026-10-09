@@ -19,6 +19,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/achievement_models.dart';
 import '../../services/achievement_engine.dart';
+import '../../stores/auth_store.dart';
 
 // ── Tier Data Model ──────────────────────────────────────────────────────────
 
@@ -116,6 +117,8 @@ class AchievementsScreen extends ConsumerWidget {
         ),
         data: (profile) {
           final totalXp = profile.totalXp.toInt();
+          final streak =
+              (ref.watch(currentUserProvider)?.currentStreakDays ?? 0).toInt();
 
           // Safe tier lookup: indexWhere returns -1 when no tier range
           // matches (e.g. XP >= 999999, the last tier's maxXp). Clamping -1
@@ -165,6 +168,11 @@ class AchievementsScreen extends ConsumerWidget {
                             isUnlocked: !isLocked,
                             isCurrent: isCurrent,
                             progress: progress,
+                            totalXp: totalXp,
+                            streak: streak,
+                            nextTier: index < _galacticTiers.length - 1
+                                ? _galacticTiers[index + 1]
+                                : null,
                           ),
                           if (index < _galacticTiers.length - 1)
                             Padding(
@@ -299,6 +307,9 @@ class _ConstellationNode extends StatefulWidget {
   final bool isUnlocked;
   final bool isCurrent;
   final double progress;
+  final int totalXp;
+  final int streak;
+  final AchievementTier? nextTier;
 
   const _ConstellationNode({
     required this.tier,
@@ -306,6 +317,9 @@ class _ConstellationNode extends StatefulWidget {
     required this.isUnlocked,
     required this.isCurrent,
     required this.progress,
+    required this.totalXp,
+    required this.streak,
+    required this.nextTier,
   });
 
   @override
@@ -318,10 +332,12 @@ class _ConstellationNodeState extends State<_ConstellationNode>
   late Animation<double> _pulseAnimation;
   late Animation<double> _floatAnimation;
 
+  // Unlocked tiles can be tapped to reveal personal progress details.
+  bool _expanded = false;
+
   @override
   void initState() {
     super.initState();
-    // Stagger durations organically so tiles breathe out of sync
     final int duration = 1200 + (widget.tier.minXp % 600);
     _glowController = AnimationController(
       vsync: this,
@@ -341,7 +357,6 @@ class _ConstellationNodeState extends State<_ConstellationNode>
   @override
   void didUpdateWidget(covariant _ConstellationNode oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // Handle XP threshold crossing while screen is live (e.g. real-time sync)
     if (widget.isUnlocked != oldWidget.isUnlocked) {
       if (widget.isUnlocked) {
         _glowController.repeat(reverse: true);
@@ -349,6 +364,7 @@ class _ConstellationNodeState extends State<_ConstellationNode>
         _glowController
           ..stop()
           ..reset();
+        _expanded = false;
       }
     }
   }
@@ -363,6 +379,8 @@ class _ConstellationNodeState extends State<_ConstellationNode>
   Widget build(BuildContext context) {
     final tier = widget.tier;
     final onSurface = Theme.of(context).colorScheme.onSurface;
+    final remaining =
+        widget.nextTier == null ? 0 : widget.nextTier!.minXp - widget.totalXp;
 
     return Align(
       alignment:
@@ -382,8 +400,6 @@ class _ConstellationNodeState extends State<_ConstellationNode>
                 right: widget.isLeftAligned ? 0 : 20,
               ),
               decoration: BoxDecoration(
-                // Gradient replaces the old hardcoded Color(0xFF131B2F) —
-                // theme-aware and works on both dark and light modes.
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -409,7 +425,6 @@ class _ConstellationNodeState extends State<_ConstellationNode>
                 ),
                 boxShadow: widget.isUnlocked
                     ? [
-                        // Outer ambient glow
                         BoxShadow(
                           color: tier.glowColor.withValues(
                               alpha: (widget.isCurrent ? 0.8 : 0.4) * pulse),
@@ -424,105 +439,201 @@ class _ConstellationNodeState extends State<_ConstellationNode>
             ),
           );
         },
-        // Static card interior — rebuilt only when widget fields change,
-        // not on every animation tick.
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Opacity(
-            opacity: widget.isUnlocked ? 1.0 : 0.5,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: widget.isUnlocked
-                            ? tier.glowColor.withValues(alpha: 0.15)
-                            : onSurface.withValues(alpha: 0.05),
-                        shape: BoxShape.circle,
+        // Static card interior. Unlocked tiles tap to expand personal details.
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: widget.isUnlocked
+              ? () => setState(() => _expanded = !_expanded)
+              : null,
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Opacity(
+              opacity: widget.isUnlocked ? 1.0 : 0.5,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: widget.isUnlocked
+                              ? tier.glowColor.withValues(alpha: 0.15)
+                              : onSurface.withValues(alpha: 0.05),
+                          shape: BoxShape.circle,
+                        ),
+                        child: widget.isUnlocked
+                            ? Text(tier.badgeEmoji,
+                                style: const TextStyle(fontSize: 28))
+                            : Icon(Icons.lock,
+                                color: onSurface.withValues(alpha: 0.5),
+                                size: 28),
                       ),
-                      child: widget.isUnlocked
-                          ? Text(
-                              tier.badgeEmoji,
-                              style: const TextStyle(fontSize: 28),
-                            )
-                          : Icon(
-                              Icons.lock,
-                              color: onSurface.withValues(alpha: 0.5),
-                              size: 28,
-                            ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: List.generate(
-                              tier.stars,
-                              (i) => Padding(
-                                padding: const EdgeInsets.only(right: 2),
-                                child: Icon(Icons.star,
-                                    color: tier.glowColor, size: 14),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: List.generate(
+                                tier.stars,
+                                (i) => Padding(
+                                  padding: const EdgeInsets.only(right: 2),
+                                  child: Icon(Icons.star,
+                                      color: tier.glowColor, size: 14),
+                                ),
                               ),
                             ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            widget.tier.title,
-                            style: TextStyle(
-                              fontFamily: 'Baloo2',
-                              fontWeight: FontWeight.w700,
-                              fontSize: 26,
-                              color: onSurface,
+                            const SizedBox(height: 4),
+                            Text(
+                              widget.tier.title,
+                              style: TextStyle(
+                                fontFamily: 'Baloo2',
+                                fontWeight: FontWeight.w700,
+                                fontSize: 26,
+                                color: onSurface,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
+                      ),
+                      if (widget.isUnlocked)
+                        Icon(
+                          _expanded
+                              ? Icons.keyboard_arrow_up_rounded
+                              : Icons.keyboard_arrow_down_rounded,
+                          color: onSurface.withValues(alpha: 0.5),
+                          size: 24,
+                        ),
+                    ],
+                  ),
+                  if (widget.isCurrent) ...[
+                    const SizedBox(height: 20),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: LinearProgressIndicator(
+                        value: widget.progress,
+                        minHeight: 10,
+                        backgroundColor: onSurface.withValues(alpha: 0.1),
+                        valueColor:
+                            AlwaysStoppedAnimation<Color>(tier.glowColor),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '${(widget.progress * 100).toInt()}% Explored',
+                      style: TextStyle(
+                        fontFamily: 'SpaceMono',
+                        fontSize: 12,
+                        color: tier.glowColor,
+                      ),
+                    ),
+                  ] else ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      widget.isUnlocked
+                          ? 'Coordinates Reached'
+                          : 'Requires ${widget.tier.minXp} XP',
+                      style: TextStyle(
+                        fontFamily: 'Mukta',
+                        fontSize: 13,
+                        color: widget.isUnlocked
+                            ? tier.glowColor
+                            : onSurface.withValues(alpha: 0.5),
                       ),
                     ),
                   ],
-                ),
-                if (widget.isCurrent) ...[
-                  const SizedBox(height: 20),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: LinearProgressIndicator(
-                      value: widget.progress,
-                      minHeight: 10,
-                      backgroundColor: onSurface.withValues(alpha: 0.1),
-                      valueColor: AlwaysStoppedAnimation<Color>(tier.glowColor),
+
+                  // ── Expandable personal-progress details (unlocked only) ──
+                  if (widget.isUnlocked && _expanded) ...[
+                    const SizedBox(height: 20),
+                    Divider(
+                        color: onSurface.withValues(alpha: 0.12), height: 1),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _MiniStat(
+                            emoji: '⭐',
+                            value: '${widget.totalXp}',
+                            label: 'Total XP',
+                            color: onSurface,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _MiniStat(
+                            emoji: '🔥',
+                            value: '${widget.streak}',
+                            label: 'Day streak',
+                            color: onSurface,
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '${(widget.progress * 100).toInt()}% Explored',
-                    style: TextStyle(
-                      fontFamily: 'SpaceMono',
-                      fontSize: 12,
-                      color: tier.glowColor,
+                    const SizedBox(height: 14),
+                    Text(
+                      widget.nextTier == null
+                          ? 'Highest level reached — Gyani 💎'
+                          : remaining > 0
+                              ? '$remaining XP to ${widget.nextTier!.title}'
+                              : '${widget.nextTier!.title} already unlocked ✓',
+                      style: TextStyle(
+                        fontFamily: 'SpaceMono',
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: tier.glowColor,
+                      ),
                     ),
-                  ),
-                ] else ...[
-                  const SizedBox(height: 12),
-                  Text(
-                    widget.isUnlocked
-                        ? 'Coordinates Reached'
-                        : 'Requires ${widget.tier.minXp} XP',
-                    style: TextStyle(
-                      fontFamily: 'Mukta',
-                      fontSize: 13,
-                      color: widget.isUnlocked
-                          ? tier.glowColor
-                          : onSurface.withValues(alpha: 0.5),
-                    ),
-                  ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+// ── Compact stat shown inside an expanded achievement tile ──
+class _MiniStat extends StatelessWidget {
+  final String emoji;
+  final String value;
+  final String label;
+  final Color color;
+  const _MiniStat({
+    required this.emoji,
+    required this.value,
+    required this.label,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: color.withValues(alpha: 0.12)),
+      ),
+      child: Column(
+        children: [
+          Text(emoji, style: const TextStyle(fontSize: 20)),
+          const SizedBox(height: 4),
+          Text(value,
+              style: TextStyle(
+                  fontFamily: 'Baloo2',
+                  fontWeight: FontWeight.w800,
+                  fontSize: 18,
+                  color: color)),
+          Text(label,
+              style: TextStyle(
+                  fontFamily: 'Mukta',
+                  fontSize: 10,
+                  color: color.withValues(alpha: 0.6))),
+        ],
       ),
     );
   }

@@ -225,7 +225,8 @@ class HomeScreen extends ConsumerWidget {
                           IconButton(
                             icon: Icon(Icons.notifications_none_rounded,
                                 color: mainTextColor, size: 28),
-                            onPressed: () => context.go('/student/profile'),
+                            onPressed: () =>
+                                context.push('/student/notifications'),
                           ),
                           const SizedBox(width: 8),
                           Container(
@@ -289,10 +290,13 @@ class HomeScreen extends ConsumerWidget {
                             isDark),
                         const SizedBox(width: 16),
 
-                        // The dynamic tag
-                        _GlowingAchievementText(
-                          title: currentTier.title,
-                          color: currentTier.glowColor,
+                        // The dynamic tag — tap to open My Level
+                        GestureDetector(
+                          onTap: () => context.push('/student/achievements'),
+                          child: _GlowingAchievementText(
+                            title: currentTier.title,
+                            color: currentTier.glowColor,
+                          ),
                         ),
                       ],
                     );

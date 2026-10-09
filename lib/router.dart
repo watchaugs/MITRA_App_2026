@@ -15,6 +15,7 @@ import '../screens/student/student_shell.dart';
 import '../screens/student/home_screen.dart';
 import '../screens/student/learn_screen.dart';
 import '../screens/student/student_profile_screen.dart';
+import '../screens/student/notifications_screen.dart';
 import '../screens/teacher/teacher_shell.dart';
 import '../screens/teacher/teacher_home_screen.dart';
 import '../screens/teacher/students_screen.dart';
@@ -136,6 +137,9 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
               path: '/student/edit-profile',
               builder: (c, s) => const EditProfileScreen()),
+          GoRoute(
+              path: '/student/notifications',
+              builder: (c, s) => const NotificationsScreen()),
         ],
       ),
 

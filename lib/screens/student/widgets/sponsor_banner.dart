@@ -5,6 +5,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:video_player/video_player.dart';
 import '../../../services/api_service.dart';
 import '../../../stores/auth_store.dart';
+import '../../../providers/app_prefs.dart';
 
 /// Geofenced sponsor ads from the dashboard, scoped to the student's state.
 /// Empty on error or when there are none (interstitial then just won't show).
@@ -37,11 +38,12 @@ Future<void> maybeShowSponsorInterstitial(
   try {
     final ads = await ref.read(sponsorAdsProvider.future);
     if (ads.isEmpty || !context.mounted) return;
+    final dataSaver = ref.read(appPrefsProvider).dataSaver;
     await showDialog<void>(
       context: context,
       barrierDismissible: false,
       barrierColor: Colors.black.withValues(alpha: 0.75),
-      builder: (_) => _SponsorInterstitial(ad: ads.first),
+      builder: (_) => _SponsorInterstitial(ad: ads.first, dataSaver: dataSaver),
     );
   } catch (_) {/* fail silent */}
 }
@@ -56,7 +58,8 @@ bool _looksLikeVideo(String url) {
 
 class _SponsorInterstitial extends StatefulWidget {
   final Map<String, dynamic> ad;
-  const _SponsorInterstitial({required this.ad});
+  final bool dataSaver;
+  const _SponsorInterstitial({required this.ad, this.dataSaver = false});
 
   @override
   State<_SponsorInterstitial> createState() => _SponsorInterstitialState();
@@ -92,9 +95,10 @@ class _SponsorInterstitialState extends State<_SponsorInterstitial> {
       if (_secondsLeft == 0) t.cancel();
     });
 
-    // Prepare video if the creative is a video.
+    // Prepare video if the creative is a video — unless Data saver is on,
+    // in which case we never download video (shows the title card instead).
     final url = _mediaUrl;
-    if (url.isNotEmpty && _looksLikeVideo(url)) {
+    if (!widget.dataSaver && url.isNotEmpty && _looksLikeVideo(url)) {
       _video = VideoPlayerController.networkUrl(Uri.parse(url))
         ..setLooping(true)
         ..initialize().then((_) {

@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import '../../../constants/colors.dart';
 import '../../../providers/app_prefs.dart';
+import '../../../stores/auth_store.dart';
 
 class SettingsGroup extends ConsumerWidget {
   const SettingsGroup({super.key});
@@ -68,8 +70,11 @@ class SettingsGroup extends ConsumerWidget {
             label: 'Notifications',
             trailing: Switch(
               value: prefs.notifications,
-              onChanged: (v) =>
-                  ref.read(appPrefsProvider.notifier).setNotifications(v),
+              onChanged: (v) {
+                ref.read(appPrefsProvider.notifier).setNotifications(v);
+                _applyNotificationSubscription(
+                    v, ref.read(currentUserProvider));
+              },
             ),
           ),
           tile(
@@ -89,13 +94,6 @@ class SettingsGroup extends ConsumerWidget {
               emoji: '🏆',
               label: 'Achievements',
               onTap: () => context.push('/student/achievements')),
-          tile(
-              emoji: '📊',
-              label: 'Ranks',
-              onTap: () {
-                // Ranks lives inside the shell; adjust if your route differs.
-                context.push('/student/achievements');
-              }),
         ]),
 
         // ── Legal & privacy (Sections 3 + 4) ──
@@ -205,4 +203,27 @@ class _Faq extends StatelessWidget {
           ],
         ),
       );
+}
+
+/// Subscribes/unsubscribes the SAME FCM topics auth_store uses on login,
+/// so turning notifications off in Settings actually stops pushes.
+void _applyNotificationSubscription(bool enabled, dynamic user) {
+  final st =
+      (user?.assignedState as String?)?.toLowerCase().replaceAll(' ', '_') ??
+          '';
+  final cls =
+      (user?.classGrade as String?)?.toLowerCase().replaceAll(' ', '_') ?? '';
+  final fcm = FirebaseMessaging.instance;
+  final topics = <String>[
+    'mitra_all',
+    if (st.isNotEmpty) 'mitra_$st',
+    if (st.isNotEmpty && cls.isNotEmpty) 'mitra_${st}_$cls',
+  ];
+  for (final t in topics) {
+    if (enabled) {
+      fcm.subscribeToTopic(t);
+    } else {
+      fcm.unsubscribeFromTopic(t);
+    }
+  }
 }
