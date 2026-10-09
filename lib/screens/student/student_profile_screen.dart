@@ -8,6 +8,7 @@ import '../../theme/theme_provider.dart';
 import 'widgets/consent_manager.dart';
 import 'package:go_router/go_router.dart';
 import 'widgets/settings_group.dart';
+import 'widgets/data_rights_section.dart';
 
 class StudentProfileScreen extends ConsumerWidget {
   const StudentProfileScreen({super.key});
@@ -234,6 +235,11 @@ class StudentProfileScreen extends ConsumerWidget {
 
                     // ── Settings (App / Progress / Legal / Support) ────
                     const SettingsGroup(),
+
+                    const SizedBox(height: 24),
+
+                    // ── Account & Data (DPDPA) ─────────────────────────
+                    const DataRightsSection(),
 
                     const SizedBox(height: 24),
 

@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -24,12 +25,37 @@ class _GrievanceScreenState extends State<GrievanceScreen> {
     try {
       final db = FirebaseFirestore.instanceFor(
           app: Firebase.app(), databaseId: '(default)');
-      final doc = await db.collection('public_config').doc('compliance').get();
-      _data = doc.data();
+      // Pull directly from the dashboard's officer entries
+      // (Compliance → Officers writes compliance_settings/grievance_officer
+      //  and compliance_settings/dpo_info).
+      final results = await Future.wait([
+        db.collection('compliance_settings').doc('grievance_officer').get(),
+        db.collection('compliance_settings').doc('dpo_info').get(),
+      ]);
+      _data = {
+        'grievance_officer': _normalizeOfficer(results[0].data()),
+        'dpo': _normalizeOfficer(results[1].data()),
+      };
     } catch (_) {
       _data = null;
     }
     if (mounted) setState(() => _loading = false);
+  }
+
+  /// The dashboard stores each officer as { value: {name,email,phone}, ... }.
+  /// Older entries may store the officer object as a JSON string — handle both.
+  Map<String, dynamic>? _normalizeOfficer(Map<String, dynamic>? doc) {
+    if (doc == null) return null;
+    dynamic v = doc['value'] ?? doc;
+    if (v is String) {
+      try {
+        v = jsonDecode(v);
+      } catch (_) {
+        return null;
+      }
+    }
+    if (v is Map) return Map<String, dynamic>.from(v);
+    return null;
   }
 
   @override
