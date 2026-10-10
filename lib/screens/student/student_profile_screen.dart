@@ -9,6 +9,7 @@ import 'widgets/consent_manager.dart';
 import 'package:go_router/go_router.dart';
 import 'widgets/settings_group.dart';
 import 'widgets/data_rights_section.dart';
+import 'widgets/feedback_dialog.dart';
 
 class StudentProfileScreen extends ConsumerWidget {
   const StudentProfileScreen({super.key});
@@ -235,6 +236,42 @@ class StudentProfileScreen extends ConsumerWidget {
 
                     // ── Settings (App / Progress / Legal / Support) ────
                     const SettingsGroup(),
+
+                    const SizedBox(height: 24),
+
+                    // ── Share feedback (NPS) ───────────────────────────
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurface
+                            .withValues(alpha: 0.05),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onSurface
+                                .withValues(alpha: 0.12)),
+                      ),
+                      child: ListTile(
+                        leading:
+                            const Text('💬', style: TextStyle(fontSize: 20)),
+                        title: Text('Share feedback',
+                            style: TextStyle(
+                                fontFamily: 'Mukta',
+                                fontWeight: FontWeight.w600,
+                                fontSize: 15,
+                                color:
+                                    Theme.of(context).colorScheme.onSurface)),
+                        trailing: Icon(Icons.chevron_right,
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onSurface
+                                .withValues(alpha: 0.4)),
+                        onTap: () => showFeedbackDialog(context, ref,
+                            screen: 'settings'),
+                      ),
+                    ),
 
                     const SizedBox(height: 24),
 

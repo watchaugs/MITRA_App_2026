@@ -1,6 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/telemetry_service.dart';
 
+/// Set once at process start in main(); used to compute cold-start time.
+DateTime? gAppLaunchedAt;
+
 /// Provider for TelemetryService instance. Initialized after auth succeeds.
 ///
 /// Usage in widgets:

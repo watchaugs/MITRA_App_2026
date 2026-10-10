@@ -49,6 +49,11 @@ class TelemetryService {
   final TelemetryDeadLetterQueue _deadLetterQueue;
   StudentContext _context;
 
+  /// The most-recently created service, so top-level code outside the widget
+  /// tree (e.g. the crash handler in main.dart) can emit telemetry. Set in
+  /// [create]; may be null before the first successful init.
+  static TelemetryService? current;
+
   TelemetryService._({
     required StudentContext context,
     required FirebaseFirestore db,
@@ -72,14 +77,12 @@ class TelemetryService {
     DeviceProbe? deviceProbe,
     TelemetryDeadLetterQueue? deadLetterQueue,
   }) async {
-    print('🔍 TelemetryService.create() starting...');
     final firestore = db ?? FirebaseFirestore.instance;
     final uid = (auth ?? FirebaseAuth.instance).currentUser?.uid;
 
     if (uid == null) {
       return const TelemetryInitOutcome(TelemetryInitResult.notLoggedIn);
     }
-    print('✅ UID found: $uid');
 
     final probe = await (deviceProbe ?? DeviceProbe()).probe();
 
@@ -93,7 +96,6 @@ class TelemetryService {
     }
 
     if (profileDoc == null) {
-      print('❌ profileDoc is null. profileError: $profileError');
       // Either the read threw, or the doc genuinely doesn't exist yet.
       // Either way we don't have enough to safely emit DPDPA-relevant
       // events, so surface this distinctly rather than guessing.
@@ -116,6 +118,7 @@ class TelemetryService {
       db: firestore,
       deadLetterQueue: deadLetterQueue ?? TelemetryDeadLetterQueue(),
     );
+    current = service;
 
     return TelemetryInitOutcome(TelemetryInitResult.success, service: service);
   }
@@ -407,6 +410,50 @@ class TelemetryService {
       'accommodation_type': accommodationType,
       'approved': approved,
       'denial_reason': denialReason,
+    });
+  }
+
+  // ─── DEVICE HEALTH / CRASH / COLD-START (Table A) ───────────────────────
+
+  Future<void> logColdStart({required int coldStartMs}) async {
+    await _write('device_events', {
+      ..._context.toBaseEventJson(),
+      'event_type': 'cold_start',
+      'cold_start_ms': coldStartMs,
+    });
+  }
+
+  Future<void> logCrash({
+    required String errorType, // 'flutter' | 'zone'
+    required String message,
+    String? stackSummary,
+    bool fatal = false,
+  }) async {
+    await _write('device_events', {
+      ..._context.toBaseEventJson(),
+      'event_type': 'crash',
+      'error_type': errorType,
+      'crash_message':
+          message.length > 500 ? message.substring(0, 500) : message,
+      if (stackSummary != null)
+        'crash_stack': stackSummary.length > 2000
+            ? stackSummary.substring(0, 2000)
+            : stackSummary,
+      'is_fatal': fatal,
+    });
+  }
+
+  Future<void> logDeviceHealth({
+    int? ramTotalMb,
+    int? ramFreeMb,
+    bool lowMemory = false,
+  }) async {
+    await _write('device_events', {
+      ..._context.toBaseEventJson(),
+      'event_type': 'device_health',
+      if (ramTotalMb != null) 'ram_total_mb': ramTotalMb,
+      if (ramFreeMb != null) 'ram_free_mb': ramFreeMb,
+      'low_memory': lowMemory,
     });
   }
 

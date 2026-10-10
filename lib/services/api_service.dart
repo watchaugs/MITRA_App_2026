@@ -7,8 +7,6 @@ import 'package:dio/dio.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:isar/isar.dart'; // ✨ Added for Piggyback Sync
-import '../models/achievement_models.dart'; // ✨ Added for Piggyback Sync
 import 'package:go_router/go_router.dart';
 import '../router.dart';
 import 'dart:convert';
@@ -229,49 +227,6 @@ class QuizAPI {
       api.get('/api/quiz/analytics', queryParameters: params);
 }
 
-class TelemetryAPI {
-  /// Unauthenticated PostgreSQL path — fires even before login
-  static Future<Response> send(Map<String, dynamic> payload) =>
-      api.post('/api/analytics/telemetry', data: payload);
-
-  /// Primary telemetry path — writes to Firestore `telemetry_sessions`.
-  /// The Dio interceptor adds the Bearer token automatically.
-  static Future<Response> sync(Map<String, dynamic> payload) =>
-      api.post('/api/analytics/telemetry', data: payload);
-
-  // ✨ 3. The Piggyback Payload Generator
-  // Your background offline-sync service can call this to inject the
-  // student's current XP and Badge state into the master JSON payload
-  // before calling TelemetryAPI.sync() above.
-  static Future<Map<String, dynamic>> buildPiggybackSyncPayload(
-      Isar isar) async {
-    // ✨ FIX: Explicitly target the collections by type to bypass pluralization errors
-    final profileCollection = isar.collection<StudentProfile>();
-    final topicCollection = isar.collection<TopicProgress>();
-
-    final profile =
-        await profileCollection.where().findFirst() ?? StudentProfile();
-    final allTopics = await topicCollection.where().findAll();
-
-    return {
-      "achievement_sync": {
-        "total_xp":
-            profile.totalXp.toInt(), // ✨ FIX: Enforce safe integer types
-        "current_tier": profile.currentTier,
-        "unlocked_badges": profile.unlockedBadges,
-      },
-      "completed_summary_ledger": allTopics
-          .map((t) => {
-                "topic_id": t.topicId,
-                "ar_completed": t.hasViewedAr,
-                "quiz_completed": t.hasPassedQuiz,
-                "synergy_achieved": t.synergyApplied
-              })
-          .toList()
-    };
-  }
-}
-
 class ConsentAPI {
   /// Current consent policy version the app presents. Bump this string
   /// whenever the consent wording changes so re-consent is triggered.
@@ -325,6 +280,17 @@ class AdsAPI {
 
   static Future<Response> impression(Map<String, dynamic> payload) =>
       api.post('/api/ads/impressions', data: payload);
+
+  /// Ad engagement depth (Table A): view-time, completion, media type.
+  /// Receiver: POST /api/ads/engagement on the dashboard.
+  static Future<Response> engagement(Map<String, dynamic> payload) =>
+      api.post('/api/ads/engagement', data: payload);
+}
+
+class FeedbackAPI {
+  /// Submit feedback / NPS (Table A). Receiver: POST /api/feedback.
+  static Future<Response> submit(Map<String, dynamic> payload) =>
+      api.post('/api/feedback', data: payload);
 }
 
 class NotificationsAPI {

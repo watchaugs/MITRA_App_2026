@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -17,6 +19,8 @@ import 'router.dart';
 import 'services/api_service.dart';
 import 'services/quiz_offline_service.dart';
 import 'services/telemetry_batch_buffer.dart';
+import 'services/telemetry_service.dart';
+import 'providers/telemetry_provider.dart';
 import 'back_button_dispatcher.dart';
 import 'firebase_options.dart';
 
@@ -33,68 +37,91 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 }
 
 Future<void> main() async {
-  WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
-  FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
+  gAppLaunchedAt = DateTime.now();
+  runZonedGuarded(() async {
+    WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+    FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
 
-  try {
-    await dotenv.load(fileName: '.env');
-  } catch (e) {
-    debugPrint('⚠️ .env: $e');
-  }
+    // Flutter framework errors → crash telemetry (best-effort).
+    FlutterError.onError = (details) {
+      FlutterError.presentError(details);
+      TelemetryService.current?.logCrash(
+        errorType: 'flutter',
+        message: details.exceptionAsString(),
+        stackSummary: details.stack?.toString(),
+        fatal: false,
+      );
+    };
 
-  try {
-    if (Firebase.apps.isEmpty) {
-      await Firebase.initializeApp(
-          options: DefaultFirebaseOptions.currentPlatform);
+    try {
+      await dotenv.load(fileName: '.env');
+    } catch (e) {
+      debugPrint('⚠️ .env: $e');
     }
-    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-  } catch (e) {
-    debugPrint('⚠️ Firebase: $e');
-  }
 
-  try {
-    ApiService.instance.init();
-  } catch (e) {
-    debugPrint('⚠️ API: $e');
-  }
+    try {
+      if (Firebase.apps.isEmpty) {
+        await Firebase.initializeApp(
+            options: DefaultFirebaseOptions.currentPlatform);
+      }
+      FirebaseMessaging.onBackgroundMessage(
+          _firebaseMessagingBackgroundHandler);
+    } catch (e) {
+      debugPrint('⚠️ Firebase: $e');
+    }
 
-  final prefs = await SharedPreferences.getInstance();
+    try {
+      ApiService.instance.init();
+    } catch (e) {
+      debugPrint('⚠️ API: $e');
+    }
 
-  try {
-    await Hive.initFlutter();
-  } catch (e) {
-    debugPrint('⚠️ Hive: $e');
-  }
+    final prefs = await SharedPreferences.getInstance();
 
-  // ✨ INITIALIZE THE ISAR XP DATABASE ✨
-  late Isar isar;
-  try {
-    final dir = await getApplicationDocumentsDirectory();
-    isar = await Isar.open(
-      [StudentProfileSchema, TopicProgressSchema],
-      directory: dir.path,
+    try {
+      await Hive.initFlutter();
+    } catch (e) {
+      debugPrint('⚠️ Hive: $e');
+    }
+
+    // ✨ INITIALIZE THE ISAR XP DATABASE ✨
+    late Isar isar;
+    try {
+      final dir = await getApplicationDocumentsDirectory();
+      isar = await Isar.open(
+        [StudentProfileSchema, TopicProgressSchema],
+        directory: dir.path,
+      );
+    } catch (e) {
+      debugPrint('⚠️ Isar Gamification DB Error: $e');
+    }
+
+    try {
+      TelemetryBatchBuffer.instance.startScheduler();
+    } catch (e) {
+      debugPrint('⚠️ Telemetry: $e');
+    }
+
+    await QuotesService.instance.init();
+    await BrainSparkService.instance.init();
+
+    runApp(ProviderScope(
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+        // ✨ Pass the active DB into the Riverpod UI stream
+        isarProvider.overrideWithValue(isar),
+      ],
+      child: const MitraApp(),
+    ));
+  }, (error, stack) {
+    // Uncaught async / zone errors → crash telemetry (best-effort).
+    TelemetryService.current?.logCrash(
+      errorType: 'zone',
+      message: error.toString(),
+      stackSummary: stack.toString(),
+      fatal: true,
     );
-  } catch (e) {
-    debugPrint('⚠️ Isar Gamification DB Error: $e');
-  }
-
-  try {
-    TelemetryBatchBuffer.instance.startScheduler();
-  } catch (e) {
-    debugPrint('⚠️ Telemetry: $e');
-  }
-
-  await QuotesService.instance.init();
-  await BrainSparkService.instance.init();
-
-  runApp(ProviderScope(
-    overrides: [
-      sharedPreferencesProvider.overrideWithValue(prefs),
-      // ✨ Pass the active DB into the Riverpod UI stream
-      isarProvider.overrideWithValue(isar),
-    ],
-    child: const MitraApp(),
-  ));
+  });
 }
 
 class MitraApp extends ConsumerStatefulWidget {
@@ -103,13 +130,21 @@ class MitraApp extends ConsumerStatefulWidget {
   ConsumerState<MitraApp> createState() => _MitraAppState();
 }
 
-class _MitraAppState extends ConsumerState<MitraApp> {
+class _MitraAppState extends ConsumerState<MitraApp>
+    with WidgetsBindingObserver {
   MitraBackButtonHandler? _backHandler;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _setupFCM();
+  }
+
+  @override
+  void didHaveMemoryPressure() {
+    // OS reported low memory → device-health telemetry (Table A, "RAM").
+    TelemetryService.current?.logDeviceHealth(lowMemory: true);
   }
 
   @override
@@ -129,6 +164,7 @@ class _MitraAppState extends ConsumerState<MitraApp> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _backHandler?.unregister();
     super.dispose();
   }

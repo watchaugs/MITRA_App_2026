@@ -114,6 +114,13 @@ class AuthNotifier extends StateNotifier<AuthState> {
       final outcome = await TelemetryService.create();
       if (outcome.isUsable && outcome.service != null) {
         ref.read(telemetryServiceProvider.notifier).state = outcome.service;
+        // Cold-start time: process launch → telemetry ready (Table A).
+        final launchedAt = gAppLaunchedAt;
+        if (launchedAt != null) {
+          await outcome.service!.logColdStart(
+            coldStartMs: DateTime.now().difference(launchedAt).inMilliseconds,
+          );
+        }
         debugPrint('✅ TelemetryService initialized');
       } else {
         debugPrint('⚠️  TelemetryService init failed: ${outcome.result}');

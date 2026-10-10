@@ -70,6 +70,8 @@ class _SponsorInterstitialState extends State<_SponsorInterstitial> {
   int _secondsLeft = _closeAfter;
   Timer? _timer;
   VideoPlayerController? _video;
+  final DateTime _shownAt = DateTime.now();
+  bool _engagementSent = false;
 
   String get _mediaUrl => (widget.ad['media_url'] ??
           widget.ad['video_url'] ??
@@ -111,12 +113,41 @@ class _SponsorInterstitialState extends State<_SponsorInterstitial> {
     // Fire-and-forget impression telemetry.
     final id = (widget.ad['id'] ?? widget.ad['ad_id'] ?? '').toString();
     if (id.isNotEmpty) {
-      AdsAPI.impression({'ad_id': id}).catchError((_) => throw Exception());
+      unawaited(AdsAPI.impression({'ad_id': id}).then((_) {}, onError: (_) {}));
     }
+  }
+
+  /// Ad engagement depth (Table A): how long the overlay was shown, whether
+  /// the countdown completed, and video completion %. Sent once, on close.
+  void _reportEngagement() {
+    if (_engagementSent) return;
+    _engagementSent = true;
+    final id = (widget.ad['id'] ?? widget.ad['ad_id'] ?? '').toString();
+    if (id.isEmpty) return;
+    double? completionPct;
+    final v = _video;
+    if (v != null &&
+        v.value.isInitialized &&
+        v.value.duration.inMilliseconds > 0) {
+      completionPct = (v.value.position.inMilliseconds /
+              v.value.duration.inMilliseconds *
+              100)
+          .clamp(0, 100)
+          .toDouble();
+    }
+    unawaited(AdsAPI.engagement({
+      'campaign_id': id,
+      'event_type': 'close',
+      'view_time_ms': DateTime.now().difference(_shownAt).inMilliseconds,
+      'completed': _secondsLeft <= 0,
+      if (completionPct != null) 'completion_pct': completionPct,
+      'media_type': _video != null ? 'video' : 'image',
+    }).then((_) {}, onError: (_) {}));
   }
 
   @override
   void dispose() {
+    _reportEngagement();
     _timer?.cancel();
     _video?.dispose();
     super.dispose();
