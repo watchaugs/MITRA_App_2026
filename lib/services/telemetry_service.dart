@@ -120,6 +120,15 @@ class TelemetryService {
     );
     current = service;
 
+    // Emit the device capability tier once at startup so the dashboard can see
+    // the real tier distribution of our users (validates the market study).
+    // Fire-and-forget: telemetry must never block login.
+    // ignore: unawaited_futures
+    service.logDeviceHealth(
+      ramTotalMb: probe.ramTotalMb,
+      deviceTier: probe.tier.name,
+    );
+
     return TelemetryInitOutcome(TelemetryInitResult.success, service: service);
   }
 
@@ -447,12 +456,14 @@ class TelemetryService {
     int? ramTotalMb,
     int? ramFreeMb,
     bool lowMemory = false,
+    String? deviceTier,
   }) async {
     await _write('device_events', {
       ..._context.toBaseEventJson(),
       'event_type': 'device_health',
       if (ramTotalMb != null) 'ram_total_mb': ramTotalMb,
       if (ramFreeMb != null) 'ram_free_mb': ramFreeMb,
+      if (deviceTier != null) 'device_tier': deviceTier,
       'low_memory': lowMemory,
     });
   }

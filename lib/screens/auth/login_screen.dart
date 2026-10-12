@@ -77,8 +77,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     setState(() => _loading = true);
 
     try {
-      await FirebaseAuth.instance
-          .setSettings(appVerificationDisabledForTesting: true);
+      // Production: real app verification (Play Integrity / reCAPTCHA) stays ON.
+      // (Was appVerificationDisabledForTesting: true — a testing-only flag that
+      //  must never ship, or real OTP verification is bypassed.)
       await FirebaseAuth.instance.verifyPhoneNumber(
         phoneNumber: '+91$phone',
         verificationCompleted: (PhoneAuthCredential credential) async {

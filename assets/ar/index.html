@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>MITRA AR</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #000; overflow: hidden;
+      font-family: -apple-system, Roboto, sans-serif; }
+    #ar-container { position: absolute; inset: 0; }
+    /* MindAR injects the camera <video> and the three.js <canvas>; make them fill. */
+    #ar-container video, #ar-container canvas {
+      position: absolute; inset: 0; width: 100% !important; height: 100% !important;
+      object-fit: cover; }
+    #hint { position: absolute; bottom: 28px; left: 0; right: 0; text-align: center;
+      color: #fff; font-size: 15px; z-index: 5; text-shadow: 0 1px 4px #000;
+      pointer-events: none; padding: 0 20px; }
+    #begin { position: absolute; inset: 0; z-index: 10; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; text-align: center; padding: 24px;
+      background: #0B1C4B; color: #fff; }
+    #begin .t { font-size: 20px; font-weight: 700; }
+    #begin .s { margin-top: 8px; opacity: .85; font-size: 14px; }
+    #begin button { margin-top: 22px; padding: 14px 30px; border: none; border-radius: 999px;
+      background: #E8820C; color: #fff; font-size: 18px; font-weight: 700; }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <div id="ar-container"></div>
+  <div id="hint" class="hidden">Point your camera at the page</div>
+  <div id="begin">
+    <div class="t">Get ready for AR</div>
+    <div class="s">Tap begin, then point your camera at the textbook page.</div>
+    <button id="beginBtn">▶ Begin</button>
+  </div>
+
+  <!-- Offline-bundled engine (three.js + MindAR + GLTF + audio sync) -->
+  <script src="ar_engine.js"></script>
+  <script>
+    (function () {
+      var begin = document.getElementById('begin');
+      document.getElementById('beginBtn').addEventListener('click', function () {
+        begin.classList.add('hidden');
+        // The engine owns the hint text (it differs per mode: marker/overlay/viewer).
+        // window.MITRA_CONFIG is injected by the Flutter side on page load.
+        window.mitraStart(window.MITRA_CONFIG || {});
+      });
+    })();
+  </script>
+</body>
+</html>

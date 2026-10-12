@@ -107,6 +107,8 @@ dependencies:
   sentry_flutter: ^7.18.0
   flutter_cache_manager: ^3.3.1
   workmanager: ^0.6.0
+  webview_flutter: ^4.9.0
+  webview_flutter_android: ^3.16.9
 
 
 dev_dependencies:
@@ -137,6 +139,7 @@ flutter:
     - assets/animations/
     - assets/lotties/
     - assets/locales/
+    - assets/ar/
     - .env
 
 flutter_launcher_icons:
