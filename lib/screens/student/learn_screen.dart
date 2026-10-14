@@ -41,6 +41,7 @@ import '../../constants/colors.dart';
 import '../../services/api_service.dart';
 import '../../stores/auth_store.dart';
 import '../../providers/translation_provider.dart'; // ✨ Added for language filtering
+import '../../widgets/orbit_explorer.dart';
 
 // ═══════════════════════════════════════════════════════════
 // DOMAIN: Failures
@@ -347,7 +348,12 @@ typedef ArLessonRec = ({
 class ArCatalog {
   final Map<String, List<ArLessonRec>> bySubject;
   final Map<String, String> glbById;
-  const ArCatalog({required this.bySubject, required this.glbById});
+  final bool territorySupported; // false = outside MITRA's approved area
+  const ArCatalog({
+    required this.bySubject,
+    required this.glbById,
+    this.territorySupported = true,
+  });
 }
 
 /// Live AR topics from the dashboard, scoped to the student's state (so the
@@ -372,6 +378,8 @@ final arCatalogProvider = FutureProvider<ArCatalog>((ref) async {
   });
 
   final raw = res.data is Map ? res.data['data'] : null;
+  final territorySupported =
+      res.data is Map ? (res.data['territory_supported'] != false) : true;
   final bySubject = <String, List<ArLessonRec>>{};
   final glbById = <String, String>{};
 
@@ -401,7 +409,11 @@ final arCatalogProvider = FutureProvider<ArCatalog>((ref) async {
       glbById: {},
     );
   }
-  return ArCatalog(bySubject: bySubject, glbById: glbById);
+  return ArCatalog(
+    bySubject: bySubject,
+    glbById: glbById,
+    territorySupported: territorySupported,
+  );
 });
 
 /// Async quiz feed notifier — exposes typed errors through
@@ -570,13 +582,12 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
                   }
 
                   if (grouped.isEmpty) {
-                    final user = ref.read(currentUserProvider);
-                    return _EmptyState(
-                      message: user?.classGrade != null
-                          ? 'No live content for ${user!.classGrade} yet.'
-                          : 'No live content available right now.',
-                      onRetry: () =>
-                          ref.read(quizFeedProvider(params).notifier).refresh(),
+                    // Outside MITRA's approved territory → geofence message;
+                    // otherwise the playful "coming soon".
+                    return OrbitEmptyView(
+                      type: (arCatalog?.territorySupported ?? true)
+                          ? OrbitErrorType.comingSoon
+                          : OrbitErrorType.unavailable,
                     );
                   }
 
@@ -1237,42 +1248,6 @@ class _ErrorState extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             const Text('⚠️', style: TextStyle(fontSize: 48)),
-            const SizedBox(height: MitraSpacing.md),
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontFamily: 'Mukta',
-                fontSize: 14,
-                color: MitraColors.textMuted,
-              ),
-            ),
-            const SizedBox(height: MitraSpacing.lg),
-            _RetryButton(onTap: onRetry),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ── Empty state (distinct from error — shows 📭) ────────
-
-class _EmptyState extends StatelessWidget {
-  final String message;
-  final VoidCallback onRetry;
-
-  const _EmptyState({required this.message, required this.onRetry});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(MitraSpacing.xl),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('📭', style: TextStyle(fontSize: 48)),
             const SizedBox(height: MitraSpacing.md),
             Text(
               message,

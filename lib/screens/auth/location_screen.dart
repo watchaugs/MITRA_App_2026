@@ -41,6 +41,72 @@ abstract class _LocRoutes {
 }
 
 /// Max character length for district/state before truncation.
+/// Folds Nominatim/OpenStreetMap state spellings to the canonical names the
+/// dashboard uses (country-state-city). Geofencing, release-by-state and the
+/// territory check all compare against these, so capture must match. Unknown
+/// inputs pass through unchanged (trimmed), so new/renamed states still work.
+String? _canonicalIndianState(String? raw) {
+  if (raw == null) return null;
+  final s = raw.trim();
+  if (s.isEmpty) return null;
+  const canonical = <String>[
+    'Andaman and Nicobar Islands',
+    'Andhra Pradesh',
+    'Arunachal Pradesh',
+    'Assam',
+    'Bihar',
+    'Chandigarh',
+    'Chhattisgarh',
+    'Dadra and Nagar Haveli and Daman and Diu',
+    'Delhi',
+    'Goa',
+    'Gujarat',
+    'Haryana',
+    'Himachal Pradesh',
+    'Jammu and Kashmir',
+    'Jharkhand',
+    'Karnataka',
+    'Kerala',
+    'Ladakh',
+    'Lakshadweep',
+    'Madhya Pradesh',
+    'Maharashtra',
+    'Manipur',
+    'Meghalaya',
+    'Mizoram',
+    'Nagaland',
+    'Odisha',
+    'Puducherry',
+    'Punjab',
+    'Rajasthan',
+    'Sikkim',
+    'Tamil Nadu',
+    'Telangana',
+    'Tripura',
+    'Uttar Pradesh',
+    'Uttarakhand',
+    'West Bengal',
+  ];
+  // Known OSM → canonical variants (lowercase keys).
+  const aliases = <String, String>{
+    'nct of delhi': 'Delhi',
+    'national capital territory of delhi': 'Delhi',
+    'pondicherry': 'Puducherry',
+    'orissa': 'Odisha',
+    'uttaranchal': 'Uttarakhand',
+    'jammu and kashmir union territory': 'Jammu and Kashmir',
+    'dadra and nagar haveli': 'Dadra and Nagar Haveli and Daman and Diu',
+    'daman and diu': 'Dadra and Nagar Haveli and Daman and Diu',
+    'andaman and nicobar': 'Andaman and Nicobar Islands',
+  };
+  final low = s.toLowerCase();
+  if (aliases.containsKey(low)) return aliases[low];
+  for (final c in canonical) {
+    if (c.toLowerCase() == low) return c; // exact (case-insensitive) match
+  }
+  return s; // unknown → keep as-is (trimmed) so nothing breaks
+}
+
 /// Prevents absurdly long geocoded strings from hitting Firestore.
 const _kMaxGeoFieldLength = 100;
 
@@ -212,7 +278,8 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
             address['city'] as String? ??
             address['town'] as String?,
       );
-      final state = _sanitiseGeoField(address['state'] as String?);
+      final state =
+          _canonicalIndianState(_sanitiseGeoField(address['state'] as String?));
 
       if (district == null || state == null) {
         throw const _LocException('GEOCODE_INCOMPLETE');
