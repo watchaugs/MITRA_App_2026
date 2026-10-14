@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:video_player/video_player.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../services/api_service.dart';
 import '../../../stores/auth_store.dart';
 import '../../../providers/app_prefs.dart';
@@ -36,6 +37,10 @@ Future<void> maybeShowSponsorInterstitial(
   if (_sponsorInterstitialShown) return;
   _sponsorInterstitialShown = true;
   try {
+    // Respect the dashboard's frequency cap ({ cap, window_hours }): show at
+    // most `cap` sponsor screens per rolling `window_hours`. Counted on-device
+    // with SharedPreferences so no server round-trip is needed to decide.
+    if (!await _sponsorCapAllows()) return;
     final ads = await ref.read(sponsorAdsProvider.future);
     if (ads.isEmpty || !context.mounted) return;
     final dataSaver = ref.read(appPrefsProvider).dataSaver;
@@ -46,6 +51,46 @@ Future<void> maybeShowSponsorInterstitial(
       builder: (_) => _SponsorInterstitial(ad: ads.first, dataSaver: dataSaver),
     );
   } catch (_) {/* fail silent */}
+}
+
+/// Returns true if another sponsor screen is allowed right now, per the
+/// dashboard's { cap, window_hours } setting. Records this show when allowed.
+Future<bool> _sponsorCapAllows() async {
+  try {
+    int cap = 3;
+    int windowHours = 24;
+    try {
+      final res = await AdsAPI.frequency();
+      final d = res.data;
+      if (d is Map) {
+        cap = (d['cap'] ?? d['daily_push'] ?? 3) is int
+            ? (d['cap'] ?? d['daily_push'] ?? 3) as int
+            : int.tryParse('${d['cap'] ?? d['daily_push'] ?? 3}') ?? 3;
+        windowHours = (d['window_hours'] ?? 24) is int
+            ? (d['window_hours'] ?? 24) as int
+            : int.tryParse('${d['window_hours'] ?? 24}') ?? 24;
+      }
+    } catch (_) {/* fall back to 3 / 24h */}
+
+    if (cap <= 0) return false; // 0 = ads effectively off
+
+    final prefs = await SharedPreferences.getInstance();
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final windowMs = windowHours * 3600 * 1000;
+    // Stored as a list of show-timestamps (ms); keep only those in-window.
+    final raw = prefs.getStringList('sponsor_show_ts') ?? const [];
+    final kept = raw
+        .map((s) => int.tryParse(s) ?? 0)
+        .where((t) => t > 0 && (now - t) < windowMs)
+        .toList();
+    if (kept.length >= cap) return false;
+    kept.add(now);
+    await prefs.setStringList(
+        'sponsor_show_ts', kept.map((t) => '$t').toList());
+    return true;
+  } catch (_) {
+    return true; // never block the app over a prefs error
+  }
 }
 
 bool _looksLikeVideo(String url) {

@@ -22,12 +22,14 @@ import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_flutter_android/webview_flutter_android.dart';
 import '../../constants/colors.dart';
 import '../../providers/telemetry_provider.dart';
+import '../../services/api_service.dart';
 import '../../services/achievement_engine.dart';
 
 enum ArMode { marker, overlay, viewer }
 
-String _modeName(ArMode m) =>
-    m == ArMode.marker ? 'marker' : (m == ArMode.overlay ? 'overlay' : 'viewer');
+String _modeName(ArMode m) => m == ArMode.marker
+    ? 'marker'
+    : (m == ArMode.overlay ? 'overlay' : 'viewer');
 
 class WebArViewerScreen extends ConsumerStatefulWidget {
   final String topicId;
@@ -126,12 +128,35 @@ class _WebArViewerScreenState extends ConsumerState<WebArViewerScreen> {
     if (mounted) setState(() => _controller = controller);
   }
 
+  // The dashboard returns a RELATIVE model URL (/api/ar/file/<id>_lite.glb).
+  // The WebView engine and Scene Viewer both need an ABSOLUTE https URL, so we
+  // prefix it with the API base. Absolute URLs (e.g. an R2 CDN) pass through.
+  String get _absoluteModelUrl {
+    final raw = widget.modelUrl;
+    if (raw.isEmpty) return raw;
+    if (raw.startsWith('http://') || raw.startsWith('https://')) return raw;
+    final base = ApiService.instance.dio.options.baseUrl;
+    if (base.isEmpty) return raw;
+    final b = base.endsWith('/') ? base.substring(0, base.length - 1) : base;
+    return raw.startsWith('/') ? '$b$raw' : '$b/$raw';
+  }
+
+  // Same treatment for the optional narration / marker files.
+  String? _absolute(String? raw) {
+    if (raw == null || raw.isEmpty) return raw;
+    if (raw.startsWith('http://') || raw.startsWith('https://')) return raw;
+    final base = ApiService.instance.dio.options.baseUrl;
+    if (base.isEmpty) return raw;
+    final b = base.endsWith('/') ? base.substring(0, base.length - 1) : base;
+    return raw.startsWith('/') ? '$b$raw' : '$b/$raw';
+  }
+
   void _injectConfig() {
     final cfg = jsonEncode({
       'mode': _modeName(_mode),
-      'modelUrl': widget.modelUrl,
-      if (widget.targetsUrl != null) 'targetsUrl': widget.targetsUrl,
-      if (widget.audioUrl != null) 'audioUrl': widget.audioUrl,
+      'modelUrl': _absoluteModelUrl,
+      if (widget.targetsUrl != null) 'targetsUrl': _absolute(widget.targetsUrl),
+      if (widget.audioUrl != null) 'audioUrl': _absolute(widget.audioUrl),
       'scale': 0.5,
     });
     _controller?.runJavaScript('window.MITRA_CONFIG = $cfg;');
@@ -150,7 +175,9 @@ class _WebArViewerScreenState extends ConsumerState<WebArViewerScreen> {
       _stepDown((msg['message'] ?? 'AR error').toString());
     } else if (type == 'model_error') {
       // The model itself failed to load — changing mode won't help.
-      if (mounted) setState(() => _error = (msg['message'] ?? 'Model error').toString());
+      if (mounted) {
+        setState(() => _error = (msg['message'] ?? 'Model error').toString());
+      }
     }
     // 'ar_started' | 'target_found' | 'target_lost' | 'model_loaded' |
     // 'audio_blocked' are available here for analytics later.
@@ -177,7 +204,7 @@ class _WebArViewerScreenState extends ConsumerState<WebArViewerScreen> {
 
   Future<void> _exploreInAR() async {
     // Silent spatial bonus — Google Scene Viewer (ar_preferred degrades to 3D).
-    final enc = Uri.encodeComponent(widget.modelUrl);
+    final enc = Uri.encodeComponent(_absoluteModelUrl);
     final url =
         'https://arvr.google.com/scene-viewer/1.0?file=$enc&mode=ar_preferred&title=${Uri.encodeComponent('MITRA')}';
     try {
@@ -198,7 +225,8 @@ class _WebArViewerScreenState extends ConsumerState<WebArViewerScreen> {
               children: [
                 const Text('This lesson could not be shown on your device.',
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: MitraColors.textPrimary, fontSize: 15)),
+                    style: TextStyle(
+                        color: MitraColors.textPrimary, fontSize: 15)),
                 const SizedBox(height: 16),
                 TextButton(
                   onPressed: () => Navigator.of(context).maybePop(),
@@ -218,7 +246,8 @@ class _WebArViewerScreenState extends ConsumerState<WebArViewerScreen> {
           if (_controller != null)
             WebViewWidget(controller: _controller!)
           else
-            const Center(child: CircularProgressIndicator(color: MitraColors.saffron)),
+            const Center(
+                child: CircularProgressIndicator(color: MitraColors.saffron)),
 
           // Close
           SafeArea(
@@ -229,7 +258,8 @@ class _WebArViewerScreenState extends ConsumerState<WebArViewerScreen> {
                 child: _RoundBtn(
                   icon: Icons.close,
                   onTap: () {
-                    _controller?.runJavaScript('window.mitraStop && window.mitraStop();');
+                    _controller?.runJavaScript(
+                        'window.mitraStop && window.mitraStop();');
                     Navigator.of(context).maybePop();
                   },
                 ),
@@ -252,12 +282,14 @@ class _WebArViewerScreenState extends ConsumerState<WebArViewerScreen> {
                         children: [
                           _PillBtn(
                             label: '🔊 Replay',
-                            onTap: () => _controller
-                                ?.runJavaScript('window.mitraReplay && window.mitraReplay();'),
+                            onTap: () => _controller?.runJavaScript(
+                                'window.mitraReplay && window.mitraReplay();'),
                           ),
                           if (widget.allowExplore && Platform.isAndroid) ...[
                             const SizedBox(width: 10),
-                            _PillBtn(label: '🧭 Explore in your room', onTap: _exploreInAR),
+                            _PillBtn(
+                                label: '🧭 Explore in your room',
+                                onTap: _exploreInAR),
                           ],
                         ],
                       ),
@@ -301,7 +333,8 @@ class _PillBtn extends StatelessWidget {
   final String label;
   final VoidCallback onTap;
   final bool filled;
-  const _PillBtn({required this.label, required this.onTap, this.filled = false});
+  const _PillBtn(
+      {required this.label, required this.onTap, this.filled = false});
   @override
   Widget build(BuildContext context) => GestureDetector(
         onTap: onTap,
@@ -319,7 +352,9 @@ class _PillBtn extends StatelessWidget {
           ),
           child: Text(label,
               style: const TextStyle(
-                  color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14)),
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14)),
         ),
       );
 }

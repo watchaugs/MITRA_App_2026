@@ -281,6 +281,9 @@ class AdsAPI {
   static Future<Response> impression(Map<String, dynamic> payload) =>
       api.post('/api/ads/impressions', data: payload);
 
+  /// Ad frequency cap set on the dashboard: { cap, window_hours }.
+  static Future<Response> frequency() => api.get('/api/ads/frequency');
+
   /// Ad engagement depth (Table A): view-time, completion, media type.
   /// Receiver: POST /api/ads/engagement on the dashboard.
   static Future<Response> engagement(Map<String, dynamic> payload) =>
