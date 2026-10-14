@@ -4,6 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../constants/colors.dart';
+import '../../widgets/orbit_explorer.dart';
 
 class GrievanceScreen extends StatefulWidget {
   const GrievanceScreen({super.key});
@@ -77,7 +78,7 @@ class _GrievanceScreenState extends State<GrievanceScreen> {
                 color: onSurface)),
       ),
       body: _loading
-          ? const Center(child: CircularProgressIndicator())
+          ? const OrbitLoader(message: 'Loading…')
           : SafeArea(
               child: ListView(
                 padding: const EdgeInsets.all(MitraSpacing.lg),

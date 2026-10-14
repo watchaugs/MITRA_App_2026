@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import '../../constants/colors.dart';
 import '../../stores/auth_store.dart';
+import '../../widgets/orbit_explorer.dart';
 
 const _kFirestoreTimeout = Duration(seconds: 10);
 
@@ -277,7 +278,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         iconTheme: IconThemeData(color: onSurface),
       ),
       body: _loading
-          ? const Center(child: CircularProgressIndicator())
+          ? const OrbitLoader(message: 'Loading…')
           : SafeArea(
               child: ListView(
                 padding: const EdgeInsets.all(MitraSpacing.lg),
