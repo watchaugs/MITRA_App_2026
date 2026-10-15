@@ -364,6 +364,63 @@ class ArCatalog {
 /// dashboard's geofencing applies), with the hardcoded demo map as a safe
 /// fallback — the list is never empty on stage. In presentation mode it
 /// returns the demo map unchanged and no network call is made.
+/// Flatten a /manifest/<state> payload into the same maps the Learn screen
+/// already consumes. Returns null if the shape is unusable. A manifest only
+/// exists for a supported state, so territorySupported is true here.
+ArCatalog? _catalogFromManifest(dynamic data) {
+  if (data is! Map) return null;
+  final classes = data['classes'];
+  if (classes is! List) return null;
+  final bySubject = <String, List<ArLessonRec>>{};
+  final glbById = <String, String>{};
+  final videoById = <String, String>{};
+  final chromaById = <String, String>{};
+  for (final c in classes) {
+    if (c is! Map) continue;
+    final subjects = c['subjects'];
+    if (subjects is! List) continue;
+    for (final sj in subjects) {
+      if (sj is! Map) continue;
+      final subject = (sj['subject'] ?? 'Other').toString();
+      final topics = sj['topics'];
+      if (topics is! List) continue;
+      for (final t in topics) {
+        if (t is! Map) continue;
+        final topic = (t['topic'] ?? subject).toString();
+        final lessons = t['ar_lessons'];
+        if (lessons is! List) continue;
+        for (final l in lessons) {
+          if (l is! Map) continue;
+          final id = (l['id'] ?? '').toString();
+          if (id.isEmpty) continue;
+          bySubject.putIfAbsent(subject, () => []).add((
+            id: id,
+            title: (l['title'] ?? id).toString(),
+            topic: topic,
+            languageTag:
+                (l['language_tag'] ?? l['language'] ?? 'all').toString(),
+          ));
+          final glb = (l['flutter_url'] ?? '').toString();
+          if (glb.isNotEmpty) glbById[id] = glb;
+          final vid = (l['video_url'] ?? '').toString();
+          if (vid.isNotEmpty) videoById[id] = vid;
+          if (l['chroma_enabled'] == true) {
+            chromaById[id] = (l['chroma_color'] ?? '#00ff00').toString();
+          }
+        }
+      }
+    }
+  }
+  if (bySubject.isEmpty) return null;
+  return ArCatalog(
+    bySubject: bySubject,
+    glbById: glbById,
+    videoById: videoById,
+    chromaById: chromaById,
+    territorySupported: true,
+  );
+}
+
 final arCatalogProvider = FutureProvider<ArCatalog>((ref) async {
   if (kPresentationMode) {
     return const ArCatalog(
@@ -375,6 +432,21 @@ final arCatalogProvider = FutureProvider<ArCatalog>((ref) async {
   final user = ref.watch(currentUserProvider);
   final state = user?.assignedState ?? '';
   final lang = ref.watch(translationProvider).langCode;
+
+  // ── Cost-shield: try the hard-cached state manifest first. ──────────────
+  // One document read, served with a long Cache-Control, instead of a
+  // per-launch Firestore collection scan. If it yields lessons we build the
+  // catalog from it and never touch /ar-topics. If it's empty/unreachable we
+  // fall through to the live /ar-topics call below (unchanged behaviour).
+  if (state.isNotEmpty) {
+    try {
+      final mres = await CurriculumAPI.manifest(state, stateName: state);
+      final mcat = _catalogFromManifest(mres.data);
+      if (mcat != null && mcat.bySubject.isNotEmpty) return mcat;
+    } catch (_) {
+      // ignore and fall back to /ar-topics
+    }
+  }
 
   final res = await CurriculumAPI.arTopics({
     if (state.isNotEmpty) 'state': state,

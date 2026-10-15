@@ -184,6 +184,14 @@ class CurriculumAPI {
   static Future<Response> arTopics(Map<String, String> params) =>
       api.get('/api/curriculum/ar-topics', queryParameters: params);
 
+  // Cost-shield: one hard-cached read per state per launch, instead of a
+  // Firestore collection scan. Superset of /ar-topics (adds class/subject/topic
+  // structure). The app prefers this and falls back to arTopics() if empty.
+  static Future<Response> manifest(String state, {String? stateName}) =>
+      api.get('/api/curriculum/manifest/$state', queryParameters: {
+        if (stateName != null && stateName.isNotEmpty) 'state_name': stateName,
+      });
+
   static Future<Response> hierarchy(String stateCode) =>
       api.get('/api/curriculum/hierarchy/$stateCode');
 }

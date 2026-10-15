@@ -46,4 +46,4 @@ lib/firebase_options.dart
 # Android diagnostic heap files
 *.hprof
 java_pid*.hprof
-android/.kotlin/errors/errors-1791821710308.log
+android/.kotlin/
