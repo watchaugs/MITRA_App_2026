@@ -263,135 +263,11 @@ class QuizResultScreen extends StatelessWidget {
                     final q = questions[i];
                     final studentAns = studentAnswers[i];
                     final isCorrect = studentAns == q.correctAnswerIndex;
-
-                    return Container(
-                      width: double.infinity,
-                      margin: const EdgeInsets.only(bottom: 12),
-                      padding: const EdgeInsets.all(MitraSpacing.lg),
-                      decoration: BoxDecoration(
-                        color: isCorrect
-                            ? MitraColors.emerald.withValues(alpha: 0.07)
-                            : MitraColors.crimson.withValues(alpha: 0.07),
-                        borderRadius: BorderRadius.circular(MitraRadius.md),
-                        border: Border.all(
-                          color: isCorrect
-                              ? MitraColors.emerald.withValues(alpha: 0.25)
-                              : MitraColors.crimson.withValues(alpha: 0.25),
-                        ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Q number + result badge
-                          Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 8, vertical: 3),
-                                decoration: BoxDecoration(
-                                  color: isCorrect
-                                      ? MitraColors.emerald
-                                          .withValues(alpha: 0.15)
-                                      : MitraColors.crimson
-                                          .withValues(alpha: 0.15),
-                                  borderRadius:
-                                      BorderRadius.circular(MitraRadius.pill),
-                                ),
-                                child: Text(
-                                  'Q${i + 1}',
-                                  style: TextStyle(
-                                    fontFamily: 'SpaceMono',
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w700,
-                                    color: isCorrect
-                                        ? MitraColors.emerald
-                                        : MitraColors.crimson,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Icon(
-                                isCorrect
-                                    ? Icons.check_circle_outline
-                                    : Icons.cancel_outlined,
-                                color: isCorrect
-                                    ? MitraColors.emerald
-                                    : MitraColors.crimson,
-                                size: 16,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                isCorrect ? 'Correct' : 'Incorrect',
-                                style: TextStyle(
-                                  fontFamily: 'Mukta',
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: isCorrect
-                                      ? MitraColors.emerald
-                                      : MitraColors.crimson,
-                                ),
-                              ),
-                            ],
-                          ),
-
-                          const SizedBox(height: 10),
-
-                          // Question text
-                          Text(
-                            q.questionText,
-                            style: const TextStyle(
-                              fontFamily: 'Mukta',
-                              fontWeight: FontWeight.w600,
-                              fontSize: 14,
-                              color: MitraColors.textPrimary,
-                              height: 1.4,
-                            ),
-                          ),
-
-                          const SizedBox(height: 8),
-
-                          // Correct answer
-                          _ReviewAnswerRow(
-                            label: 'Correct',
-                            answer: q.options[q.correctAnswerIndex],
-                            color: MitraColors.emerald,
-                          ),
-
-                          // Student's wrong answer (only if wrong)
-                          if (!isCorrect && studentAns != null) ...[
-                            const SizedBox(height: 4),
-                            _ReviewAnswerRow(
-                              label: 'Your answer',
-                              answer: q.options[studentAns],
-                              color: MitraColors.crimson,
-                            ),
-                          ],
-
-                          // Explanation
-                          if (q.explanation != null) ...[
-                            const SizedBox(height: 8),
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Icon(Icons.lightbulb_outline,
-                                    color: MitraColors.indigoLight, size: 14),
-                                const SizedBox(width: 6),
-                                Expanded(
-                                  child: Text(
-                                    q.explanation!,
-                                    style: const TextStyle(
-                                      fontFamily: 'Mukta',
-                                      fontSize: 12,
-                                      color: MitraColors.textMuted,
-                                      height: 1.4,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ],
-                      ),
+                    return _ReviewItem(
+                      index: i,
+                      question: q,
+                      studentAnswer: studentAns,
+                      isCorrect: isCorrect,
                     );
                   }),
 
@@ -417,6 +293,159 @@ class QuizResultScreen extends StatelessWidget {
           ),
       ],
     ); // closes Stack
+  }
+}
+
+// Collapsed by default; tap to expand. Explanation is shown ONLY when the
+// student answered correctly — wrong answers never reveal the explanation.
+class _ReviewItem extends StatefulWidget {
+  final int index;
+  final QuizQuestion question;
+  final int? studentAnswer;
+  final bool isCorrect;
+
+  const _ReviewItem({
+    required this.index,
+    required this.question,
+    required this.studentAnswer,
+    required this.isCorrect,
+  });
+
+  @override
+  State<_ReviewItem> createState() => _ReviewItemState();
+}
+
+class _ReviewItemState extends State<_ReviewItem> {
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final q = widget.question;
+    final isCorrect = widget.isCorrect;
+    final accent = isCorrect ? MitraColors.emerald : MitraColors.crimson;
+
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: accent.withValues(alpha: 0.07),
+        borderRadius: BorderRadius.circular(MitraRadius.md),
+        border: Border.all(color: accent.withValues(alpha: 0.25)),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(MitraRadius.md),
+          onTap: () => setState(() => _expanded = !_expanded),
+          child: Padding(
+            padding: const EdgeInsets.all(MitraSpacing.lg),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Collapsed header row: Q number + verdict + expand chevron.
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: accent.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(MitraRadius.pill),
+                      ),
+                      child: Text(
+                        'Q${widget.index + 1}',
+                        style: TextStyle(
+                          fontFamily: 'SpaceMono',
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: accent,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Icon(
+                      isCorrect
+                          ? Icons.check_circle_outline
+                          : Icons.cancel_outlined,
+                      color: accent,
+                      size: 16,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      isCorrect ? 'Correct' : 'Incorrect',
+                      style: TextStyle(
+                        fontFamily: 'Mukta',
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: accent,
+                      ),
+                    ),
+                    const Spacer(),
+                    Icon(
+                      _expanded ? Icons.expand_less : Icons.expand_more,
+                      size: 20,
+                      color: accent.withValues(alpha: 0.7),
+                    ),
+                  ],
+                ),
+
+                // Expanded body.
+                if (_expanded) ...[
+                  const SizedBox(height: 10),
+                  Text(
+                    q.questionText,
+                    style: const TextStyle(
+                      fontFamily: 'Mukta',
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                      color: MitraColors.textPrimary,
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  _ReviewAnswerRow(
+                    label: 'Correct',
+                    answer: q.options[q.correctAnswerIndex],
+                    color: MitraColors.emerald,
+                  ),
+                  if (!isCorrect && widget.studentAnswer != null) ...[
+                    const SizedBox(height: 4),
+                    _ReviewAnswerRow(
+                      label: 'Your answer',
+                      answer: q.options[widget.studentAnswer!],
+                      color: MitraColors.crimson,
+                    ),
+                  ],
+                  // Explanation — ONLY for correctly answered questions.
+                  if (isCorrect && q.explanation != null) ...[
+                    const SizedBox(height: 8),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(Icons.lightbulb_outline,
+                            color: MitraColors.indigoLight, size: 14),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            q.explanation!,
+                            style: const TextStyle(
+                              fontFamily: 'Mukta',
+                              fontSize: 12,
+                              color: MitraColors.textMuted,
+                              height: 1.4,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 

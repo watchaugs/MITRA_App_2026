@@ -42,6 +42,7 @@ import '../../services/api_service.dart';
 import '../../stores/auth_store.dart';
 import '../../providers/translation_provider.dart'; // ✨ Added for language filtering
 import '../../widgets/orbit_explorer.dart';
+import '../../stores/module_progress_store.dart';
 
 // ═══════════════════════════════════════════════════════════
 // DOMAIN: Failures
@@ -975,7 +976,7 @@ class _StatBadge extends StatelessWidget {
 
 // ── Subject section ──────────────────────────────────────
 
-class _SubjectSection extends StatelessWidget {
+class _SubjectSection extends ConsumerWidget {
   final String subject;
   final List<QuizSummary> quizzes;
   final List<({String id, String title, String topic, String languageTag})>
@@ -994,7 +995,15 @@ class _SubjectSection extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Rebuild locks/badges whenever progress changes.
+    ref.watch(moduleProgressTickProvider);
+    final progress = ref.watch(moduleProgressStoreProvider);
+
+    // Match each AR module to its quiz by shared id → gives us the question
+    // count to show as subtext, and the quiz list item once AR is watched.
+    final quizById = {for (final q in quizzes) q.id: q};
+
     final totalItems = quizzes.length + arLessons.length;
 
     return Semantics(
@@ -1047,14 +1056,54 @@ class _SubjectSection extends StatelessWidget {
                 ],
               ),
             ),
-          // ✨ Inject AR Lessons dynamically at the top of the subject
-          ...arLessons.map(
-            (ar) => _ArTile(lesson: ar, onTap: onArTap),
-          ),
-          // Followed immediately by the quizzes
-          ...quizzes.map(
-            (q) => _QuizTile(quiz: q, onTap: onQuizTap),
-          ),
+          // Gated modules, in list order. The first is always open; each later
+          // one unlocks only when the previous module is mastered (100%).
+          ...() {
+            final widgets = <Widget>[];
+            final shownQuizIds = <String>{};
+            bool prevMastered = true; // first module in the subject is open
+            for (int i = 0; i < arLessons.length; i++) {
+              final ar = arLessons[i];
+              final unlocked = (i == 0) || prevMastered;
+              final best = progress.bestPct(ar.id);
+              final watched = progress.arWatched(ar.id);
+              final matchedQuiz = quizById[ar.id];
+              final qCount = matchedQuiz?.questionCount ?? 0;
+
+              widgets.add(_ArTile(
+                lesson: ar,
+                onTap: onArTap,
+                unlocked: unlocked,
+                bestPct: best,
+                questionCount: qCount,
+              ));
+
+              // The quiz becomes its own list item only after the AR is watched
+              // once AND the module is unlocked.
+              if (unlocked && watched && matchedQuiz != null) {
+                shownQuizIds.add(matchedQuiz.id);
+                widgets.add(_QuizTile(
+                  quiz: matchedQuiz,
+                  onTap: onQuizTap,
+                  bestPct: best,
+                ));
+              }
+
+              // Chain: the next module needs THIS one mastered.
+              prevMastered = progress.isMastered(ar.id);
+            }
+
+            // Any quizzes with no matching AR module (standalone) show as before.
+            for (final q in quizzes) {
+              if (shownQuizIds.contains(q.id)) continue;
+              widgets.add(_QuizTile(
+                quiz: q,
+                onTap: onQuizTap,
+                bestPct: progress.bestPct(q.id),
+              ));
+            }
+            return widgets;
+          }(),
           const SizedBox(height: MitraSpacing.lg),
         ],
       ),
@@ -1067,8 +1116,9 @@ class _SubjectSection extends StatelessWidget {
 class _QuizTile extends StatelessWidget {
   final QuizSummary quiz;
   final ValueChanged<String> onTap;
+  final int bestPct; // 0..100 — this student's best score on this module
 
-  const _QuizTile({required this.quiz, required this.onTap});
+  const _QuizTile({required this.quiz, required this.onTap, this.bestPct = 0});
 
   @override
   Widget build(BuildContext context) {
@@ -1110,7 +1160,10 @@ class _QuizTile extends StatelessWidget {
                     topic: quiz.topic,
                   ),
                 ),
-                if (quiz.avgScore > 0) ...[
+                if (bestPct > 0) ...[
+                  const SizedBox(width: 8),
+                  _ScoreBadge(pct: bestPct),
+                ] else if (quiz.avgScore > 0) ...[
                   const SizedBox(width: 8),
                   _AvgScoreChip(score: quiz.avgScore),
                 ],
@@ -1126,89 +1179,146 @@ class _QuizTile extends StatelessWidget {
   }
 }
 
-// ── AR Lesson tile ───────────────────────────────────────
+// ── AR Lesson tile (gated + badge + N-questions subtext) ─────────────────
 
 class _ArTile extends StatelessWidget {
   final ({String id, String title, String topic, String languageTag}) lesson;
   final ValueChanged<String> onTap;
+  final bool unlocked; // false = greyed, tap shows "unlock" hint
+  final int bestPct; // 0..100 best score on this module
+  final int questionCount; // shown as "N questions" subtext
 
-  const _ArTile({required this.lesson, required this.onTap});
+  const _ArTile({
+    required this.lesson,
+    required this.onTap,
+    this.unlocked = true,
+    this.bestPct = 0,
+    this.questionCount = 0,
+  });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final onSurface = theme.colorScheme.onSurface;
 
-    return Semantics(
-      button: true,
-      label: '3D Lesson: ${lesson.title}',
-      child: ExcludeSemantics(
-        child: GestureDetector(
-          onTap: () => onTap(lesson.id),
-          child: Container(
-            margin: const EdgeInsets.only(bottom: MitraSpacing.sm),
-            padding: const EdgeInsets.all(MitraSpacing.lg),
+    final subtext = questionCount > 0
+        ? '${lesson.topic.isNotEmpty ? '${lesson.topic} · ' : ''}$questionCount question${questionCount == 1 ? '' : 's'}'
+        : lesson.topic;
+
+    final card = Container(
+      margin: const EdgeInsets.only(bottom: MitraSpacing.sm),
+      padding: const EdgeInsets.all(MitraSpacing.lg),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            MitraColors.sky.withValues(alpha: unlocked ? 0.15 : 0.05),
+            onSurface.withValues(alpha: 0.03),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(MitraRadius.md),
+        border: Border.all(
+            color: MitraColors.sky.withValues(alpha: unlocked ? 0.3 : 0.12)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
             decoration: BoxDecoration(
-              // ✨ AR Glass Theme Applied (Sky tint over theme background)
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  MitraColors.sky.withValues(alpha: 0.15),
-                  onSurface.withValues(alpha: 0.03),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(MitraRadius.md),
+              color: MitraColors.sky.withValues(alpha: unlocked ? 0.2 : 0.08),
+              borderRadius: BorderRadius.circular(MitraRadius.sm),
               border: Border.all(color: MitraColors.sky.withValues(alpha: 0.3)),
             ),
-            child: Row(
-              children: [
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: MitraColors.sky.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(MitraRadius.sm),
-                    border: Border.all(
-                        color: MitraColors.sky.withValues(alpha: 0.3)),
-                  ),
-                  alignment: Alignment.center,
-                  child: const Text('🧊', style: TextStyle(fontSize: 24)),
-                ),
-                const SizedBox(width: MitraSpacing.md),
-                Expanded(
-                  child: _QuizInfo(
-                    title: lesson.title,
-                    topic: lesson.topic,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: MitraColors.sky.withValues(alpha: 0.8),
-                    borderRadius: BorderRadius.circular(MitraRadius.pill),
-                  ),
-                  child: const Row(
-                    children: [
-                      Icon(Icons.view_in_ar, size: 14, color: Colors.black87),
-                      SizedBox(width: 4),
-                      Text(
-                        'View 3D',
-                        style: TextStyle(
-                          fontFamily: 'Baloo2',
-                          fontSize: 12,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.black87,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+            alignment: Alignment.center,
+            child: Text(unlocked ? '🧊' : '🔒',
+                style: const TextStyle(fontSize: 24)),
+          ),
+          const SizedBox(width: MitraSpacing.md),
+          Expanded(
+            child: _QuizInfo(
+              title: lesson.title,
+              topic: unlocked
+                  ? subtext
+                  : 'Score 100% on the previous module to unlock',
             ),
           ),
+          const SizedBox(width: 8),
+          // Badge: 100% once mastered, otherwise best % so far (if attempted).
+          if (bestPct > 0) ...[
+            _ScoreBadge(pct: bestPct),
+            const SizedBox(width: 8),
+          ],
+          if (unlocked)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: MitraColors.sky.withValues(alpha: 0.8),
+                borderRadius: BorderRadius.circular(MitraRadius.pill),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.view_in_ar, size: 14, color: Colors.black87),
+                  SizedBox(width: 4),
+                  Text(
+                    'View 3D',
+                    style: TextStyle(
+                      fontFamily: 'Baloo2',
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.black87,
+                    ),
+                  ),
+                ],
+              ),
+            )
+          else
+            Icon(Icons.lock_outline,
+                size: 18, color: onSurface.withValues(alpha: 0.4)),
+        ],
+      ),
+    );
+
+    return Semantics(
+      button: true,
+      label: unlocked
+          ? '3D Lesson: ${lesson.title}'
+          : 'Locked: ${lesson.title}. Score 100% on the previous module to unlock.',
+      child: ExcludeSemantics(
+        child: GestureDetector(
+          // Locked tiles do nothing on tap (the hint is already visible).
+          onTap: unlocked ? () => onTap(lesson.id) : null,
+          child: Opacity(opacity: unlocked ? 1.0 : 0.6, child: card),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Score badge (100% or best % so far) ──────────────────
+class _ScoreBadge extends StatelessWidget {
+  final int pct;
+  const _ScoreBadge({required this.pct});
+
+  @override
+  Widget build(BuildContext context) {
+    final mastered = pct >= 100;
+    final color = mastered ? MitraColors.emerald : MitraColors.saffron;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(MitraRadius.pill),
+        border: Border.all(color: color.withValues(alpha: 0.35)),
+      ),
+      child: Text(
+        '$pct%',
+        style: TextStyle(
+          fontFamily: 'SpaceMono',
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+          color: color,
         ),
       ),
     );

@@ -24,6 +24,7 @@ import '../../constants/colors.dart';
 import '../../providers/telemetry_provider.dart';
 import '../../services/api_service.dart';
 import '../../services/achievement_engine.dart';
+import '../../stores/module_progress_store.dart';
 
 enum ArMode { marker, overlay, viewer }
 
@@ -185,9 +186,13 @@ class _WebArViewerScreenState extends ConsumerState<WebArViewerScreen> {
       if (mounted) {
         setState(() => _error = (msg['message'] ?? 'Model error').toString());
       }
+    } else if (type == 'model_loaded' || type == 'ar_started') {
+      // The student has reached the AR lesson → unlock its quiz as a list item.
+      ref.read(moduleProgressStoreProvider).markArWatched(widget.topicId);
+      ref.read(moduleProgressTickProvider.notifier).state++;
     }
-    // 'ar_started' | 'target_found' | 'target_lost' | 'model_loaded' |
-    // 'audio_blocked' are available here for analytics later.
+    // 'target_found' | 'target_lost' | 'audio_blocked' are available here for
+    // analytics later.
   }
 
   // Graceful degradation: marker → overlay → viewer. Viewer failing is terminal.

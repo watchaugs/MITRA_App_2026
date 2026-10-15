@@ -14,6 +14,7 @@ import '../../widgets/language_alphabet_background.dart';
 import '../../constants/colors.dart';
 import '../../services/api_service.dart';
 import '../../services/quiz_offline_service.dart';
+import '../../stores/module_progress_store.dart';
 import '../../models/quiz_model.dart';
 import '../../demo/demo_data.dart';
 import '../../theme/theme_provider.dart';
@@ -219,6 +220,18 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
         timeTakenSecs: durationSeconds,
         appLanguage: user?.languagePreference ?? 'en',
       ));
+
+      // Gating: keep the BEST percentage for this module (quizId == module id).
+      // 100% unlocks the next module in the Learn list. This is device-local;
+      // the raw attempt above already syncs to the cloud via the batch service.
+      unawaited(
+        ref.read(moduleProgressStoreProvider).recordQuiz(
+              widget.quizId,
+              _score,
+              _questions.length,
+            ),
+      );
+      ref.read(moduleProgressTickProvider.notifier).state++;
 
       // ✨ 2. Evaluate Quiz Achievements locally!
       final percentageScore = (_score / _questions.length) * 100;
