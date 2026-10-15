@@ -50,7 +50,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         try {
           // ✨ Fetch the real profile data from Firestore automatically
           final doc = await FirebaseFirestore.instance
-              .collection('users')
+              .collection('app_users')
               .doc(firebaseUser.uid)
               .get();
 

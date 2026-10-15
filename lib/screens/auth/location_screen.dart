@@ -328,7 +328,10 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
       }
 
       // Firestore update — timeout guarded
-      await FirebaseFirestore.instance.collection('users').doc(user.id).update({
+      await FirebaseFirestore.instance
+          .collection('app_users')
+          .doc(user.id)
+          .update({
         'assigned_state': _state,
         'assigned_district': _district,
       }).timeout(_kFirestoreTimeout);

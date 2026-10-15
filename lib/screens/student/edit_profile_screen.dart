@@ -102,7 +102,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       return;
     }
     try {
-      final doc = await _db.collection('users').doc(uid).get().timeout(
+      final doc = await _db.collection('app_users').doc(uid).get().timeout(
             _kFirestoreTimeout,
           );
       final ts = doc.data()?['class_locked_at'];
@@ -159,7 +159,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         data['class_locked_at'] = FieldValue.serverTimestamp();
       }
 
-      await _db.collection('users').doc(uid).update(data).timeout(
+      await _db.collection('app_users').doc(uid).update(data).timeout(
             _kFirestoreTimeout,
           );
 

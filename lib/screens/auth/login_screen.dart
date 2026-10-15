@@ -182,7 +182,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       await FirebaseFirestore.instanceFor(
         app: Firebase.app(),
         databaseId: '(default)',
-      ).collection('users').doc(firebaseUser.uid).set({
+      ).collection('app_users').doc(firebaseUser.uid).set({
         'id': firebaseUser.uid,
         'phone': firebaseUser.phoneNumber ?? '',
         'email': firebaseUser.email ?? '',

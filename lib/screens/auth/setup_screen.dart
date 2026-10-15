@@ -238,7 +238,7 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
       final genderValid = _isValidGender(_gender);
       final mobileOwnerValid = _isValidMobileOwner(_mobileBelongsTo);
 
-      await firestore.collection('users').doc(user.id).update({
+      await firestore.collection('app_users').doc(user.id).update({
         'language_preference': _lang,
         'avatar_emoji': _avatar,
         'full_name': sanitisedName,

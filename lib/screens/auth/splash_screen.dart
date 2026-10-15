@@ -58,7 +58,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
         final doc = await FirebaseFirestore.instanceFor(
           app: Firebase.app(),
           databaseId: '(default)',
-        ).collection('users').doc(firebaseUser.uid).get();
+        ).collection('app_users').doc(firebaseUser.uid).get();
 
         if (doc.exists) {
           final data = doc.data()!;
