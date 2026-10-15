@@ -348,10 +348,14 @@ typedef ArLessonRec = ({
 class ArCatalog {
   final Map<String, List<ArLessonRec>> bySubject;
   final Map<String, String> glbById;
+  final Map<String, String> videoById;
+  final Map<String, String> chromaById;
   final bool territorySupported; // false = outside MITRA's approved area
   const ArCatalog({
     required this.bySubject,
     required this.glbById,
+    this.videoById = const {},
+    this.chromaById = const {},
     this.territorySupported = true,
   });
 }
@@ -382,6 +386,8 @@ final arCatalogProvider = FutureProvider<ArCatalog>((ref) async {
       res.data is Map ? (res.data['territory_supported'] != false) : true;
   final bySubject = <String, List<ArLessonRec>>{};
   final glbById = <String, String>{};
+  final videoById = <String, String>{};
+  final chromaById = <String, String>{};
 
   if (raw is List) {
     for (final item in raw) {
@@ -399,6 +405,11 @@ final arCatalogProvider = FutureProvider<ArCatalog>((ref) async {
       final glb =
           (m['flutter_url'] ?? m['glb_url'] ?? m['model_url'] ?? '').toString();
       if (glb.isNotEmpty) glbById[id] = glb;
+      final vid = (m['video_url'] ?? '').toString();
+      if (vid.isNotEmpty) videoById[id] = vid;
+      if (m['chroma_enabled'] == true) {
+        chromaById[id] = (m['chroma_color'] ?? '#00ff00').toString();
+      }
     }
   }
 
@@ -412,6 +423,8 @@ final arCatalogProvider = FutureProvider<ArCatalog>((ref) async {
   return ArCatalog(
     bySubject: bySubject,
     glbById: glbById,
+    videoById: videoById,
+    chromaById: chromaById,
     territorySupported: territorySupported,
   );
 });
@@ -723,11 +736,22 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
                                   // route existed) and carries the real model
                                   // URL when the dashboard supplied one.
                                   final glb = arGlbById[id];
-                                  context.push(
-                                    glb != null && glb.isNotEmpty
-                                        ? '/student/ar/$id?glb=${Uri.encodeComponent(glb)}'
-                                        : '/student/ar/$id',
-                                  );
+                                  final vid = arCatalog?.videoById[id];
+                                  final chroma = arCatalog?.chromaById[id];
+                                  final qp = <String>[];
+                                  if (glb != null && glb.isNotEmpty) {
+                                    qp.add('glb=${Uri.encodeComponent(glb)}');
+                                  }
+                                  if (vid != null && vid.isNotEmpty) {
+                                    qp.add('video=${Uri.encodeComponent(vid)}');
+                                  }
+                                  if (chroma != null && chroma.isNotEmpty) {
+                                    qp.add(
+                                        'chroma=${Uri.encodeComponent(chroma)}');
+                                  }
+                                  final query =
+                                      qp.isEmpty ? '' : '?${qp.join('&')}';
+                                  context.push('/student/ar/$id$query');
                                 },
                               );
                             }).toList(),

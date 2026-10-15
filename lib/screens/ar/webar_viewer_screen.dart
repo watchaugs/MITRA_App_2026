@@ -36,6 +36,8 @@ class WebArViewerScreen extends ConsumerStatefulWidget {
   final String modelUrl; // GLB (remote R2 URL)
   final String? targetsUrl; // compiled MindAR .mind (marker mode)
   final String? audioUrl; // narration for the current language
+  final String? videoUrl; // mp4 that plays on an AR plane
+  final String? chromaColor; // hex key colour; non-null = green-screen on
   final ArMode mode;
   final bool allowExplore;
 
@@ -45,6 +47,8 @@ class WebArViewerScreen extends ConsumerStatefulWidget {
     required this.modelUrl,
     this.targetsUrl,
     this.audioUrl,
+    this.videoUrl,
+    this.chromaColor,
     this.mode = ArMode.viewer,
     this.allowExplore = false,
   });
@@ -157,6 +161,9 @@ class _WebArViewerScreenState extends ConsumerState<WebArViewerScreen> {
       'modelUrl': _absoluteModelUrl,
       if (widget.targetsUrl != null) 'targetsUrl': _absolute(widget.targetsUrl),
       if (widget.audioUrl != null) 'audioUrl': _absolute(widget.audioUrl),
+      if (widget.videoUrl != null) 'videoUrl': _absolute(widget.videoUrl),
+      if (widget.chromaColor != null && widget.chromaColor!.isNotEmpty)
+        'chromaKey': {'color': widget.chromaColor},
       'scale': 0.5,
     });
     _controller?.runJavaScript('window.MITRA_CONFIG = $cfg;');

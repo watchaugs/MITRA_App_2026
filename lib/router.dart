@@ -217,6 +217,8 @@ final routerProvider = Provider<GoRouter>((ref) {
           modelUrl: state.uri.queryParameters['glb'],
           targetsUrl: state.uri.queryParameters['mind'],
           audioUrl: state.uri.queryParameters['audio'],
+          videoUrl: state.uri.queryParameters['video'],
+          chromaColor: state.uri.queryParameters['chroma'],
         ),
       ),
     ],

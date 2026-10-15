@@ -21,6 +21,8 @@ class ArViewerScreen extends ConsumerWidget {
   final String? modelUrl; // ?glb=
   final String? targetsUrl; // ?mind=  (compiled MindAR target)
   final String? audioUrl; // ?audio=
+  final String? videoUrl; // ?video=
+  final String? chromaColor; // ?chroma=  (hex; non-null = green-screen on)
 
   const ArViewerScreen({
     super.key,
@@ -28,6 +30,8 @@ class ArViewerScreen extends ConsumerWidget {
     this.modelUrl,
     this.targetsUrl,
     this.audioUrl,
+    this.videoUrl,
+    this.chromaColor,
   });
 
   // Bundled sample used only when no real model URL is supplied (demo mode).
@@ -59,6 +63,8 @@ class ArViewerScreen extends ConsumerWidget {
       modelUrl: model,
       targetsUrl: targetsUrl,
       audioUrl: audioUrl,
+      videoUrl: videoUrl,
+      chromaColor: chromaColor,
       mode: mode,
       allowExplore: tier != DeviceTier.low, // silent Scene Viewer bonus
     );
