@@ -186,7 +186,7 @@ class _MitraAppState extends ConsumerState<MitraApp>
     final ctx = rootNavigatorKey.currentContext;
     if (ctx == null) return;
     if (type == 'quiz') GoRouter.of(ctx).go('/quiz/$id');
-    if (type == 'ar_topic') GoRouter.of(ctx).go('/ar/$id');
+    if (type == 'ar_topic') GoRouter.of(ctx).go('/student/ar/$id');
   }
 
   @override

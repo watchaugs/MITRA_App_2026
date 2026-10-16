@@ -43,10 +43,20 @@ final _studentKey = GlobalKey<NavigatorState>();
 final _teacherKey = GlobalKey<NavigatorState>();
 
 // ── Router provider ────────────────────────────────────
+// Re-runs GoRouter's redirect whenever the auth state changes (login resolves,
+// session restores, logout) so a genuinely logged-in student is never left on
+// the wrong screen after the async auth check settles.
+class _AuthRefresh extends ChangeNotifier {
+  _AuthRefresh(Ref ref) {
+    ref.listen(authProvider, (_, __) => notifyListeners());
+  }
+}
+
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     navigatorKey: rootNavigatorKey,
     initialLocation: '/',
+    refreshListenable: _AuthRefresh(ref),
     redirect: (context, state) {
       final authState = ref.read(authProvider);
       final loggedIn = authState.isLoggedIn;
@@ -54,6 +64,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       final path = state.uri.path;
 
       if (path == '/') return null;
+
+      // Auth still resolving (restoring the cached session / fetching the
+      // profile) — do NOT bounce to login yet. The splash holds until it's done,
+      // and refreshListenable re-runs this once isLoading flips to false.
+      if (authState.isLoading) return null;
 
       if (!loggedIn &&
           path != '/onboarding' &&

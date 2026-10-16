@@ -54,21 +54,33 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
         debugPrint(
             "🚨 SPLASH: User found! Fetching full profile from database...");
 
-        // 2. Fetch their complete profile so GoRouter's Rule 3 doesn't block them
-        final doc = await FirebaseFirestore.instanceFor(
-          app: Firebase.app(),
-          databaseId: '(default)',
-        ).collection('app_users').doc(firebaseUser.uid).get();
+        // 2. Try to fetch the latest profile. A network hiccup or a missing
+        //    doc must NOT force re-login/re-setup — we fall back to the cached
+        //    profile that auth_store restored on launch.
+        Map<String, dynamic>? data;
+        try {
+          final doc = await FirebaseFirestore.instanceFor(
+            app: Firebase.app(),
+            databaseId: '(default)',
+          ).collection('app_users').doc(firebaseUser.uid).get();
+          if (doc.exists) data = doc.data();
+        } catch (e) {
+          debugPrint('⚠️  SPLASH profile fetch failed (using cache): $e');
+        }
 
-        if (doc.exists) {
-          final data = doc.data()!;
+        // Prefer the fresh doc; otherwise use the cached/restored auth user.
+        final cached = ref.read(authProvider).user;
+        final String role =
+            (data?['role'] as String?) ?? cached?.role ?? 'student';
+        final String? classGrade =
+            (data?['class_grade'] as String?) ?? cached?.classGrade;
 
-          // 3. Rebuild the user with all their data (especially class_grade!)
+        if (data != null) {
           final consumerUser = MitraUser(
             id: firebaseUser.uid,
-            fullName: data['name'] ?? 'Student',
-            phone: data['phone'] ?? '',
-            role: data['role'] ?? 'student',
+            fullName: (data['name'] ?? data['full_name'] ?? 'Student').toString(),
+            phone: (data['phone'] ?? '').toString(),
+            role: role,
           ).copyWith(
             classGrade: data['class_grade'],
             assignedState: data['assigned_state'],
@@ -76,21 +88,21 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
             avatarEmoji: data['avatar_emoji'] ?? '🎒',
             languagePreference: data['language_preference'] ?? 'en',
           );
-
           ref.read(authProvider.notifier).setUser(consumerUser);
+        }
 
-          // 4. Check consent — gate home screen behind it (DPDPA)
+        // Decide where to go. A student with a known class is fully set up.
+        if (classGrade == null || classGrade.isEmpty) {
+          // No profile anywhere (brand-new account) → finish setup.
+          _nextRoute = '/setup';
+        } else {
           final prefs = await SharedPreferences.getInstance();
           final bool consentGiven = prefs.getBool('consentGiven') ?? false;
           final String homeRoute =
-              data['role'] == 'teacher' ? '/teacher/home' : '/student/home';
-          // Route to the personalized animated greeting instead of straight to dashboard
+              role == 'teacher' ? '/teacher/home' : '/student/home';
           _nextRoute = consentGiven
               ? '/greeting?next=$homeRoute'
               : '/consent?next=$homeRoute';
-        } else {
-          // They authenticated via OTP but never finished the setup screen
-          _nextRoute = '/setup';
         }
       } else {
         // No one is logged in. Check SharedPreferences to see if we skip Onboarding.
