@@ -12,9 +12,9 @@ import 'package:go_router/go_router.dart';
 import '../../widgets/mitra_scaffold.dart';
 import '../../widgets/language_alphabet_background.dart';
 import '../../constants/colors.dart';
-import '../../services/api_service.dart';
 import '../../services/quiz_offline_service.dart';
 import '../../stores/module_progress_store.dart';
+import '../../stores/quiz_pack_store.dart';
 import '../../models/quiz_model.dart';
 import '../../demo/demo_data.dart';
 import '../../theme/theme_provider.dart';
@@ -88,41 +88,24 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
       });
       return;
     }
+    // Read questions from the on-device quiz pack. The pack is downloaded ONCE
+    // per state (questions are fixed for the year) and cached on the device, so
+    // taking a quiz makes NO network call. Only results sync back (batched).
     try {
-      final res = await QuizAPI.questions(widget.quizId);
+      final state = ref.read(currentUserProvider)?.assignedState ?? '';
+      final store = ref.read(quizPackStoreProvider);
+      await store.ensurePack(state); // no-op if already on the device
+      final loaded = await store.questionsFor(widget.quizId);
       setState(() {
-        final rawQuestions = res.data['questions'] as List<dynamic>?;
-        if (rawQuestions != null) {
-          _questions = rawQuestions.map((q) {
-            final map = q as Map<String, dynamic>;
-            // Backend returns option_a..option_d + correct_answer as "A"/"B"/"C"/"D"
-            final options = [
-              map['option_a'] as String? ?? '',
-              map['option_b'] as String? ?? '',
-              map['option_c'] as String? ?? '',
-              map['option_d'] as String? ?? '',
-            ];
-            final correctLetter =
-                (map['correct_answer'] as String? ?? 'A').toUpperCase();
-            final correctIndex = ['A', 'B', 'C', 'D'].indexOf(correctLetter);
-            return QuizQuestion(
-              questionText: map['question_text'] as String? ?? '',
-              options: options,
-              correctAnswerIndex: correctIndex < 0 ? 0 : correctIndex,
-              explanation: map['explanation'] as String?,
-            );
-          }).toList();
-        } else {
-          _questions = List.from(_mockQuestions);
-        }
+        _questions = List.from(loaded); // may be empty → clean empty state
         _studentAnswers.addAll(List.filled(_questions.length, null));
         _loading = false;
         _quizStartTime = DateTime.now();
       });
     } catch (_) {
+      // Pack missing/unreadable → show the clean empty state, not demo content.
       setState(() {
-        _questions = List.from(_mockQuestions);
-        _studentAnswers.addAll(List.filled(_questions.length, null));
+        _questions = const [];
         _loading = false;
         _quizStartTime = DateTime.now();
       });
@@ -274,6 +257,55 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
             ),
           ],
         ),
+      );
+    }
+
+    // Clean empty state: the dashboard has not published a quiz for this module
+    // yet (or the pack hasn't reached this device). Never show demo questions.
+    if (_questions.isEmpty) {
+      return Stack(
+        children: [
+          const Positioned.fill(child: LanguageAlphabetBackground()),
+          MitraScaffold(
+            appBar: AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () => context.pop(),
+              ),
+            ),
+            body: const Center(
+              child: Padding(
+                padding: EdgeInsets.all(32),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text('📝', style: TextStyle(fontSize: 56)),
+                    SizedBox(height: 16),
+                    Text(
+                      'No quiz yet',
+                      style: TextStyle(
+                          fontFamily: 'Baloo2',
+                          fontWeight: FontWeight.w800,
+                          fontSize: 20,
+                          color: MitraColors.textPrimary),
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      "This module's quiz will appear here once it is released.",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                          fontFamily: 'Mukta',
+                          fontSize: 14,
+                          color: MitraColors.textSecondary),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
       );
     }
 

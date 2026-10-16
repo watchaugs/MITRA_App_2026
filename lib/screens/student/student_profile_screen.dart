@@ -135,7 +135,7 @@ class StudentProfileScreen extends ConsumerWidget {
                             collapsedIconColor: Colors.white70,
                             childrenPadding: const EdgeInsets.only(
                                 left: 12, right: 12, bottom: 12),
-                            children: MitraTheme.values.map((theme) {
+                            children: ThemeHelper.selectableThemes.map((theme) {
                               final isSelected = activeTheme == theme;
                               final highlight =
                                   ThemeHelper.getActiveHighlight(theme);

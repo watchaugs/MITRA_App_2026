@@ -31,10 +31,13 @@ class ThemeNotifier extends StateNotifier<MitraTheme> {
     final savedThemeName = prefs.getString(_themeKey);
     if (savedThemeName != null) {
       // Find the saved theme from the enum list
-      return MitraTheme.values.firstWhere(
+      final saved = MitraTheme.values.firstWhere(
         (theme) => theme.name == savedThemeName,
         orElse: () => MitraTheme.midnightSlate,
       );
+      // A user who had picked a (now-hidden) light theme falls back to the
+      // default dark theme so they are never stuck on an unreadable screen.
+      return ThemeHelper.isLightTheme(saved) ? MitraTheme.midnightSlate : saved;
     }
     return MitraTheme.midnightSlate; // Default if nothing is saved
   }
@@ -158,6 +161,13 @@ class ThemeHelper {
   static bool isLightTheme(MitraTheme theme) {
     return theme == MitraTheme.banyanGreen || theme == MitraTheme.riverSky;
   }
+
+  // Themes offered in the picker. Light themes are hidden for launch because
+  // many screens hardcode near-white text that is invisible on a light
+  // background; dark themes render correctly. Re-add the light themes here once
+  // the per-screen text colours are made theme-aware.
+  static List<MitraTheme> get selectableThemes =>
+      MitraTheme.values.where((t) => !isLightTheme(t)).toList();
 
   // ── Legible text colors, driven by theme brightness ──────
   // Use these everywhere instead of hardcoded Colors.white*.

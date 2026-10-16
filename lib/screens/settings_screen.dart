@@ -51,10 +51,10 @@ class SettingsScreen extends ConsumerWidget {
 
             Expanded(
               child: ListView.separated(
-                itemCount: MitraTheme.values.length,
+                itemCount: ThemeHelper.selectableThemes.length,
                 separatorBuilder: (_, __) => const SizedBox(height: 12),
                 itemBuilder: (context, index) {
-                  final themeOption = MitraTheme.values[index];
+                  final themeOption = ThemeHelper.selectableThemes[index];
                   return MitraGlassCard(
                     title: ThemeHelper.getThemeName(themeOption),
                     isSelected: activeTheme == themeOption,

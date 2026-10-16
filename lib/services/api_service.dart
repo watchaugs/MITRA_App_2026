@@ -213,6 +213,11 @@ class QuizAPI {
   static Future<Response> questions(String id) =>
       api.get('/api/quiz/$id/questions');
 
+  // Download the per-state quiz pack ONCE (questions are fixed for the year).
+  // The app caches it on the device and reads quizzes locally thereafter.
+  static Future<Response> pack(String state) => api.get(
+      '/api/quiz/pack/${Uri.encodeComponent(state.isEmpty ? 'ALL' : state)}');
+
   static Future<Response> submit(Map<String, dynamic> payload) =>
       api.post('/api/quiz/attempts', data: payload);
 
