@@ -127,7 +127,7 @@ class _SponsorInterstitialState extends State<_SponsorInterstitial> {
       .toString();
 
   String get _title =>
-      (widget.ad['title'] ?? widget.ad['name'] ?? 'Sponsored').toString();
+      (widget.ad['title'] ?? widget.ad['name'] ?? 'Announcement').toString();
 
   bool get _canClose => _secondsLeft <= 0;
 
@@ -222,7 +222,8 @@ class _SponsorInterstitialState extends State<_SponsorInterstitial> {
                 ),
               ),
 
-              // "Sponsored" tag, top-left.
+              // Departmental "Notice" tag, top-left (this is an official school/
+              // department announcement, NOT a commercial ad).
               Positioned(
                 top: 12,
                 left: 12,
@@ -233,7 +234,7 @@ class _SponsorInterstitialState extends State<_SponsorInterstitial> {
                     color: Colors.black.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: const Text('Sponsored',
+                  child: const Text('📢 Notice',
                       style: TextStyle(color: Colors.white70, fontSize: 11)),
                 ),
               ),

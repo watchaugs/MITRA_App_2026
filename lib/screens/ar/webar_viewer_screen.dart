@@ -7,7 +7,7 @@
 // Model + narration play in one process, so audio is always perfectly in sync.
 //
 // Everything stays IN THE APP — there is no Google Scene Viewer / external
-// launcher any more. "Explore freely" switches the in-app engine to the free
+// launcher any more. "Explore in your room" uses in-app WebXR floor AR, with
 // camera-overlay view. The engine steps DOWN gracefully on failure
 // (marker → overlay → viewer) and never dead-ends.
 // ═══════════════════════════════════════════════════════════════════════════
@@ -16,6 +16,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_flutter_android/webview_flutter_android.dart';
 import '../../constants/colors.dart';
@@ -213,8 +214,23 @@ class _WebArViewerScreenState extends ConsumerState<WebArViewerScreen> {
       // The student has reached the AR lesson → unlock its quiz as a list item.
       ref.read(moduleProgressStoreProvider).markArWatched(widget.topicId);
       ref.read(moduleProgressTickProvider.notifier).state++;
+    } else if (type == 'xr_unsupported') {
+      // This phone has no WebXR/ARCore for in-app floor AR. The engine already
+      // fell back to the overlay view; offer Google Scene Viewer (which uses
+      // ARCore) so the student can still place the model on the real floor.
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text(
+                'Floor AR needs Google Play Services for AR. Open in your room instead?'),
+            action: SnackBarAction(
+                label: 'Open', onPressed: _exploreInSceneViewer),
+            duration: const Duration(seconds: 6),
+          ),
+        );
+      }
     }
-    // 'target_found' | 'target_lost' | 'audio_blocked' are available here.
+    // 'target_found' | 'target_lost' | 'model_placed' are available here.
   }
 
   // Graceful degradation: marker → overlay → viewer. Viewer failing is terminal.
@@ -239,12 +255,26 @@ class _WebArViewerScreenState extends ConsumerState<WebArViewerScreen> {
     _controller?.runJavaScript('window.mitraReplay && window.mitraReplay();');
   }
 
-  // "Explore freely" — stays in-app: switch the engine to the free camera
-  // overlay view (model over the live camera, rotate/pinch-zoom). No external
-  // app, works on all phones.
-  void _exploreFreely() {
-    setState(() => _mode = ArMode.overlay);
-    _controller?.runJavaScript('window.mitraExplore && window.mitraExplore();');
+  // "Explore in your room" — TRUE floor AR. Tries the in-app WebXR engine first
+  // (real ground/plane detection + walk-around, ARCore phones). If the phone
+  // lacks WebXR/ARCore the engine emits 'xr_unsupported' and we offer Google
+  // Scene Viewer as the fallback (see _onEngineMessage).
+  void _exploreInRoom() {
+    _controller?.runJavaScript(
+        'window.mitraStartWorld && window.mitraStartWorld();');
+  }
+
+  // Fallback: Google Scene Viewer (external ARCore app). Only reached when the
+  // phone can't do in-app WebXR floor AR. Needs a public https model URL — the
+  // dashboard file route is public, so this works.
+  Future<void> _exploreInSceneViewer() async {
+    final enc = Uri.encodeComponent(_absoluteModelUrl);
+    final url =
+        'https://arvr.google.com/scene-viewer/1.0?file=$enc&mode=ar_preferred'
+        '&title=${Uri.encodeComponent('MITRA')}';
+    try {
+      await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+    } catch (_) {/* stays on the in-app lesson */}
   }
 
   void _showMoreOptions() {
@@ -279,13 +309,13 @@ class _WebArViewerScreenState extends ConsumerState<WebArViewerScreen> {
             ),
             ListTile(
               leading: const Text('🧭', style: TextStyle(fontSize: 22)),
-              title: const Text('Explore freely',
+              title: const Text('Explore in your room',
                   style: TextStyle(color: MitraColors.textPrimary)),
-              subtitle: const Text('See the model over your live camera',
+              subtitle: const Text('Place the model on your floor and walk around it',
                   style: TextStyle(color: MitraColors.textSecondary)),
               onTap: () {
                 Navigator.of(ctx).pop();
-                _exploreFreely();
+                _exploreInRoom();
               },
             ),
             ListTile(

@@ -38,41 +38,56 @@ class MitraBackButtonHandler with WidgetsBindingObserver {
     debugPrint('🔙 Back: $loc');
     if (ctx == null) return false;
 
-    // ── Student tabs ──────────────────────────────────
-    if (loc.startsWith('/student/')) {
-      if (loc == '/student/home') return _promptExit(ctx);
+    // The bottom-nav TAB routes. Back from a tab goes to Home (like a normal
+    // tab app); back from the Home tab prompts exit. EVERY other screen is a
+    // pushed detail (AR viewer, edit-profile, notifications, quiz, result, …)
+    // and must return to the screen it came from — pop the stack.
+    const studentTabs = <String>[
+      '/student/home',
+      '/student/learn',
+      '/student/achievements',
+      '/student/profile',
+    ];
+    const teacherTabs = <String>[
+      '/teacher/home',
+      '/teacher/students',
+      '/teacher/analytics',
+      '/teacher/assign',
+      '/teacher/profile',
+    ];
+
+    // ── Home tabs → prompt exit ───────────────────────
+    if (loc == '/student/home' || loc == '/teacher/home') {
+      return _promptExit(ctx);
+    }
+
+    // ── Other bottom-nav tabs → Home ──────────────────
+    if (studentTabs.contains(loc)) {
       router.go('/student/home');
       return true;
     }
-
-    // ── Teacher tabs ──────────────────────────────────
-    if (loc.startsWith('/teacher/')) {
-      if (loc == '/teacher/home') return _promptExit(ctx);
+    if (teacherTabs.contains(loc)) {
       router.go('/teacher/home');
       return true;
     }
 
-    // ── Quiz result → student home ────────────────────
-    if (loc == '/quiz/result') {
-      router.go('/student/home');
-      return true;
-    }
-
-    // ── Quiz screen → learn tab ───────────────────────
-    if (loc.startsWith('/quiz/')) {
-      router.go('/student/learn');
-      return true;
-    }
-
-    // ── AR viewer → AR tab ────────────────────────────
-    if (loc.startsWith('/ar/')) {
-      router.go('/student/ar');
-      return true;
-    }
-
-    // ── Auth flow: pop if history exists, else exit ───
+    // ── Everything else is a pushed detail screen ─────
+    // Pop back to exactly where the user came from. Only if there's nothing to
+    // pop (e.g. a screen reached via go() with no stack) do we fall back to a
+    // sensible section home instead of dead-ending.
     if (router.canPop()) {
       router.pop();
+      return true;
+    }
+    // No stack to pop — choose a safe home by section.
+    if (loc.startsWith('/teacher/')) {
+      router.go('/teacher/home');
+      return true;
+    }
+    if (loc.startsWith('/student/') ||
+        loc.startsWith('/quiz') ||
+        loc.startsWith('/ar')) {
+      router.go('/student/home');
       return true;
     }
     return _promptExit(ctx);

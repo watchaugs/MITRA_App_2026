@@ -236,8 +236,11 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
       }
 
       // 3. Get position — coords stay in local scope, never logged
+      // DPDPA data minimisation: we only need the STATE, so request the
+      // lowest accuracy (city/region level). The coordinates are used once to
+      // reverse-geocode the state and are never stored or sent to our backend.
       final position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.medium,
+        desiredAccuracy: LocationAccuracy.low,
       ).timeout(_kLocationTimeout);
 
       // 4. Reverse geocode via Nominatim — works on all Android devices
