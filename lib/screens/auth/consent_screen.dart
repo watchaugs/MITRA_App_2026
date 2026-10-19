@@ -16,6 +16,7 @@ import '../../stores/auth_store.dart';
 import '../../widgets/mitra_scaffold.dart';
 import '../../services/api_service.dart';
 import '../../theme/theme_provider.dart';
+import '../../providers/translation_provider.dart';
 
 // ── Constants ────────────────────────────────────────────────
 
@@ -203,18 +204,21 @@ class _ConsentScreenState extends ConsumerState<ConsentScreen> {
     super.dispose();
   }
 
-  // ── Navigation callbacks (TODO: wire to actual sheets) ──
+  // ── Navigation callbacks — open the live legal screens ──
+  // Routes defined in router.dart: /legal/privacy, /legal/terms.
+  // The DPDPA rights are covered inside the privacy screen, so the
+  // DPDPA "learn more" opens the same page.
 
   void _showDpdpaInfo() {
-    // TODO: show DPDPA bottom sheet or navigate
+    context.push('/legal/privacy');
   }
 
   void _showTerms() {
-    // TODO: show Terms bottom sheet or navigate
+    context.push('/legal/terms');
   }
 
   void _showPrivacy() {
-    // TODO: show Privacy bottom sheet or navigate
+    context.push('/legal/privacy');
   }
 
   // ── Actions ──
@@ -283,6 +287,16 @@ class _ConsentScreenState extends ConsumerState<ConsentScreen> {
         child: Column(
           children: [
             const _Header(),
+            // DPDPA Rule 3: the consent notice must be available in the user's
+            // language. This selector switches the app language pack
+            // (English / हिंदी / ગુજરાતી). The consent BODY text below is still
+            // English — supply counsel-approved Hindi/Gujarati strings to fully
+            // localise it (see the delivery note).
+            _ConsentLanguageBar(
+              current: ref.watch(translationProvider).langCode,
+              onPick: (code) =>
+                  ref.read(translationProvider.notifier).loadLanguagePack(code),
+            ),
             Expanded(
               child: SingleChildScrollView(
                 padding:
@@ -878,6 +892,46 @@ class _DeclineHint extends StatelessWidget {
           fontSize: 11,
           color: MitraColors.textMuted,
         ),
+      ),
+    );
+  }
+}
+
+// Language selector for the consent notice (DPDPA Rule 3).
+class _ConsentLanguageBar extends StatelessWidget {
+  final String current;
+  final ValueChanged<String> onPick;
+  const _ConsentLanguageBar({required this.current, required this.onPick});
+
+  static const _langs = <MapEntry<String, String>>[
+    MapEntry('en', 'English'),
+    MapEntry('hi', 'हिंदी'),
+    MapEntry('gu', 'ગુજરાતી'),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      child: Row(
+        children: _langs.map((e) {
+          final selected = current == e.key;
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: ChoiceChip(
+              label: Text(e.value),
+              selected: selected,
+              onSelected: (_) => onPick(e.key),
+              selectedColor: MitraColors.saffron.withValues(alpha: 0.25),
+              labelStyle: TextStyle(
+                color:
+                    selected ? MitraColors.saffron : MitraColors.textSecondary,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+              ),
+              backgroundColor: MitraColors.bgCard,
+            ),
+          );
+        }).toList(),
       ),
     );
   }
