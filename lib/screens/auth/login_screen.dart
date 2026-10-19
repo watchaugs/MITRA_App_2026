@@ -127,7 +127,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
       final GoogleSignInAccount googleUser = await googleSignIn.authenticate();
 
-      debugPrint("🚨 STEP 2: Google Account Selected: ${googleUser.email}");
+      debugPrint("🚨 STEP 2: Google Account Selected");
       final GoogleSignInAuthentication googleAuth = googleUser.authentication;
 
       debugPrint("🚨 STEP 3: Creating Firebase Credential...");

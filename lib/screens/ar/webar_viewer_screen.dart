@@ -142,6 +142,19 @@ class _WebArViewerScreenState extends ConsumerState<WebArViewerScreen> {
         NavigationDelegate(
           onPageFinished: (_) => _injectConfigAndStart(),
           onWebResourceError: (e) => _stepDown(e.description),
+          // Defense-in-depth: the engine lives in a bundled asset and only ever
+          // fetches model/media over https. Allow the local asset + our API +
+          // CDN hosts; block any attempt to navigate the webview elsewhere.
+          onNavigationRequest: (req) {
+            final u = req.url;
+            final ok = u.startsWith('file:') ||
+                u.startsWith('about:') ||
+                u.startsWith('https://') ||
+                u == 'about:blank';
+            return ok
+                ? NavigationDecision.navigate
+                : NavigationDecision.prevent;
+          },
         ),
       );
 
@@ -223,8 +236,8 @@ class _WebArViewerScreenState extends ConsumerState<WebArViewerScreen> {
           SnackBar(
             content: const Text(
                 'Floor AR needs Google Play Services for AR. Open in your room instead?'),
-            action: SnackBarAction(
-                label: 'Open', onPressed: _exploreInSceneViewer),
+            action:
+                SnackBarAction(label: 'Open', onPressed: _exploreInSceneViewer),
             duration: const Duration(seconds: 6),
           ),
         );
@@ -260,8 +273,8 @@ class _WebArViewerScreenState extends ConsumerState<WebArViewerScreen> {
   // lacks WebXR/ARCore the engine emits 'xr_unsupported' and we offer Google
   // Scene Viewer as the fallback (see _onEngineMessage).
   void _exploreInRoom() {
-    _controller?.runJavaScript(
-        'window.mitraStartWorld && window.mitraStartWorld();');
+    _controller
+        ?.runJavaScript('window.mitraStartWorld && window.mitraStartWorld();');
   }
 
   // Fallback: Google Scene Viewer (external ARCore app). Only reached when the
@@ -311,7 +324,8 @@ class _WebArViewerScreenState extends ConsumerState<WebArViewerScreen> {
               leading: const Text('🧭', style: TextStyle(fontSize: 22)),
               title: const Text('Explore in your room',
                   style: TextStyle(color: MitraColors.textPrimary)),
-              subtitle: const Text('Place the model on your floor and walk around it',
+              subtitle: const Text(
+                  'Place the model on your floor and walk around it',
                   style: TextStyle(color: MitraColors.textSecondary)),
               onTap: () {
                 Navigator.of(ctx).pop();
