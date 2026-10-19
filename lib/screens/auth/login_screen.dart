@@ -182,12 +182,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       await FirebaseFirestore.instanceFor(
         app: Firebase.app(),
         databaseId: '(default)',
+        // Security: the app only ever self-provisions a STUDENT. A teacher role is
+        // granted by the backend after verification (Firestore rules reject a
+        // client-written 'teacher'), so we never write the toggle's value here.
       ).collection('app_users').doc(firebaseUser.uid).set({
         'id': firebaseUser.uid,
         'phone': firebaseUser.phoneNumber ?? '',
         'email': firebaseUser.email ?? '',
         'name': firebaseUser.displayName ?? 'App ${_role.name}',
-        'role': _role.name,
+        'role': 'student',
         'last_login': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
 
