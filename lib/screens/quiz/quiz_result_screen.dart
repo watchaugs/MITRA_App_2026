@@ -245,11 +245,11 @@ class QuizResultScreen extends StatelessWidget {
                   const SizedBox(height: MitraSpacing.xl),
 
                   // ── Question Review ────────────────────
-                  Align(
+                  const Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
                       'Review Answers',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Baloo2',
                         fontWeight: FontWeight.w800,
                         fontSize: 18,

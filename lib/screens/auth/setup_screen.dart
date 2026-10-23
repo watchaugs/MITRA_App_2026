@@ -707,7 +707,7 @@ class _LabeledDropdown extends StatelessWidget {
             )),
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
-          value: value.isEmpty ? null : value,
+          initialValue: value.isEmpty ? null : value,
           isExpanded: true,
           dropdownColor: MitraColors.bgCard,
           icon: const Icon(Icons.keyboard_arrow_down_rounded,
