@@ -7,8 +7,7 @@
   <style>
     html, body { margin: 0; height: 100%; background: #000; overflow: hidden;
       font-family: -apple-system, Roboto, sans-serif; }
-    #ar-container { position: absolute; inset: 0; }
-    /* MindAR injects the camera <video> and the three.js <canvas>; make them fill. */
+    #ar-container { position: absolute; inset: 0; touch-action: none; }
     #ar-container video, #ar-container canvas {
       position: absolute; inset: 0; width: 100% !important; height: 100% !important;
       object-fit: cover; }
@@ -17,20 +16,29 @@
       pointer-events: none; padding: 0 20px; }
     .hidden { display: none !important; }
   </style>
+
+  <!--
+    Three.js is loaded as a VERSIONED module via an import map, so MITRA's own
+    code (engine.js, gestures.js) stays small and hand-editable.
+    OFFLINE BUILD: download three@0.160.0 build/three.module.js and
+    examples/jsm/* into assets/ar/vendor/three/ and change these URLs to
+    './vendor/three/...'.
+  -->
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+    }
+  }
+  </script>
 </head>
 <body>
   <div id="ar-container"></div>
-  <div id="hint" class="hidden">Point your camera at the page</div>
+  <div id="hint" class="hidden">Point your camera at the floor</div>
 
-  <!-- Offline-bundled engine (three.js + MindAR + GLTF + audio sync) -->
-  <script src="ar_engine.js"></script>
-  <!--
-    No "Begin" splash any more. The camera permission is already granted on the
-    Flutter side before this page loads, and the AR card tap is the user gesture
-    that allows camera + audio. Flutter injects window.MITRA_CONFIG and then
-    calls window.mitraStart(...) itself (see _injectConfig in
-    webar_viewer_screen.dart), so the live view starts automatically with a
-    single tap from the Learn card.
-  -->
+  <!-- MITRA engine (readable source). Flutter injects window.MITRA_CONFIG and
+       calls window.mitraStart(...) once the page is ready. -->
+  <script type="module" src="./engine.js"></script>
 </body>
 </html>

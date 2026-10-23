@@ -602,7 +602,9 @@ class LearnScreen extends ConsumerStatefulWidget {
   static void _navigateToQuiz(BuildContext context, String id) {
     if (id.isEmpty) return;
     if (id.contains('/') || id.contains('..')) return;
-    context.go('/quiz/$id');
+    // push (not go) so the back button returns to Learn, not Home. go() replaces
+    // the stack, leaving nothing to pop — which sent back straight to /student/home.
+    context.push('/quiz/$id');
   }
 
   @override

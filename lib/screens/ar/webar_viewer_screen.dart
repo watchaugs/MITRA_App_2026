@@ -23,6 +23,7 @@ import '../../constants/colors.dart';
 import '../../providers/telemetry_provider.dart';
 import '../../services/api_service.dart';
 import '../../services/achievement_engine.dart';
+import '../../services/ar_launcher.dart';
 import '../../stores/module_progress_store.dart';
 
 enum ArMode { marker, overlay, viewer }
@@ -272,7 +273,25 @@ class _WebArViewerScreenState extends ConsumerState<WebArViewerScreen> {
   // (real ground/plane detection + walk-around, ARCore phones). If the phone
   // lacks WebXR/ARCore the engine emits 'xr_unsupported' and we offer Google
   // Scene Viewer as the fallback (see _onEngineMessage).
-  void _exploreInRoom() {
+  // "Explore in your room" — TRUE floor AR, tiered by device capability:
+  //   • ARCore present  → native Scene Viewer (reliable ground-lock + gestures)
+  //   • ARCore needed   → offer to install Play Services for AR, then Scene Viewer
+  //   • no ARCore       → in-app WebXR engine (mitraStartWorld), which itself
+  //                       falls back to the overlay viewer if WebXR is absent.
+  Future<void> _exploreInRoom() async {
+    final tier = await ArLauncher.instance.tier();
+    if (tier == ArTier.arcore) {
+      await _stopEngine(); // free the camera before the external AR app opens
+      final ok = await ArLauncher.instance.launchSceneViewer(
+        glbUrl: _absoluteModelUrl,
+        title: 'MITRA',
+      );
+      if (ok) return;
+      // Scene Viewer failed to open → fall through to in-app WebXR.
+    } else if (tier == ArTier.arcoreNeeds) {
+      await ArLauncher.instance.ensureArCore();
+      // After install the student can tap again; meanwhile try in-app WebXR.
+    }
     _controller
         ?.runJavaScript('window.mitraStartWorld && window.mitraStartWorld();');
   }

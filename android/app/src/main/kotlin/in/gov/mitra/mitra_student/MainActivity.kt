@@ -23,6 +23,14 @@ class MainActivity : FlutterActivity() {
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+
+        // MITRA AR tier + launcher channel (ArLauncherPlugin.kt).
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, ArLauncherPlugin.CHANNEL)
+            .setMethodCallHandler { call, result ->
+                @Suppress("UNCHECKED_CAST")
+                ArLauncherPlugin.handle(this, call.method, call.arguments as? Map<*, *>, result)
+            }
+
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, channelName)
             .setMethodCallHandler { call, result ->
                 when (call.method) {
