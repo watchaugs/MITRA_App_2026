@@ -226,11 +226,15 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         // ✨ Updated the path to match exactly what the Learn Screen is asking for!
         path: '/student/ar/:topicId',
-        builder: (context, state) => ArRoomScreen(
+        builder: (context, state) => ArEntryScreen(
           topicId: state.pathParameters['topicId'] ?? '',
-          // /student/ar/<topicId>?glb=<model>&audio=<narration>
+          // Routes to native ARCore (ArRoomScreen) on capable phones, else the
+          // on-screen 3D viewer (ArViewerScreen). /student/ar/<id>?glb=&audio=
           modelUrl: state.uri.queryParameters['glb'],
           audioUrl: state.uri.queryParameters['audio'],
+          targetsUrl: state.uri.queryParameters['mind'],
+          videoUrl: state.uri.queryParameters['video'],
+          chromaColor: state.uri.queryParameters['chroma'],
         ),
       ),
     ],
