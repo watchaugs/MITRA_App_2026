@@ -16,29 +16,20 @@
       pointer-events: none; padding: 0 20px; }
     .hidden { display: none !important; }
   </style>
-
-  <!--
-    Three.js is loaded as a VERSIONED module via an import map, so MITRA's own
-    code (engine.js, gestures.js) stays small and hand-editable.
-    OFFLINE BUILD: download three@0.160.0 build/three.module.js and
-    examples/jsm/* into assets/ar/vendor/three/ and change these URLs to
-    './vendor/three/...'.
-  -->
-  <script type="importmap">
-  {
-    "imports": {
-      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
-      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
-    }
-  }
-  </script>
 </head>
 <body>
   <div id="ar-container"></div>
   <div id="hint" class="hidden">Point your camera at the floor</div>
 
-  <!-- MITRA engine (readable source). Flutter injects window.MITRA_CONFIG and
-       calls window.mitraStart(...) once the page is ready. -->
-  <script type="module" src="./engine.js"></script>
+  <!--
+    CLASSIC script (NOT type="module"). Android WebView blocks ES modules and
+    import maps when the page is loaded from a file:// asset (CORS: "requests are
+    only supported for protocol schemes http, https, data…"), which is what made
+    the lesson fail with "could not be shown". ar_engine.js is a self-contained
+    bundle (Three.js + GLTF/DRACO loaders + the MITRA engine + gestures) built as
+    a classic IIFE, so it runs offline from file:// with no imports and no CORS.
+    Flutter injects window.MITRA_CONFIG and calls window.mitraStart(...).
+  -->
+  <script src="ar_engine.js"></script>
 </body>
 </html>

@@ -562,22 +562,40 @@ class _SubjectCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(MitraRadius.md),
             border: Border.all(color: MitraColors.borderLight),
           ),
+          // Fill the tile: large centred icon + name, with the progress line
+          // pinned to the bottom. FittedBox keeps a long subject name on one
+          // line by scaling it down instead of overflowing.
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(subject.emoji, style: const TextStyle(fontSize: 28)),
-              const SizedBox(height: 6),
-              Text(subject.name,
-                  style: const TextStyle(
-                      fontFamily: 'Baloo2',
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                      color: MitraColors.textPrimary)),
+              Expanded(
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(subject.emoji, style: const TextStyle(fontSize: 44)),
+                      const SizedBox(height: 8),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(subject.name,
+                            maxLines: 1,
+                            style: const TextStyle(
+                                fontFamily: 'Baloo2',
+                                fontWeight: FontWeight.w800,
+                                fontSize: 18,
+                                color: MitraColors.textPrimary)),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
               Text(
                   '${(subject.progress * 100).toInt()}% · ${subject.arCount} AR topics',
+                  textAlign: TextAlign.center,
                   style: const TextStyle(
                       fontFamily: 'Mukta',
-                      fontSize: 10,
+                      fontSize: 11,
                       color: MitraColors.textMuted)),
             ],
           ),

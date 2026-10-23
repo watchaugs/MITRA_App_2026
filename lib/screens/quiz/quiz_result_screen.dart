@@ -403,37 +403,57 @@ class _ReviewItemState extends State<_ReviewItem> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  _ReviewAnswerRow(
-                    label: 'Correct',
-                    answer: q.options[q.correctAnswerIndex],
-                    color: MitraColors.emerald,
-                  ),
-                  if (!isCorrect && widget.studentAnswer != null) ...[
-                    const SizedBox(height: 4),
+                  if (isCorrect) ...[
+                    // Correct answer → reveal the answer AND the explanation.
                     _ReviewAnswerRow(
-                      label: 'Your answer',
-                      answer: q.options[widget.studentAnswer!],
-                      color: MitraColors.crimson,
+                      label: 'Correct',
+                      answer: q.options[q.correctAnswerIndex],
+                      color: MitraColors.emerald,
                     ),
-                  ],
-                  // Explanation — ONLY for correctly answered questions.
-                  if (isCorrect && q.explanation != null) ...[
-                    const SizedBox(height: 8),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Icon(Icons.lightbulb_outline,
-                            color: MitraColors.indigoLight, size: 14),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            q.explanation!,
-                            style: const TextStyle(
-                              fontFamily: 'Mukta',
-                              fontSize: 12,
-                              color: MitraColors.textMuted,
-                              height: 1.4,
+                    if (q.explanation != null) ...[
+                      const SizedBox(height: 8),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Icon(Icons.lightbulb_outline,
+                              color: MitraColors.indigoLight, size: 14),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              q.explanation!,
+                              style: const TextStyle(
+                                fontFamily: 'Mukta',
+                                fontSize: 12,
+                                color: MitraColors.textMuted,
+                                height: 1.4,
+                              ),
                             ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ] else ...[
+                    // Wrong answer → show ONLY what the student picked. Never the
+                    // correct answer, never the explanation. Encourage a retry.
+                    if (widget.studentAnswer != null)
+                      _ReviewAnswerRow(
+                        label: 'Your answer',
+                        answer: q.options[widget.studentAnswer!],
+                        color: MitraColors.crimson,
+                      ),
+                    const SizedBox(height: 8),
+                    const Row(
+                      children: [
+                        Icon(Icons.thumb_up_alt_outlined,
+                            color: MitraColors.saffron, size: 15),
+                        SizedBox(width: 6),
+                        Text(
+                          'Try again',
+                          style: TextStyle(
+                            fontFamily: 'Baloo2',
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13,
+                            color: MitraColors.saffron,
                           ),
                         ),
                       ],

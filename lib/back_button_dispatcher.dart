@@ -72,9 +72,17 @@ class MitraBackButtonHandler with WidgetsBindingObserver {
     }
 
     // ── Everything else is a pushed detail screen ─────
-    // Pop back to exactly where the user came from. Only if there's nothing to
-    // pop (e.g. a screen reached via go() with no stack) do we fall back to a
-    // sensible section home instead of dead-ending.
+    // Pop back to exactly where the user came from. Quiz / quiz-result / AR are
+    // TOP-LEVEL routes pushed onto the ROOT navigator (they sit above the tab
+    // shell), and go_router's own canPop() can under-report in that shell setup
+    // — which is why back from a quiz jumped to Home. So for a pushed detail we
+    // pop the root Navigator directly, which reliably reflects the pushed route,
+    // and only fall back to go_router's pop if the root has nothing to pop.
+    final rootNav = rootNavKey.currentState;
+    if (rootNav != null && rootNav.canPop()) {
+      rootNav.pop();
+      return true;
+    }
     if (router.canPop()) {
       router.pop();
       return true;

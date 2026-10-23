@@ -1,0 +1,13 @@
+{
+  "name": "mitra-ar-engine-src",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Editable source for the MITRA AR WebView engine. Builds to assets/ar/ar_engine.js as a classic IIFE (no ES modules) so it runs offline from file:// inside Android WebView.",
+  "scripts": {
+    "build": "esbuild engine.js --bundle --format=iife --minify --target=es2019 --outfile=../assets/ar/ar_engine.js"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2",
+    "three": "0.160.0"
+  }
+}

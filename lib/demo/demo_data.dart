@@ -13,7 +13,7 @@ import '../screens/student/learn_screen.dart';
 import '../models/quiz_model.dart';
 
 /// Master switch. true = offline demo data, false = live backend.
-const bool kPresentationMode = true;
+const bool kPresentationMode = false;
 
 // ─────────────────────────────────────────────────────────────
 // 1. HOME SCREEN SUBJECTS
