@@ -99,11 +99,14 @@ object ArLauncherPlugin {
     // ── Scene Viewer (ARCore-backed anchored AR) ────────────────────────────
     private fun launchSceneViewer(activity: Activity, glbUrl: String, title: String): Boolean {
         return try {
-            // ar_preferred → open straight into AR (floor placement) when possible.
+            // mode=3d_preferred (NOT ar_preferred): open in 3D and let the user tap
+            // Scene Viewer's own AR button. ar_preferred auto-launches AR and, on
+            // some devices, crash-loops ViewerActivity (StackOverflow in Google's
+            // code), freezing the screen. 3d_preferred is the safe entry point.
             val sceneUri = Uri.parse(
                 "https://arvr.google.com/scene-viewer/1.0?file=" +
                     Uri.encode(glbUrl) +
-                    "&mode=ar_preferred&title=" + Uri.encode(title)
+                    "&mode=3d_preferred&title=" + Uri.encode(title)
             )
             val intent = Intent(Intent.ACTION_VIEW, sceneUri).apply {
                 setPackage("com.google.android.googlequicksearchbox")

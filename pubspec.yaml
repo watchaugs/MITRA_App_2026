@@ -140,6 +140,7 @@ flutter:
     - assets/lotties/
     - assets/locales/
     - assets/ar/
+    - assets/ar/models/
     - .env
 
 flutter_launcher_icons:
