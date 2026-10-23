@@ -32,8 +32,9 @@ android {
 
     defaultConfig {
         applicationId "in.gov.mitra.student"
-        // Explicitly set to 24 to support camera and secure_storage packages
-        minSdkVersion 24
+        // Raised to 28 (Android 9): required by ar_flutter_plugin_2 for ARCore.
+        // All ARCore-capable phones are well above this anyway.
+        minSdkVersion 28
         targetSdk 34
         versionCode flutter.versionCode
         versionName flutter.versionName
@@ -65,4 +66,9 @@ dependencies {
     implementation "com.google.firebase:firebase-analytics-ktx"
     implementation "androidx.multidex:multidex:2.0.1"
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.4'
+
+    // ARCore SDK — needed for the ArCoreApk availability check + install prompt
+    // in MainActivity (checkArCore / requestArCoreInstall). ar_flutter_plugin_2
+    // uses ARCore too, but we declare it explicitly so MainActivity compiles.
+    implementation "com.google.ar:core:1.42.0"
 }

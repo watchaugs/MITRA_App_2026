@@ -101,6 +101,9 @@ dependencies:
   geocoding: ^4.0.0
   uuid: ^4.5.3
   model_viewer_plus: ^1.8.0
+  ar_flutter_plugin_2: ^0.0.3
+  audioplayers: ^6.1.0
+  vector_math: ^2.1.4
   isar: ^3.1.0+1
   isar_flutter_libs: ^3.1.0+1
   firebase_remote_config: ^4.3.0

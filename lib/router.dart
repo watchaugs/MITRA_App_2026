@@ -25,7 +25,8 @@ import '../screens/teacher/teacher_profile_screen.dart';
 import '../screens/quiz/quiz_screen.dart';
 import '../screens/quiz/quiz_result_screen.dart';
 import '../models/quiz_model.dart';
-import '../screens/ar/ar_viewer_screen.dart';
+import '../screens/ar/ar_room_screen.dart';
+import '../screens/ar/ar_entry_screen.dart';
 import '../stores/auth_store.dart';
 import '../screens/auth/consent_screen.dart';
 import '../screens/auth/location_screen.dart';
@@ -225,15 +226,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         // ✨ Updated the path to match exactly what the Learn Screen is asking for!
         path: '/student/ar/:topicId',
-        builder: (context, state) => ArViewerScreen(
+        builder: (context, state) => ArRoomScreen(
           topicId: state.pathParameters['topicId'] ?? '',
-          // Asset URLs arrive as query params, mirroring the existing ?glb=:
-          //   /student/ar/<topicId>?glb=<model>&mind=<target>&audio=<narration>
+          // /student/ar/<topicId>?glb=<model>&audio=<narration>
           modelUrl: state.uri.queryParameters['glb'],
-          targetsUrl: state.uri.queryParameters['mind'],
           audioUrl: state.uri.queryParameters['audio'],
-          videoUrl: state.uri.queryParameters['video'],
-          chromaColor: state.uri.queryParameters['chroma'],
         ),
       ),
     ],

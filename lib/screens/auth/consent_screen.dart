@@ -17,6 +17,7 @@ import '../../widgets/mitra_scaffold.dart';
 import '../../services/api_service.dart';
 import '../../theme/theme_provider.dart';
 import '../../providers/translation_provider.dart';
+import '../../providers/consent_i18n.dart';
 
 // ── Constants ────────────────────────────────────────────────
 
@@ -41,6 +42,9 @@ class _DataItem {
     required this.color,
     required this.label,
   });
+
+  _DataItem copyLabel(String newLabel) =>
+      _DataItem(icon: icon, color: color, label: newLabel);
 }
 
 // ── Static data (no rebuilds, no allocations) ───────────────
@@ -83,13 +87,8 @@ const _kReasonItems = [
       label: 'Improve app quality & safety'),
 ];
 
-const _kRights = [
-  'Access your data anytime from Profile',
-  'Request deletion — erased within 72 hours',
-  'Withdraw consent — account will be deactivated',
-  'Data never sold to third parties',
-  'All data encrypted at rest and in transit',
-];
+// _kRights removed — the rights list now comes from the translation packs
+// (i18n.t('consent.right_1..5')). See _RightsSection in the build method.
 
 // ── Consent persistence (isolated, testable) ────────────────
 
@@ -174,6 +173,12 @@ class _ConsentScreenState extends ConsumerState<ConsentScreen> {
     _termsTap = TapGestureRecognizer()..onTap = _showTerms;
     _privacyTap = TapGestureRecognizer()..onTap = _showPrivacy;
     _checkBackendConsent();
+    // DPDPA Rule 3: open the consent notice in the student's regional language,
+    // chosen from their detected state. They can still override via the bar.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final st = ref.read(currentUserProvider)?.assignedState;
+      ref.read(consentI18nProvider.notifier).autoSelectForState(st);
+    });
   }
 
   Future<void> _checkBackendConsent() async {
@@ -274,6 +279,7 @@ class _ConsentScreenState extends ConsumerState<ConsentScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final i18n = ref.watch(consentI18nProvider);
     if (_checking) {
       return const MitraScaffold(
         body: Center(
@@ -293,9 +299,13 @@ class _ConsentScreenState extends ConsumerState<ConsentScreen> {
             // English — supply counsel-approved Hindi/Gujarati strings to fully
             // localise it (see the delivery note).
             _ConsentLanguageBar(
-              current: ref.watch(translationProvider).langCode,
-              onPick: (code) =>
-                  ref.read(translationProvider.notifier).loadLanguagePack(code),
+              current: i18n.langCode,
+              onPick: (code) {
+                // Switch the consent notice language…
+                ref.read(consentI18nProvider.notifier).load(code);
+                // …and the rest of the app UI if a full pack exists for it.
+                ref.read(translationProvider.notifier).loadLanguagePack(code);
+              },
             ),
             Expanded(
               child: SingleChildScrollView(
@@ -304,14 +314,38 @@ class _ConsentScreenState extends ConsumerState<ConsentScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const _GlassSection(
-                        title: '📋  What MITRA Collects',
-                        items: _kCollectionItems),
+                    _GlassSection(
+                      title: i18n.t('consent.collect_title'),
+                      items: [
+                        _kCollectionItems[0]
+                            .copyLabel(i18n.t('consent.collect_1')),
+                        _kCollectionItems[1]
+                            .copyLabel(i18n.t('consent.collect_2')),
+                        _kCollectionItems[2]
+                            .copyLabel(i18n.t('consent.collect_3')),
+                        _kCollectionItems[3]
+                            .copyLabel(i18n.t('consent.collect_4')),
+                        _kCollectionItems[4]
+                            .copyLabel(i18n.t('consent.collect_5')),
+                      ],
+                    ),
                     const SizedBox(height: 10),
-                    const _GlassSection(
-                        title: '🎯  Why We Collect It', items: _kReasonItems),
+                    _GlassSection(
+                      title: i18n.t('consent.reason_title'),
+                      items: [
+                        _kReasonItems[0].copyLabel(i18n.t('consent.reason_1')),
+                        _kReasonItems[1].copyLabel(i18n.t('consent.reason_2')),
+                        _kReasonItems[2].copyLabel(i18n.t('consent.reason_3')),
+                      ],
+                    ),
                     const SizedBox(height: 10),
-                    const _RightsSection(rights: _kRights),
+                    _RightsSection(rights: [
+                      i18n.t('consent.right_1'),
+                      i18n.t('consent.right_2'),
+                      i18n.t('consent.right_3'),
+                      i18n.t('consent.right_4'),
+                      i18n.t('consent.right_5'),
+                    ]),
                     const SizedBox(height: 20),
 
                     _ConsentCheckbox(
@@ -326,14 +360,9 @@ class _ConsentScreenState extends ConsumerState<ConsentScreen> {
                             height: 1.5,
                           ),
                           children: [
-                            const TextSpan(
-                              text:
-                                  'I confirm I am a parent/guardian (or above 18) and '
-                                  'consent to MITRA collecting my child\'s learning data '
-                                  'as described above under ',
-                            ),
+                            TextSpan(text: i18n.t('consent.parent_pre')),
                             TextSpan(
-                              text: 'DPDPA 2023',
+                              text: i18n.t('consent.parent_link'),
                               style: const TextStyle(
                                 color: MitraColors.saffron,
                                 fontWeight: FontWeight.w600,
@@ -362,10 +391,9 @@ class _ConsentScreenState extends ConsumerState<ConsentScreen> {
                             height: 1.5,
                           ),
                           children: [
-                            const TextSpan(
-                                text: 'I have read and agree to the '),
+                            TextSpan(text: i18n.t('consent.terms_pre')),
                             TextSpan(
-                              text: 'Terms of Use',
+                              text: i18n.t('consent.terms_link'),
                               style: const TextStyle(
                                 color: MitraColors.saffron,
                                 fontWeight: FontWeight.w600,
@@ -374,9 +402,9 @@ class _ConsentScreenState extends ConsumerState<ConsentScreen> {
                               ),
                               recognizer: _termsTap,
                             ),
-                            const TextSpan(text: ' and '),
+                            TextSpan(text: i18n.t('consent.terms_and')),
                             TextSpan(
-                              text: 'Privacy Policy',
+                              text: i18n.t('consent.privacy_link'),
                               style: const TextStyle(
                                 color: MitraColors.saffron,
                                 fontWeight: FontWeight.w600,
@@ -407,7 +435,7 @@ class _ConsentScreenState extends ConsumerState<ConsentScreen> {
                     _GhostButton(
                       enabled: !_isSubmitting,
                       onPressed: _decline,
-                      label: 'Decline & Sign Out',
+                      label: i18n.t('consent.decline'),
                     ),
                     const SizedBox(height: 8),
                     const _DeclineHint(),
@@ -903,35 +931,36 @@ class _ConsentLanguageBar extends StatelessWidget {
   final ValueChanged<String> onPick;
   const _ConsentLanguageBar({required this.current, required this.onPick});
 
-  static const _langs = <MapEntry<String, String>>[
-    MapEntry('en', 'English'),
-    MapEntry('hi', 'हिंदी'),
-    MapEntry('gu', 'ગુજરાતી'),
-  ];
+  static const _langs = kConsentLangs; // all 23 languages (consent_i18n.dart)
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-      child: Row(
-        children: _langs.map((e) {
-          final selected = current == e.key;
-          return Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: ChoiceChip(
-              label: Text(e.value),
-              selected: selected,
-              onSelected: (_) => onPick(e.key),
-              selectedColor: MitraColors.saffron.withValues(alpha: 0.25),
-              labelStyle: TextStyle(
-                color:
-                    selected ? MitraColors.saffron : MitraColors.textSecondary,
-                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+      // 23 chips won't fit on one row — make the bar horizontally scrollable.
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: _langs.map((e) {
+            final selected = current == e.key;
+            return Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: ChoiceChip(
+                label: Text(e.value),
+                selected: selected,
+                onSelected: (_) => onPick(e.key),
+                selectedColor: MitraColors.saffron.withValues(alpha: 0.25),
+                labelStyle: TextStyle(
+                  color: selected
+                      ? MitraColors.saffron
+                      : MitraColors.textSecondary,
+                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                ),
+                backgroundColor: MitraColors.bgCard,
               ),
-              backgroundColor: MitraColors.bgCard,
-            ),
-          );
-        }).toList(),
+            );
+          }).toList(),
+        ),
       ),
     );
   }
