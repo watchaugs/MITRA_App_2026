@@ -80,9 +80,8 @@
         <meta-data
             android:name="com.google.ar.core"
             android:value="optional" />
-        <meta-data
-            android:name="com.google.ar.core.min_apk_version"
-            android:value="latest" />
+        <!-- min_apk_version is supplied by the ARCore library's own manifest;
+             we don't declare it here to avoid a manifest-merge conflict. -->
 
         <!-- Don't delete the meta-data below — Flutter needs it -->
         <meta-data

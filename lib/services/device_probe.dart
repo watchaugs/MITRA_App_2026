@@ -122,8 +122,9 @@ class DeviceProbe {
 
     if (ramMb != null) {
       if (ramMb < 3072) return DeviceTier.low; // ≤ ~3 GB
-      if (ramMb >= 6144 && sdkInt >= 29)
+      if (ramMb >= 6144 && sdkInt >= 29) {
         return DeviceTier.high; // 6GB+ on Android 10+
+      }
       return DeviceTier.medium;
     }
 

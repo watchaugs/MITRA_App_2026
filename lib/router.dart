@@ -25,7 +25,7 @@ import '../screens/teacher/teacher_profile_screen.dart';
 import '../screens/quiz/quiz_screen.dart';
 import '../screens/quiz/quiz_result_screen.dart';
 import '../models/quiz_model.dart';
-import '../screens/ar/ar_room_screen.dart';
+//import '../screens/ar/ar_room_screen.dart';
 import '../screens/ar/ar_entry_screen.dart';
 import '../stores/auth_store.dart';
 import '../screens/auth/consent_screen.dart';
