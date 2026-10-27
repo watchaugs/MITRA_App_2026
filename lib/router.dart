@@ -231,6 +231,8 @@ final routerProvider = Provider<GoRouter>((ref) {
           // Routes to native ARCore (ArRoomScreen) on capable phones, else the
           // on-screen 3D viewer (ArViewerScreen). /student/ar/<id>?glb=&audio=
           modelUrl: state.uri.queryParameters['glb'],
+          // Non-Draco GLB for native Filament AR (Draco glb can't render there).
+          nativeModelUrl: state.uri.queryParameters['nglb'],
           audioUrl: state.uri.queryParameters['audio'],
           targetsUrl: state.uri.queryParameters['mind'],
           videoUrl: state.uri.queryParameters['video'],

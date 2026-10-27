@@ -20,7 +20,8 @@ import 'ar_viewer_screen.dart';
 
 class ArEntryScreen extends ConsumerStatefulWidget {
   final String topicId;
-  final String? modelUrl;
+  final String? modelUrl; // Draco _lite.glb (the 3D viewer decodes Draco)
+  final String? nativeModelUrl; // non-Draco _native.glb (native Filament AR)
   final String? audioUrl;
   final String? targetsUrl;
   final String? videoUrl;
@@ -30,6 +31,7 @@ class ArEntryScreen extends ConsumerStatefulWidget {
     super.key,
     required this.topicId,
     this.modelUrl,
+    this.nativeModelUrl,
     this.audioUrl,
     this.targetsUrl,
     this.videoUrl,
@@ -99,7 +101,12 @@ class _ArEntryScreenState extends ConsumerState<ArEntryScreen> {
     if (_arCapable) {
       return ArRoomScreen(
         topicId: widget.topicId,
-        modelUrl: widget.modelUrl,
+        // Native Filament can't decode Draco → prefer the non-Draco native GLB;
+        // fall back to the Draco url only if no native tier exists yet.
+        modelUrl:
+            (widget.nativeModelUrl != null && widget.nativeModelUrl!.isNotEmpty)
+                ? widget.nativeModelUrl
+                : widget.modelUrl,
         audioUrl: widget.audioUrl,
       );
     }

@@ -349,12 +349,14 @@ typedef ArLessonRec = ({
 class ArCatalog {
   final Map<String, List<ArLessonRec>> bySubject;
   final Map<String, String> glbById;
+  final Map<String, String> nativeGlbById;
   final Map<String, String> videoById;
   final Map<String, String> chromaById;
   final bool territorySupported; // false = outside MITRA's approved area
   const ArCatalog({
     required this.bySubject,
     required this.glbById,
+    this.nativeGlbById = const {},
     this.videoById = const {},
     this.chromaById = const {},
     this.territorySupported = true,
@@ -374,6 +376,7 @@ ArCatalog? _catalogFromManifest(dynamic data) {
   if (classes is! List) return null;
   final bySubject = <String, List<ArLessonRec>>{};
   final glbById = <String, String>{};
+  final nativeGlbById = <String, String>{};
   final videoById = <String, String>{};
   final chromaById = <String, String>{};
   for (final c in classes) {
@@ -401,8 +404,12 @@ ArCatalog? _catalogFromManifest(dynamic data) {
             languageTag:
                 (l['language_tag'] ?? l['language'] ?? 'all').toString(),
           ));
+          // flutter_url = Draco _lite.glb (for the on-screen 3D viewer).
+          // native_url  = non-Draco _native.glb (for floor AR / Filament).
           final glb = (l['flutter_url'] ?? '').toString();
           if (glb.isNotEmpty) glbById[id] = glb;
+          final nativeGlb = (l['native_url'] ?? '').toString();
+          if (nativeGlb.isNotEmpty) nativeGlbById[id] = nativeGlb;
           final vid = (l['video_url'] ?? '').toString();
           if (vid.isNotEmpty) videoById[id] = vid;
           if (l['chroma_enabled'] == true) {
@@ -416,6 +423,7 @@ ArCatalog? _catalogFromManifest(dynamic data) {
   return ArCatalog(
     bySubject: bySubject,
     glbById: glbById,
+    nativeGlbById: nativeGlbById,
     videoById: videoById,
     chromaById: chromaById,
     territorySupported: true,
@@ -459,6 +467,7 @@ final arCatalogProvider = FutureProvider<ArCatalog>((ref) async {
       res.data is Map ? (res.data['territory_supported'] != false) : true;
   final bySubject = <String, List<ArLessonRec>>{};
   final glbById = <String, String>{};
+  final nativeGlbById = <String, String>{};
   final videoById = <String, String>{};
   final chromaById = <String, String>{};
 
@@ -478,6 +487,8 @@ final arCatalogProvider = FutureProvider<ArCatalog>((ref) async {
       final glb =
           (m['flutter_url'] ?? m['glb_url'] ?? m['model_url'] ?? '').toString();
       if (glb.isNotEmpty) glbById[id] = glb;
+      final nativeGlb = (m['native_url'] ?? '').toString();
+      if (nativeGlb.isNotEmpty) nativeGlbById[id] = nativeGlb;
       final vid = (m['video_url'] ?? '').toString();
       if (vid.isNotEmpty) videoById[id] = vid;
       if (m['chroma_enabled'] == true) {
@@ -496,6 +507,7 @@ final arCatalogProvider = FutureProvider<ArCatalog>((ref) async {
   return ArCatalog(
     bySubject: bySubject,
     glbById: glbById,
+    nativeGlbById: nativeGlbById,
     videoById: videoById,
     chromaById: chromaById,
     territorySupported: territorySupported,
@@ -811,11 +823,18 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
                                   // route existed) and carries the real model
                                   // URL when the dashboard supplied one.
                                   final glb = arGlbById[id];
+                                  final nativeGlb =
+                                      arCatalog?.nativeGlbById[id];
                                   final vid = arCatalog?.videoById[id];
                                   final chroma = arCatalog?.chromaById[id];
                                   final qp = <String>[];
                                   if (glb != null && glb.isNotEmpty) {
                                     qp.add('glb=${Uri.encodeComponent(glb)}');
+                                  }
+                                  if (nativeGlb != null &&
+                                      nativeGlb.isNotEmpty) {
+                                    qp.add(
+                                        'nglb=${Uri.encodeComponent(nativeGlb)}');
                                   }
                                   if (vid != null && vid.isNotEmpty) {
                                     qp.add('video=${Uri.encodeComponent(vid)}');
