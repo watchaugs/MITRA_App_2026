@@ -47,9 +47,10 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       FlutterNativeSplash.remove();
     });
 
-    // SAFETY NET: never hang on the splash. If the Lottie never loads/stalls,
-    // force-advance after 4 seconds.
-    Future.delayed(const Duration(seconds: 4), () {
+    // SAFETY NET: never hang on the splash. The Lottie is heavy (~4 MB) and
+    // takes a few seconds to play through, so we only force-advance if it has
+    // genuinely stalled well past its normal runtime.
+    Future.delayed(const Duration(seconds: 8), () {
       if (mounted && !_animationDone) {
         setState(() => _animationDone = true);
         _attemptNavigation();

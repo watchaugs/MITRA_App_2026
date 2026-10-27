@@ -165,18 +165,21 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
               path: '/student/profile',
               builder: (c, s) => const StudentProfileScreen()),
-          // edit-profile & notifications are detail screens, never tabs — push
-          // them on the ROOT navigator (above the tab shell) so the back button
-          // pops to wherever they were opened from, not to Home.
-          GoRoute(
-              path: '/student/edit-profile',
-              parentNavigatorKey: rootNavigatorKey,
-              builder: (c, s) => const EditProfileScreen()),
-          GoRoute(
-              path: '/student/notifications',
-              parentNavigatorKey: rootNavigatorKey,
-              builder: (c, s) => const NotificationsScreen()),
         ],
+      ),
+
+      // ── Teacher Shell ────────────────────────────────
+      // edit-profile & notifications are detail screens, never tabs. As
+      // TOP-LEVEL routes (outside the shell) they push onto the root navigator
+      // automatically, so the back button pops to wherever they were opened
+      // from, not to the Home tab. No parentNavigatorKey needed here.
+      GoRoute(
+        path: '/student/edit-profile',
+        builder: (c, s) => const EditProfileScreen(),
+      ),
+      GoRoute(
+        path: '/student/notifications',
+        builder: (c, s) => const NotificationsScreen(),
       ),
 
       // ── Teacher Shell ────────────────────────────────

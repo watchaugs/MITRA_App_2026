@@ -252,10 +252,10 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
     const fileName = 'mitra_demo_spin.glb';
     final dir = await getApplicationDocumentsDirectory();
     final out = File('${dir.path}/$fileName');
-    if (!await out.exists()) {
-      final bytes = await rootBundle.load(ArRoomScreen._bundledAsset);
-      await out.writeAsBytes(bytes.buffer.asUint8List());
-    }
+    // Always rewrite from the bundled asset so a stale/old copy from a previous
+    // run can never shadow an updated model (that caused "could not load").
+    final bytes = await rootBundle.load(ArRoomScreen._bundledAsset);
+    await out.writeAsBytes(bytes.buffer.asUint8List());
     return fileName;
   }
 

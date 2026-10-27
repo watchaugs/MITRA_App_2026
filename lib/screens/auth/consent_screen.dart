@@ -18,6 +18,7 @@ import '../../services/api_service.dart';
 import '../../theme/theme_provider.dart';
 import '../../providers/translation_provider.dart';
 import '../../providers/consent_i18n.dart';
+import 'state_language_map.dart';
 
 // ── Constants ────────────────────────────────────────────────
 
@@ -173,11 +174,11 @@ class _ConsentScreenState extends ConsumerState<ConsentScreen> {
     _termsTap = TapGestureRecognizer()..onTap = _showTerms;
     _privacyTap = TapGestureRecognizer()..onTap = _showPrivacy;
     _checkBackendConsent();
-    // DPDPA Rule 3: open the consent notice in the student's regional language,
-    // chosen from their detected state. They can still override via the bar.
+    // DPDPA Rule 3: the consent notice is available in multiple languages, but it
+    // OPENS in English by default. The student can switch to Hindi or their
+    // state's regional language via the bar.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final st = ref.read(currentUserProvider)?.assignedState;
-      ref.read(consentI18nProvider.notifier).autoSelectForState(st);
+      ref.read(consentI18nProvider.notifier).load('en');
     });
   }
 
@@ -300,6 +301,9 @@ class _ConsentScreenState extends ConsumerState<ConsentScreen> {
             // localise it (see the delivery note).
             _ConsentLanguageBar(
               current: i18n.langCode,
+              // English + Hindi + the detected state's language (de-duplicated).
+              langs: _consentBarLangs(
+                  ref.read(currentUserProvider)?.assignedState),
               onPick: (code) {
                 // Switch the consent notice language…
                 ref.read(consentI18nProvider.notifier).load(code);
@@ -925,23 +929,49 @@ class _DeclineHint extends StatelessWidget {
   }
 }
 
+// Builds the consent language bar list: English + Hindi + the detected state's
+// regional language, de-duplicated (so a Hindi-belt or English state shows just
+// the two). Falls back to English + Hindi when the state is unknown.
+List<MapEntry<String, String>> _consentBarLangs(String? state) {
+  final out = <MapEntry<String, String>>[];
+  final seen = <String>{};
+  void add(String code) {
+    if (seen.contains(code)) return;
+    final entry = kConsentLangs.firstWhere(
+      (e) => e.key == code,
+      orElse: () => const MapEntry('', ''),
+    );
+    if (entry.key.isEmpty) return;
+    seen.add(code);
+    out.add(entry);
+  }
+
+  add('en'); // always English first
+  add('hi'); // then Hindi
+  final regional = consentLangForState(state); // state's language (or 'en')
+  add(regional); // de-duped if it's en/hi
+  return out;
+}
+
 // Language selector for the consent notice (DPDPA Rule 3).
 class _ConsentLanguageBar extends StatelessWidget {
   final String current;
   final ValueChanged<String> onPick;
-  const _ConsentLanguageBar({required this.current, required this.onPick});
-
-  static const _langs = kConsentLangs; // all 23 languages (consent_i18n.dart)
+  final List<MapEntry<String, String>> langs;
+  const _ConsentLanguageBar({
+    required this.current,
+    required this.onPick,
+    required this.langs,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-      // 23 chips won't fit on one row — make the bar horizontally scrollable.
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(
-          children: _langs.map((e) {
+          children: langs.map((e) {
             final selected = current == e.key;
             return Padding(
               padding: const EdgeInsets.only(right: 8),

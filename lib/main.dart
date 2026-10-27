@@ -119,19 +119,15 @@ Future<void> main() async {
       debugPrint('⚠️ BrainSpark: $e');
     }
 
-    debugPrint('🚦 MAIN: reached runApp');
     runApp(ProviderScope(
       overrides: [
         sharedPreferencesProvider.overrideWithValue(prefs),
-        // Only override Isar if it actually opened. On a device where Isar
-        // failed, we skip it so the app still launches (gamification/XP just
-        // degrades gracefully instead of crashing the whole app).
         if (isar != null) isarProvider.overrideWithValue(isar),
       ],
       child: const MitraApp(),
     ));
-    // Belt-and-suspenders: lift the native splash shortly after runApp, no
-    // matter what the splash screen does. Prevents a stuck static splash.
+    // Lift the native splash shortly after runApp, independent of what the
+    // splash screen does — prevents a stuck static splash.
     Future.delayed(const Duration(milliseconds: 600), () {
       FlutterNativeSplash.remove();
     });
@@ -172,15 +168,21 @@ class _MitraAppState extends ConsumerState<MitraApp>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Register handler after router is available via ref
+    // Register the back-handler AFTER the first frame, so building the router
+    // (which instantiates the auth graph, incl. FirebaseAuth.instance) never
+    // blocks the first paint. On a device where Firebase/Play Services is slow,
+    // doing this synchronously here froze the UI before any screen rendered.
     if (_backHandler == null) {
-      final router = ref.read(routerProvider);
-      _backHandler = MitraBackButtonHandler(
-        router: router,
-        ref: ref,
-        rootNavKey: rootNavigatorKey,
-      );
-      _backHandler!.register();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        final router = ref.read(routerProvider);
+        _backHandler = MitraBackButtonHandler(
+          router: router,
+          ref: ref,
+          rootNavKey: rootNavigatorKey,
+        );
+        _backHandler!.register();
+      });
     }
   }
 
@@ -318,19 +320,6 @@ class _MitraAppState extends ConsumerState<MitraApp>
 
   @override
   Widget build(BuildContext context) {
-    debugPrint('🟣 MitraApp build RAN');
-    // ───── TEMP DIAGNOSTIC: bare screen, watches no providers ─────
-    return const MaterialApp(
-      home: Scaffold(
-        backgroundColor: Colors.green,
-        body: Center(
-          child: Text('IT RENDERS',
-              style: TextStyle(color: Colors.white, fontSize: 28)),
-        ),
-      ),
-    );
-    // ───── END TEMP (restore the real body after this test) ─────
-    // ignore: dead_code
     final router = ref.watch(routerProvider);
     final activeTheme = ref.watch(themeProvider);
     ref.watch(quizSyncProvider);

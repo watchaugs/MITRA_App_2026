@@ -25,6 +25,7 @@ import '../models/user.dart';
 import '../services/telemetry_service.dart';
 import '../providers/telemetry_provider.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/widgets.dart';
 
 const _kCachedUserKey = 'mitra_cached_user_json';
 
@@ -58,8 +59,13 @@ class AuthNotifier extends StateNotifier<AuthState> {
   final Ref ref;
 
   AuthNotifier({required this.ref}) : super(const AuthState()) {
-    _restoreCachedSession();
-    _listenToFirebaseAuth();
+    // Defer all Firebase access off the construction path. Touching
+    // FirebaseAuth.instance synchronously here can block when Play Services is
+    // slow/unavailable, which froze the whole app before the first frame.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _restoreCachedSession();
+      _listenToFirebaseAuth();
+    });
   }
 
   // Restore the cached profile instantly on launch so the router never bounces a
@@ -82,8 +88,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
         final cached = MitraUser.fromJson(map);
         // Only use the cache if it belongs to the signed-in Firebase user.
         if (cached.id == firebaseUser.uid) {
-          state = state.copyWith(
-              user: cached, isLoggedIn: true, isLoading: false);
+          state =
+              state.copyWith(user: cached, isLoggedIn: true, isLoading: false);
         }
       }
     } catch (e) {
