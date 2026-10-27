@@ -5,6 +5,8 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'widgets/in_app_notification_card.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -169,14 +171,106 @@ class _MitraAppState extends ConsumerState<MitraApp>
     super.dispose();
   }
 
+  final FlutterLocalNotificationsPlugin _localNotif =
+      FlutterLocalNotificationsPlugin();
+
+  Future<void> _initLocalNotifications() async {
+    const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const iosInit = DarwinInitializationSettings();
+    await _localNotif.initialize(
+      const InitializationSettings(android: androidInit, iOS: iosInit),
+      onDidReceiveNotificationResponse: (resp) {
+        // Tapping a shown notification deep-links the same way FCM does.
+        final data = resp.payload;
+        if (data != null && data.contains('|')) {
+          final parts = data.split('|');
+          final ctx = rootNavigatorKey.currentContext;
+          if (ctx != null && parts.length == 2 && parts[1].isNotEmpty) {
+            if (parts[0] == 'quiz') GoRouter.of(ctx).go('/quiz/${parts[1]}');
+            if (parts[0] == 'ar_topic') {
+              GoRouter.of(ctx).go('/student/ar/${parts[1]}');
+            }
+          }
+        }
+      },
+    );
+    // The channel the dashboard targets (channelId: 'mitra_content'). The
+    // accent colour per-message is applied in _showLocalNotification.
+    const channel = AndroidNotificationChannel(
+      'mitra_content',
+      'MITRA Announcements',
+      description: 'Lessons, quizzes and announcements from MITRA',
+      importance: Importance.high,
+    );
+    await _localNotif
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
+        ?.createNotificationChannel(channel);
+  }
+
   void _setupFCM() {
+    _initLocalNotifications();
     FirebaseMessaging.onMessage.listen((msg) {
-      debugPrint('🔔 FCM foreground: ${msg.notification?.title}');
+      // Foreground: show BOTH the in-app card (rich, styled) and a tray
+      // notification, so the student sees it whether or not they're looking.
+      _showInAppCard(msg);
+      _showLocalNotification(msg);
     });
     FirebaseMessaging.onMessageOpenedApp.listen(_handleDeepLink);
     FirebaseMessaging.instance.getInitialMessage().then((msg) {
       if (msg != null) _handleDeepLink(msg);
     });
+  }
+
+  // Tray notification with the dashboard's accent colour + banner image.
+  Future<void> _showLocalNotification(RemoteMessage msg) async {
+    final n = msg.notification;
+    if (n == null) return;
+    final data = msg.data;
+    final colorHex = (data['color'] ?? '').toString();
+    final imageUrl = (data['image_url'] ?? '').toString();
+    Color? accent;
+    if (colorHex.startsWith('#') && colorHex.length == 7) {
+      accent = Color(int.parse('FF${colorHex.substring(1)}', radix: 16));
+    }
+    final payload =
+        '${data['deep_link_type'] ?? ''}|${data['deep_link_id'] ?? ''}';
+
+    StyleInformation? style;
+    if (imageUrl.isNotEmpty) {
+      try {
+        // BigPicture needs a local/asset path; for a URL we fall back to
+        // BigText so the notification still expands nicely. (Downloading the
+        // image for BigPicture can be added later via a file provider.)
+        style = BigTextStyleInformation(n.body ?? '');
+      } catch (_) {}
+    }
+
+    final android = AndroidNotificationDetails(
+      'mitra_content',
+      'MITRA Announcements',
+      channelDescription: 'Lessons, quizzes and announcements from MITRA',
+      importance: Importance.high,
+      priority: Priority.high,
+      color: accent,
+      colorized: accent != null,
+      styleInformation: style,
+    );
+    await _localNotif.show(
+      msg.hashCode,
+      n.title,
+      n.body,
+      NotificationDetails(
+          android: android, iOS: const DarwinNotificationDetails()),
+      payload: payload,
+    );
+  }
+
+  // Rich in-app card (full design control) when the app is open.
+  void _showInAppCard(RemoteMessage msg) {
+    final ctx = rootNavigatorKey.currentContext;
+    if (ctx == null) return;
+    showInAppNotificationCard(ctx, msg);
   }
 
   void _handleDeepLink(RemoteMessage msg) {
