@@ -39,6 +39,22 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     // Initialize the controller that will manage the Lottie playback speeds
     _lottieController = AnimationController(vsync: this);
 
+    // Remove the native splash NOW — never leave it gated on the Lottie loading.
+    // If the heavy animation stalls, the native splash would otherwise cover the
+    // app forever (the freeze you saw).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      FlutterNativeSplash.remove();
+    });
+
+    // SAFETY NET: never hang on the splash. If the Lottie never loads/stalls,
+    // force-advance after 4 seconds.
+    Future.delayed(const Duration(seconds: 4), () {
+      if (mounted && !_animationDone) {
+        setState(() => _animationDone = true);
+        _attemptNavigation();
+      }
+    });
+
     // Kick off the background authentication verification instantly
     _checkAuth();
   }
@@ -78,7 +94,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
         if (data != null) {
           final consumerUser = MitraUser(
             id: firebaseUser.uid,
-            fullName: (data['name'] ?? data['full_name'] ?? 'Student').toString(),
+            fullName:
+                (data['name'] ?? data['full_name'] ?? 'Student').toString(),
             phone: (data['phone'] ?? '').toString(),
             role: role,
           ).copyWith(
@@ -150,6 +167,16 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
           'assets/animations/splash_animation.json',
           controller: _lottieController,
           fit: BoxFit.cover,
+          errorBuilder: (context, error, stack) {
+            // Animation failed to load → don't block. Advance after a beat.
+            Future.delayed(const Duration(milliseconds: 500), () {
+              if (mounted && !_animationDone) {
+                setState(() => _animationDone = true);
+                _attemptNavigation();
+              }
+            });
+            return const SizedBox.shrink();
+          },
           onLoaded: (composition) {
             // ✨ THE MAGIC FIX: Remove the native splash screen right NOW!
             // The Lottie file is loaded in memory, so there will be zero blank flash.

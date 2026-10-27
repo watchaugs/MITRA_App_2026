@@ -66,8 +66,8 @@ Future<void> main() async {
         await Firebase.initializeApp(
             options: DefaultFirebaseOptions.currentPlatform);
       }
-      FirebaseMessaging.onBackgroundMessage(
-          _firebaseMessagingBackgroundHandler);
+      // FirebaseMessaging.onBackgroundMessage(
+      //     _firebaseMessagingBackgroundHandler);
     } catch (e) {
       debugPrint('⚠️ Firebase: $e');
     }
@@ -104,9 +104,18 @@ Future<void> main() async {
       debugPrint('⚠️ Telemetry: $e');
     }
 
-    await QuotesService.instance.init();
-    await BrainSparkService.instance.init();
+    try {
+      await QuotesService.instance.init();
+    } catch (e) {
+      debugPrint('⚠️ QuotesService: $e');
+    }
+    try {
+      await BrainSparkService.instance.init();
+    } catch (e) {
+      debugPrint('⚠️ BrainSpark: $e');
+    }
 
+    debugPrint('🚦 MAIN: reached runApp');
     runApp(ProviderScope(
       overrides: [
         sharedPreferencesProvider.overrideWithValue(prefs),
@@ -209,17 +218,30 @@ class _MitraAppState extends ConsumerState<MitraApp>
   }
 
   void _setupFCM() {
-    _initLocalNotifications();
-    FirebaseMessaging.onMessage.listen((msg) {
-      // Foreground: show BOTH the in-app card (rich, styled) and a tray
-      // notification, so the student sees it whether or not they're looking.
-      _showInAppCard(msg);
-      _showLocalNotification(msg);
+    // Fully non-blocking + guarded: notification init must never affect launch
+    // or the UI, especially on devices where Google Play Services / FCM is
+    // unavailable (SERVICE_NOT_AVAILABLE).
+    Future(() async {
+      try {
+        await _initLocalNotifications();
+      } catch (e) {
+        debugPrint('⚠️ local notif init: $e');
+      }
     });
-    FirebaseMessaging.onMessageOpenedApp.listen(_handleDeepLink);
-    FirebaseMessaging.instance.getInitialMessage().then((msg) {
-      if (msg != null) _handleDeepLink(msg);
-    });
+    try {
+      FirebaseMessaging.onMessage.listen((msg) {
+        // Foreground: show BOTH the in-app card (rich, styled) and a tray
+        // notification, so the student sees it whether or not they're looking.
+        _showInAppCard(msg);
+        _showLocalNotification(msg);
+      });
+      FirebaseMessaging.onMessageOpenedApp.listen(_handleDeepLink);
+      FirebaseMessaging.instance.getInitialMessage().then((msg) {
+        if (msg != null) _handleDeepLink(msg);
+      });
+    } catch (e) {
+      debugPrint('⚠️ FCM setup: $e');
+    }
   }
 
   // Tray notification with the dashboard's accent colour + banner image.
