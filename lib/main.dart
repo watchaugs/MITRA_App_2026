@@ -124,6 +124,11 @@ Future<void> main() async {
       ],
       child: const MitraApp(),
     ));
+    // Belt-and-suspenders: lift the native splash shortly after runApp, no
+    // matter what the splash screen does. Prevents a stuck static splash.
+    Future.delayed(const Duration(milliseconds: 600), () {
+      FlutterNativeSplash.remove();
+    });
   }, (error, stack) {
     // Uncaught async / zone errors → crash telemetry (best-effort).
     TelemetryService.current?.logCrash(

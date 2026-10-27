@@ -36,6 +36,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   @override
   void initState() {
     super.initState();
+    debugPrint('🟢 SPLASH initState RAN');
     // Initialize the controller that will manage the Lottie playback speeds
     _lottieController = AnimationController(vsync: this);
 
@@ -158,6 +159,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
+    debugPrint('🟢 SPLASH build RAN');
     return MitraScaffold(
       //backgroundColor: const Color(0xFF181335),
       body: SizedBox(
