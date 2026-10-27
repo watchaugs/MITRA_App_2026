@@ -97,6 +97,13 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/legal/grievance',
         builder: (c, s) => const GrievanceScreen(),
       ),
+      // Root-level Achievements DETAIL route (distinct from the shell TAB at
+      // /student/achievements). Opened via push from Home/Settings so the back
+      // button returns there instead of jumping to the Home tab.
+      GoRoute(
+        path: '/achievements',
+        builder: (c, s) => const AchievementsScreen(),
+      ),
       GoRoute(
         path: '/onboarding',
         builder: (context, state) => const OnboardingScreen(),
@@ -150,11 +157,16 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
               path: '/student/profile',
               builder: (c, s) => const StudentProfileScreen()),
+          // edit-profile & notifications are detail screens, never tabs — push
+          // them on the ROOT navigator (above the tab shell) so the back button
+          // pops to wherever they were opened from, not to Home.
           GoRoute(
               path: '/student/edit-profile',
+              parentNavigatorKey: rootNavigatorKey,
               builder: (c, s) => const EditProfileScreen()),
           GoRoute(
               path: '/student/notifications',
+              parentNavigatorKey: rootNavigatorKey,
               builder: (c, s) => const NotificationsScreen()),
         ],
       ),

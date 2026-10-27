@@ -93,7 +93,7 @@ class SettingsGroup extends ConsumerWidget {
           tile(
               emoji: '🏆',
               label: 'Achievements',
-              onTap: () => context.push('/student/achievements')),
+              onTap: () => context.push('/achievements')),
         ]),
 
         // ── Legal & privacy (Sections 3 + 4) ──

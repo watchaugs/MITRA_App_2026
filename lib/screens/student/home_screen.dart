@@ -292,7 +292,7 @@ class HomeScreen extends ConsumerWidget {
 
                         // The dynamic tag — tap to open My Level
                         GestureDetector(
-                          onTap: () => context.push('/student/achievements'),
+                          onTap: () => context.push('/achievements'),
                           child: _GlowingAchievementText(
                             title: currentTier.title,
                             color: currentTier.glowColor,

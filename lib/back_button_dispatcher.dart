@@ -83,8 +83,16 @@ class MitraBackButtonHandler with WidgetsBindingObserver {
       rootNav.pop();
       return true;
     }
+    // Then try go_router's own pop (covers routes pushed on a shell navigator).
     if (router.canPop()) {
       router.pop();
+      return true;
+    }
+    // Last resort: pop the Navigator nearest the current context (the active
+    // shell), so an in-shell pushed detail still steps back instead of going Home.
+    final ctxNav = Navigator.maybeOf(ctx);
+    if (ctxNav != null && ctxNav.canPop()) {
+      ctxNav.pop();
       return true;
     }
     // No stack to pop — choose a safe home by section.
