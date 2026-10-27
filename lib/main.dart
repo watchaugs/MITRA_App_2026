@@ -87,7 +87,11 @@ Future<void> main() async {
     }
 
     // ✨ INITIALIZE THE ISAR XP DATABASE ✨
-    late Isar isar;
+    // Nullable: on some devices (e.g. strict SELinux blocking Isar's worker)
+    // Isar.open throws. We must NOT leave this unassigned, or the override below
+    // reads an uninitialised `late` and throws LateInitializationError during
+    // runApp — which silently kills the whole app before any screen builds.
+    Isar? isar;
     try {
       final dir = await getApplicationDocumentsDirectory();
       isar = await Isar.open(
@@ -119,8 +123,10 @@ Future<void> main() async {
     runApp(ProviderScope(
       overrides: [
         sharedPreferencesProvider.overrideWithValue(prefs),
-        // ✨ Pass the active DB into the Riverpod UI stream
-        isarProvider.overrideWithValue(isar),
+        // Only override Isar if it actually opened. On a device where Isar
+        // failed, we skip it so the app still launches (gamification/XP just
+        // degrades gracefully instead of crashing the whole app).
+        if (isar != null) isarProvider.overrideWithValue(isar),
       ],
       child: const MitraApp(),
     ));
@@ -312,6 +318,19 @@ class _MitraAppState extends ConsumerState<MitraApp>
 
   @override
   Widget build(BuildContext context) {
+    debugPrint('🟣 MitraApp build RAN');
+    // ───── TEMP DIAGNOSTIC: bare screen, watches no providers ─────
+    return const MaterialApp(
+      home: Scaffold(
+        backgroundColor: Colors.green,
+        body: Center(
+          child: Text('IT RENDERS',
+              style: TextStyle(color: Colors.white, fontSize: 28)),
+        ),
+      ),
+    );
+    // ───── END TEMP (restore the real body after this test) ─────
+    // ignore: dead_code
     final router = ref.watch(routerProvider);
     final activeTheme = ref.watch(themeProvider);
     ref.watch(quizSyncProvider);
