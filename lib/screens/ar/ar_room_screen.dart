@@ -16,6 +16,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:audioplayers/audioplayers.dart';
+import '../../services/glb_cache_manager.dart';
 import 'package:vector_math/vector_math_64.dart' as vm;
 
 import 'package:ar_flutter_plugin_2/ar_flutter_plugin.dart';
@@ -166,9 +167,27 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
 
     final isRemote =
         widget.modelUrl != null && widget.modelUrl!.startsWith('http');
+    // Remote models are cached on-device (download once, reuse for 30 days) and
+    // then loaded from the app folder, so re-opening a lesson is instant and we
+    // don't re-pay egress on every view. Falls back to streaming if caching fails.
+    String nodeUri;
+    NodeType nodeType;
+    if (isRemote) {
+      final cachedName = await _cacheRemoteModel(widget.modelUrl!);
+      if (cachedName != null) {
+        nodeUri = cachedName;
+        nodeType = NodeType.fileSystemAppFolderGLB;
+      } else {
+        nodeUri = widget.modelUrl!;
+        nodeType = NodeType.webGLB; // fallback: stream directly
+      }
+    } else {
+      nodeUri = await _ensureLocalModel();
+      nodeType = NodeType.fileSystemAppFolderGLB;
+    }
     final node = ARNode(
-      type: isRemote ? NodeType.webGLB : NodeType.fileSystemAppFolderGLB,
-      uri: isRemote ? widget.modelUrl! : await _ensureLocalModel(),
+      type: nodeType,
+      uri: nodeUri,
       scale: vm.Vector3(0.3, 0.3, 0.3),
       position: vm.Vector3(0, 0, 0),
       rotation: vm.Vector4(1, 0, 0, 0),
@@ -205,6 +224,28 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
   void _replay() {
     // Re-trigger narration. (The model's own animation loops via the GLB.)
     _startNarration();
+  }
+
+  // Downloads (or reuses) the remote GLB via GlbCacheManager, copies it into the
+  // app documents folder under a stable name, and returns that filename for
+  // NodeType.fileSystemAppFolderGLB. Returns null on any failure so the caller
+  // can fall back to streaming.
+  Future<String?> _cacheRemoteModel(String url) async {
+    try {
+      final file = await GlbCacheManager.instance.getSingleFile(url);
+      if (!await file.exists()) return null;
+      // ar_flutter_plugin_2 wants a name relative to the app documents dir.
+      final docs = await getApplicationDocumentsDirectory();
+      final fileName =
+          'ar_${url.hashCode.toUnsigned(32).toRadixString(16)}.glb';
+      final dest = File('${docs.path}/$fileName');
+      if (!await dest.exists()) {
+        await dest.writeAsBytes(await file.readAsBytes());
+      }
+      return fileName;
+    } catch (_) {
+      return null; // caller streams via webGLB instead
+    }
   }
 
   Future<String> _ensureLocalModel() async {

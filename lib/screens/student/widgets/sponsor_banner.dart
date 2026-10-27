@@ -111,9 +111,21 @@ class _SponsorInterstitial extends StatefulWidget {
 }
 
 class _SponsorInterstitialState extends State<_SponsorInterstitial> {
-  static const _closeAfter = 10; // seconds until the X appears
-  int _secondsLeft = _closeAfter;
+  // Dashboard-controlled popup behaviour (per campaign), with safe defaults.
+  late final int _closeAfter = _intFrom(widget.ad['close_after_seconds'], 10);
+  late final int _autoDismiss = _intFrom(widget.ad['auto_dismiss_seconds'], 0);
+  late final bool _skippable = widget.ad['skippable'] != false;
+  late int _secondsLeft = _closeAfter;
   Timer? _timer;
+  Timer? _autoDismissTimer;
+
+  static int _intFrom(dynamic v, int fallback) {
+    if (v is int) return v;
+    if (v is num) return v.toInt();
+    if (v is String) return int.tryParse(v) ?? fallback;
+    return fallback;
+  }
+
   VideoPlayerController? _video;
   final DateTime _shownAt = DateTime.now();
   bool _engagementSent = false;
@@ -141,6 +153,13 @@ class _SponsorInterstitialState extends State<_SponsorInterstitial> {
       setState(() => _secondsLeft = (_secondsLeft - 1).clamp(0, _closeAfter));
       if (_secondsLeft == 0) t.cancel();
     });
+
+    // Auto-dismiss: close the popup on its own after N seconds (0 = never).
+    if (_autoDismiss > 0) {
+      _autoDismissTimer = Timer(Duration(seconds: _autoDismiss), () {
+        if (mounted) _close();
+      });
+    }
 
     // Prepare video if the creative is a video — unless Data saver is on,
     // in which case we never download video (shows the title card instead).
@@ -190,10 +209,17 @@ class _SponsorInterstitialState extends State<_SponsorInterstitial> {
     }).then((_) {}, onError: (_) {}));
   }
 
+  // Single close path (used by the X and the auto-dismiss timer).
+  void _close() {
+    if (!mounted) return;
+    Navigator.of(context).maybePop();
+  }
+
   @override
   void dispose() {
     _reportEngagement();
     _timer?.cancel();
+    _autoDismissTimer?.cancel();
     _video?.dispose();
     super.dispose();
   }
@@ -239,21 +265,47 @@ class _SponsorInterstitialState extends State<_SponsorInterstitial> {
                 ),
               ),
 
-              // Timed close control, top-right.
+              // Timed close control, top-right: a progress ring fills over the
+              // countdown, then becomes a tappable X. If the campaign is not
+              // skippable, the X only appears once auto-dismiss is imminent
+              // (i.e. the student can't close early — they watch it through).
               Positioned(
                 top: 10,
                 right: 10,
-                child: _canClose
+                child: (_canClose && _skippable)
                     ? GestureDetector(
-                        onTap: () => Navigator.of(context).maybePop(),
+                        onTap: _close,
                         child: _chip(const Icon(Icons.close,
                             color: Colors.white, size: 22)),
                       )
-                    : _chip(Text('$_secondsLeft',
-                        style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 15))),
+                    : _chip(
+                        SizedBox(
+                          width: 40,
+                          height: 40,
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              CircularProgressIndicator(
+                                value: _closeAfter == 0
+                                    ? 1
+                                    : (_closeAfter - _secondsLeft) /
+                                        _closeAfter,
+                                strokeWidth: 3,
+                                backgroundColor: Colors.white24,
+                                valueColor:
+                                    const AlwaysStoppedAnimation(Colors.white),
+                              ),
+                              Text(
+                                _secondsLeft > 0 ? '$_secondsLeft' : '',
+                                style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 13),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
               ),
             ],
           ),

@@ -168,8 +168,6 @@ class AuthAPI {
 }
 
 class UsersAPI {
-  static Future<Response> me() => api.get('/api/users/me');
-
   static Future<Response> update(String id, Map<String, dynamic> data) =>
       api.put('/api/users/$id', data: data);
 }

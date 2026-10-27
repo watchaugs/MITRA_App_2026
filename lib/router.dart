@@ -86,6 +86,14 @@ final routerProvider = Provider<GoRouter>((ref) {
         return '/setup';
       }
 
+      // ── Teacher flow hidden for launch ────────────────────────────────────
+      // The teacher screens (Students/Analytics/Assign) are not wired to live
+      // data yet, so we don't expose them. Anyone landing on /teacher/* is sent
+      // to the student home. Remove this block to re-enable the teacher flow.
+      if (path.startsWith('/teacher')) {
+        return '/student/home';
+      }
+
       return null;
     },
     routes: [
