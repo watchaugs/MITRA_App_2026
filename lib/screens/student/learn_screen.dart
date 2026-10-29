@@ -351,6 +351,7 @@ class ArCatalog {
   final Map<String, String> glbById;
   final Map<String, String> nativeGlbById;
   final Map<String, String> videoById;
+  final Map<String, String> audioById;
   final Map<String, String> chromaById;
   final bool territorySupported; // false = outside MITRA's approved area
   const ArCatalog({
@@ -358,6 +359,7 @@ class ArCatalog {
     required this.glbById,
     this.nativeGlbById = const {},
     this.videoById = const {},
+    this.audioById = const {},
     this.chromaById = const {},
     this.territorySupported = true,
   });
@@ -378,6 +380,7 @@ ArCatalog? _catalogFromManifest(dynamic data) {
   final glbById = <String, String>{};
   final nativeGlbById = <String, String>{};
   final videoById = <String, String>{};
+  final audioById = <String, String>{};
   final chromaById = <String, String>{};
   for (final c in classes) {
     if (c is! Map) continue;
@@ -412,6 +415,8 @@ ArCatalog? _catalogFromManifest(dynamic data) {
           if (nativeGlb.isNotEmpty) nativeGlbById[id] = nativeGlb;
           final vid = (l['video_url'] ?? '').toString();
           if (vid.isNotEmpty) videoById[id] = vid;
+          final aud = (l['audio_url'] ?? '').toString();
+          if (aud.isNotEmpty) audioById[id] = aud;
           if (l['chroma_enabled'] == true) {
             chromaById[id] = (l['chroma_color'] ?? '#00ff00').toString();
           }
@@ -425,6 +430,7 @@ ArCatalog? _catalogFromManifest(dynamic data) {
     glbById: glbById,
     nativeGlbById: nativeGlbById,
     videoById: videoById,
+    audioById: audioById,
     chromaById: chromaById,
     territorySupported: true,
   );
@@ -468,6 +474,7 @@ final arCatalogProvider = FutureProvider<ArCatalog>((ref) async {
   final bySubject = <String, List<ArLessonRec>>{};
   final glbById = <String, String>{};
   final nativeGlbById = <String, String>{};
+  final audioById = <String, String>{};
   final videoById = <String, String>{};
   final chromaById = <String, String>{};
 
@@ -491,6 +498,8 @@ final arCatalogProvider = FutureProvider<ArCatalog>((ref) async {
       if (nativeGlb.isNotEmpty) nativeGlbById[id] = nativeGlb;
       final vid = (m['video_url'] ?? '').toString();
       if (vid.isNotEmpty) videoById[id] = vid;
+      final aud = (m['audio_url'] ?? '').toString();
+      if (aud.isNotEmpty) audioById[id] = aud;
       if (m['chroma_enabled'] == true) {
         chromaById[id] = (m['chroma_color'] ?? '#00ff00').toString();
       }
@@ -509,6 +518,7 @@ final arCatalogProvider = FutureProvider<ArCatalog>((ref) async {
     glbById: glbById,
     nativeGlbById: nativeGlbById,
     videoById: videoById,
+    audioById: audioById,
     chromaById: chromaById,
     territorySupported: territorySupported,
   );
@@ -826,6 +836,7 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
                                   final nativeGlb =
                                       arCatalog?.nativeGlbById[id];
                                   final vid = arCatalog?.videoById[id];
+                                  final aud = arCatalog?.audioById[id];
                                   final chroma = arCatalog?.chromaById[id];
                                   final qp = <String>[];
                                   if (glb != null && glb.isNotEmpty) {
@@ -838,6 +849,9 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
                                   }
                                   if (vid != null && vid.isNotEmpty) {
                                     qp.add('video=${Uri.encodeComponent(vid)}');
+                                  }
+                                  if (aud != null && aud.isNotEmpty) {
+                                    qp.add('audio=${Uri.encodeComponent(aud)}');
                                   }
                                   if (chroma != null && chroma.isNotEmpty) {
                                     qp.add(
