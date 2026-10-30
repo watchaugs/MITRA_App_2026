@@ -910,8 +910,10 @@ class _LearnHeader extends ConsumerWidget {
     // but you can wire this directly to your database variables later!
     final user = ref.watch(currentUserProvider);
     final xp = user?.totalXp;
-    final topicsConsumed = xp != null ? (xp / 100).floor() : 12;
-    final quizzesTaken = xp != null ? (xp / 500).floor() : 4;
+    // Progress counters derived from the student's XP. Default to 0 for a new
+    // user (was 12/4 placeholder, which looked like real content counts).
+    final topicsConsumed = xp != null ? (xp / 100).floor() : 0;
+    final quizzesTaken = xp != null ? (xp / 500).floor() : 0;
 
     final isAll = selectedSubject == 'All';
     final title = isAll ? 'Learn Modules' : selectedSubject;
