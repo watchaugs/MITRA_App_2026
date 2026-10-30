@@ -9,6 +9,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../constants/colors.dart';
 import '../../stores/auth_store.dart';
+import '../../stores/module_progress_store.dart';
+import '../../services/geo_state_service.dart';
 import '../../services/api_service.dart';
 import '../../demo/demo_data.dart';
 import '../../theme/theme_provider.dart';
@@ -119,14 +121,13 @@ final subjectsProvider = FutureProvider<List<Subject>>((ref) async {
     ];
   }
 
-  // Geofence subjects by the student's state so the dashboard's
-  // target_states scoping applies here too.
-  final user = ref.read(currentUserProvider);
-  final res = await CurriculumAPI.tree(state: user?.assignedState);
-  final allNodes = res.data['nodes'] as List<dynamic>? ?? [];
-  final rawSubjects = allNodes
-      .where((n) => (n as Map<String, dynamic>)['node_type'] == 'subject')
-      .toList();
+  // Real subject tiles, derived from PUBLISHED AR assets and scoped to the
+  // student's GPS-detected licensed state (same source the Learn screen uses).
+  // The old /tree endpoint read an empty legacy 'curriculum' collection, which
+  // is why no tiles showed. Falls back to the profile state if GPS is pending.
+  final state = ref.watch(effectiveStateProvider);
+  final res = await CurriculumAPI.subjects(state);
+  final rawSubjects = (res.data['subjects'] as List<dynamic>?) ?? [];
 
   return [
     for (var i = 0; i < rawSubjects.length; i++)
@@ -463,11 +464,63 @@ class _Section extends StatelessWidget {
       );
 }
 
-class _ContinueLearningCard extends StatelessWidget {
+class _ContinueLearningCard extends ConsumerWidget {
   const _ContinueLearningCard();
 
   @override
-  Widget build(BuildContext context) => Container(
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Real data: the last AR lesson the student opened + its live best score.
+    final last = ref.watch(lastModuleProvider);
+
+    // No lesson opened yet → a friendly prompt instead of fake progress.
+    if (last == null) {
+      return GestureDetector(
+        onTap: () => context.go('/student/learn'),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(MitraRadius.sm),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+          ),
+          padding: const EdgeInsets.all(MitraSpacing.md),
+          child: const Row(
+            children: [
+              Text('🚀', style: TextStyle(fontSize: 22)),
+              SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Start learning',
+                        style: TextStyle(
+                            fontFamily: 'Baloo2',
+                            fontWeight: FontWeight.w600,
+                            fontSize: 16,
+                            color: MitraColors.textPrimary)),
+                    SizedBox(height: 2),
+                    Text('Open a lesson to begin your journey',
+                        style: TextStyle(
+                            fontFamily: 'Mukta',
+                            fontSize: 12,
+                            color: MitraColors.textMuted)),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right, color: MitraColors.textMuted),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final pct = (last.bestPct.clamp(0, 100)) / 100.0;
+    final header =
+        (last.subject.isNotEmpty ? last.subject.toUpperCase() : 'LESSON') +
+            (last.topic.isNotEmpty ? ' · ${last.topic}' : '');
+
+    return GestureDetector(
+      onTap: () => context.go('/student/learn'),
+      child: Container(
         decoration: BoxDecoration(
           color: Colors.white.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(MitraRadius.sm),
@@ -489,15 +542,22 @@ class _ContinueLearningCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('SCIENCE · CHAPTER 3',
-                      style: TextStyle(
+                  Text(header,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
                           fontFamily: 'Mukta',
                           fontSize: 10,
                           color: MitraColors.textMuted,
                           letterSpacing: 1)),
                   const SizedBox(height: 4),
-                  const Text('Microscopy & Cell Structure',
-                      style: TextStyle(
+                  Text(
+                      last.title.isNotEmpty
+                          ? last.title
+                          : 'Continue your lesson',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
                           fontFamily: 'Baloo2',
                           fontWeight: FontWeight.w600,
                           fontSize: 16,
@@ -505,38 +565,44 @@ class _ContinueLearningCard extends StatelessWidget {
                   const SizedBox(height: 8),
                   ClipRRect(
                     borderRadius: BorderRadius.circular(MitraRadius.pill),
-                    child: const LinearProgressIndicator(
-                      value: 0.65,
+                    child: LinearProgressIndicator(
+                      value: pct,
                       minHeight: 5,
                       backgroundColor: MitraColors.bgSurface,
-                      valueColor:
-                          AlwaysStoppedAnimation<Color>(MitraColors.saffron),
+                      valueColor: const AlwaysStoppedAnimation<Color>(
+                          MitraColors.saffron),
                     ),
                   ),
                   const SizedBox(height: 8),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text('13/20 topics',
-                          style: TextStyle(
+                      Text(
+                          last.bestPct >= 100
+                              ? 'Mastered ✓'
+                              : last.bestPct > 0
+                                  ? '${last.bestPct}% complete'
+                                  : 'Not started yet',
+                          style: const TextStyle(
                               fontFamily: 'Mukta',
                               fontSize: 12,
                               color: MitraColors.textMuted)),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 3),
+                            horizontal: 10, vertical: 3),
                         decoration: BoxDecoration(
-                          color: MitraColors.gold.withValues(alpha: 0.2),
+                          color: MitraColors.saffron.withValues(alpha: 0.18),
                           borderRadius: BorderRadius.circular(MitraRadius.pill),
                           border: Border.all(
-                              color: MitraColors.gold.withValues(alpha: 0.4)),
+                              color:
+                                  MitraColors.saffron.withValues(alpha: 0.4)),
                         ),
-                        child: const Text('+240 XP',
+                        child: const Text('Resume →',
                             style: TextStyle(
-                                fontFamily: 'SpaceMono',
+                                fontFamily: 'Baloo2',
                                 fontWeight: FontWeight.w700,
                                 fontSize: 11,
-                                color: MitraColors.gold)),
+                                color: MitraColors.saffron)),
                       ),
                     ],
                   ),
@@ -545,7 +611,9 @@ class _ContinueLearningCard extends StatelessWidget {
             ),
           ],
         ),
-      );
+      ),
+    );
+  }
 }
 
 class _SubjectCard extends StatelessWidget {
