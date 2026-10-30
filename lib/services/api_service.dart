@@ -200,6 +200,13 @@ class ArAPI {
       api.get('/api/ar/links/$nodeId');
 }
 
+class GeofenceAPI {
+  // Resolve which licensed state a GPS point falls in.
+  static Future<Response> checkPoint(double lat, double lng) =>
+      api.get('/api/geofence/check-point',
+          queryParameters: {'lat': lat, 'lng': lng});
+}
+
 class QuizAPI {
   static Future<Response> list(Map<String, String> params) =>
       api.get('/api/quiz', queryParameters: params);

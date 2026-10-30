@@ -39,6 +39,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../constants/colors.dart';
 import '../../services/api_service.dart';
+import '../../services/geo_state_service.dart';
 import '../../stores/auth_store.dart';
 import '../../providers/translation_provider.dart'; // ✨ Added for language filtering
 import '../../widgets/orbit_explorer.dart';
@@ -326,7 +327,7 @@ final quizFilterParamsProvider = Provider<QuizFilterParams>((ref) {
   final user = ref.watch(currentUserProvider);
   return QuizFilterParams(
     className: user?.classGrade ?? '',
-    state: user?.assignedState ?? '',
+    state: ref.watch(effectiveStateProvider), // GPS-primary licensed state
     language: user?.languagePreference ?? '',
   );
 });
@@ -459,8 +460,7 @@ final arCatalogProvider = FutureProvider<ArCatalog>((ref) async {
     );
   }
 
-  final user = ref.watch(currentUserProvider);
-  final state = user?.assignedState ?? '';
+  final state = ref.watch(effectiveStateProvider); // GPS-primary licensed state
   final lang = ref.watch(translationProvider).langCode;
 
   // ── Cost-shield: try the hard-cached state manifest first. ──────────────
@@ -655,6 +655,67 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // ── Territory licensing gate (GPS-primary) ──────────────────────────────
+    // Strict: a student outside every geofenced/licensed state gets no content.
+    // Safety valve: GPS unavailable/denied → "enable location" prompt, not a lockout.
+    if (!kPresentationMode) {
+      final geoAsync = ref.watch(geoStateProvider);
+      final geo = geoAsync.valueOrNull;
+      if (geoAsync.isLoading && geo == null) {
+        return const Scaffold(
+          backgroundColor: Colors.transparent,
+          body: Center(child: CircularProgressIndicator()),
+        );
+      }
+      if (geo != null && geo.status != GeoStatus.insideTerritory) {
+        final isGps = geo.status == GeoStatus.gpsUnavailable;
+        return Scaffold(
+          backgroundColor: Colors.transparent,
+          body: SafeArea(
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(28),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(isGps ? '📍' : '🌏',
+                        style: const TextStyle(fontSize: 48)),
+                    const SizedBox(height: 16),
+                    Text(
+                      isGps ? 'Location needed' : 'Not available here yet',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                          fontFamily: 'Baloo2',
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      geo.message ??
+                          (isGps
+                              ? 'Turn on location to access your state\'s lessons.'
+                              : 'MITRA is not yet available in your location.'),
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                          fontFamily: 'Mukta',
+                          fontSize: 14,
+                          color: Colors.white70),
+                    ),
+                    const SizedBox(height: 20),
+                    if (isGps)
+                      ElevatedButton(
+                        onPressed: () => ref.invalidate(geoStateProvider),
+                        child: const Text('Try again'),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      }
+    }
+
     final params = ref.watch(quizFilterParamsProvider);
     final quizAsync = ref.watch(quizFeedProvider(params));
 

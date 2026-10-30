@@ -21,6 +21,7 @@
     <!-- Location features and detection -->
     <!-- DPDPA minimisation: COARSE only. State detection does not need FINE. -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 
     <application
         android:label="MITRA"
