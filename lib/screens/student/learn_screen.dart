@@ -664,7 +664,7 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
       if (geoAsync.isLoading && geo == null) {
         return const Scaffold(
           backgroundColor: Colors.transparent,
-          body: Center(child: CircularProgressIndicator()),
+          body: OrbitLoader(message: 'Finding your state…'),
         );
       }
       if (geo != null && geo.status != GeoStatus.insideTerritory) {
@@ -734,11 +734,8 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
             _LearnHeader(selectedSubject: _selectedSubject),
             Expanded(
               child: quizAsync.when(
-                loading: () => const Center(
-                  child: CircularProgressIndicator(
-                    color: MitraColors.saffron,
-                  ),
-                ),
+                loading: () =>
+                    const OrbitLoader(message: 'Loading your lessons…'),
                 error: (error, _) => _ErrorState(
                   message: switch (error) {
                     LearnFailure f => f.displayMessage,
@@ -906,6 +903,24 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
                                 onQuizTap: (id) =>
                                     LearnScreen._navigateToQuiz(context, id),
                                 onArTap: (id) {
+                                  // Remember this as the last-opened lesson so
+                                  // Home's "Continue Learning" card shows REAL
+                                  // data (title/subject/topic/%), not a stub.
+                                  final rec = filteredArLessons
+                                      .where((l) => l.id == id)
+                                      .cast<ArLessonRec?>()
+                                      .firstWhere((_) => true,
+                                          orElse: () => null);
+                                  if (rec != null) {
+                                    ref
+                                        .read(moduleProgressStoreProvider)
+                                        .recordOpenedModule(
+                                          id: rec.id,
+                                          title: rec.title,
+                                          subject: entry.key,
+                                          topic: rec.topic,
+                                        );
+                                  }
                                   // Fixes the old '/ar/$id' route (no such
                                   // route existed) and carries the real model
                                   // URL when the dashboard supplied one.

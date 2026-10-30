@@ -114,7 +114,7 @@ const _kMaxGeoFieldLength = 100;
 const _kDetectCooldown = Duration(seconds: 3);
 
 /// Timeouts for async operations.
-const _kLocationTimeout = Duration(seconds: 15);
+const _kLocationTimeout = Duration(seconds: 20);
 const _kGeocodeTimeout = Duration(seconds: 10);
 const _kFirestoreTimeout = Duration(seconds: 10);
 const _kPrefsTimeout = Duration(seconds: 5);
@@ -235,12 +235,18 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
         throw const _LocException('PERMISSION_PERMANENTLY_BLOCKED');
       }
 
-      // 3. Get position — coords stay in local scope, never logged
-      // DPDPA data minimisation: we only need the STATE, so request the
-      // lowest accuracy (city/region level). The coordinates are used once to
-      // reverse-geocode the state and are never stored or sent to our backend.
-      final position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.low,
+      // 3. Get position — coords stay in local scope, never logged.
+      // DPDP data minimisation: we only need the STATE. We try a cached fix
+      // first (instant, no radio wake-up), and only ask for a fresh one if none
+      // exists. APPROXIMATE accuracy only (LocationAccuracy.reduced → coarse):
+      // a state is hundreds of km wide, so precise/fine location would collect
+      // more than the purpose requires and break DPDP/CERT-In compliance.
+      Position? position;
+      try {
+        position = await Geolocator.getLastKnownPosition();
+      } catch (_) {/* no cached fix — fall through to a fresh read */}
+      position ??= await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.reduced,
       ).timeout(_kLocationTimeout);
 
       // 4. Reverse geocode via Nominatim — works on all Android devices

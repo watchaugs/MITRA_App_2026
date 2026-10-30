@@ -27,6 +27,7 @@
 //   A module is "mastered" when mp_best_<id> == 100.
 // ═══════════════════════════════════════════════════════
 
+import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -34,6 +35,7 @@ import '../theme/theme_provider.dart'; // sharedPreferencesProvider
 
 String _bestKey(String id) => 'mp_best_$id';
 String _arSeenKey(String id) => 'mp_arseen_$id';
+const _lastModuleKey = 'mp_last_module';
 
 /// Immutable snapshot of one module's progress.
 class ModuleProgress {
@@ -94,6 +96,64 @@ class ModuleProgressStore {
     if (_prefs.getBool(_arSeenKey(id)) == true) return;
     await _prefs.setBool(_arSeenKey(id), true);
   }
+
+  /// Remember the last AR lesson the student opened, so Home's "Continue
+  /// Learning" card can show it with real progress. Called when a lesson opens.
+  Future<void> recordOpenedModule({
+    required String id,
+    required String title,
+    required String subject,
+    required String topic,
+  }) async {
+    if (id.isEmpty) return;
+    try {
+      await _prefs.setString(
+          _lastModuleKey,
+          jsonEncode({
+            'id': id,
+            'title': title,
+            'subject': subject,
+            'topic': topic,
+          }));
+    } catch (_) {/* best-effort */}
+  }
+
+  /// The last opened module (with its live best-% merged in), or null if none.
+  LastModule? readLastModule() {
+    try {
+      final raw = _prefs.getString(_lastModuleKey);
+      if (raw == null || raw.isEmpty) return null;
+      final m = jsonDecode(raw) as Map<String, dynamic>;
+      final id = (m['id'] ?? '').toString();
+      if (id.isEmpty) return null;
+      return LastModule(
+        id: id,
+        title: (m['title'] ?? '').toString(),
+        subject: (m['subject'] ?? '').toString(),
+        topic: (m['topic'] ?? '').toString(),
+        bestPct: bestPct(id),
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+}
+
+/// The most recently opened AR lesson — powers the "Continue Learning" card on
+/// Home with REAL data instead of a hardcoded placeholder.
+class LastModule {
+  final String id;
+  final String title;
+  final String subject;
+  final String topic;
+  final int bestPct;
+  const LastModule({
+    required this.id,
+    required this.title,
+    required this.subject,
+    required this.topic,
+    this.bestPct = 0,
+  });
 }
 
 /// Provider for the store itself (reads SharedPreferences synchronously).
@@ -105,3 +165,10 @@ final moduleProgressStoreProvider = Provider<ModuleProgressStore>((ref) {
 /// A tiny tick that bumps whenever progress changes, so widgets watching it
 /// rebuild (locks/badges refresh) without us wiring a full StateNotifier map.
 final moduleProgressTickProvider = StateProvider<int>((ref) => 0);
+
+/// The last-opened module for Home's Continue Learning card. Rebuilds when the
+/// progress tick bumps (e.g. after a quiz) so the % stays fresh.
+final lastModuleProvider = Provider<LastModule?>((ref) {
+  ref.watch(moduleProgressTickProvider);
+  return ref.watch(moduleProgressStoreProvider).readLastModule();
+});

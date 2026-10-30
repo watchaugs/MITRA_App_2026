@@ -188,6 +188,10 @@ class CurriculumAPI {
 
   static Future<Response> hierarchy(String stateCode) =>
       api.get('/api/curriculum/hierarchy/$stateCode');
+
+  // Real subject tiles for Home, derived from published AR assets, state-scoped.
+  static Future<Response> subjects(String state) => api.get(
+      '/api/curriculum/subjects/${Uri.encodeComponent(state.isEmpty ? "ALL" : state)}');
 }
 
 class ArAPI {

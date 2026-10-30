@@ -37,7 +37,7 @@ class GeoState {
 }
 
 class GeoStateService {
-  static const Duration _timeout = Duration(seconds: 12);
+  static const Duration _timeout = Duration(seconds: 20);
 
   // Resolve the student's licensed state from live GPS.
   static Future<GeoState> resolve() async {
@@ -69,15 +69,23 @@ class GeoStateService {
           message: 'Allow location access to continue.');
     }
 
-    // 3. Get a fix.
-    Position pos;
+    // 3. Get a fix — cached first (instant), then a fresh COARSE read.
+    // Approximate accuracy only (DPDP data-minimisation): a state is hundreds
+    // of km wide, so precise/fine location would collect more than the purpose
+    // needs. LocationAccuracy.reduced maps to ACCESS_COARSE_LOCATION.
+    Position? pos;
     try {
-      pos = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.medium,
-      ).timeout(_timeout);
-    } catch (_) {
-      return const GeoState(GeoStatus.gpsUnavailable,
-          message: 'Could not get your location. Try again outdoors.');
+      pos = await Geolocator.getLastKnownPosition();
+    } catch (_) {/* no cached fix */}
+    if (pos == null) {
+      try {
+        pos = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.reduced,
+        ).timeout(_timeout);
+      } catch (_) {
+        return const GeoState(GeoStatus.gpsUnavailable,
+            message: 'Could not get your location. Try again outdoors.');
+      }
     }
 
     // 4. Ask the backend which licensed state this point is in.
