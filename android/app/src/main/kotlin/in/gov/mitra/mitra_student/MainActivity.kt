@@ -13,12 +13,12 @@ class MainActivity : FlutterActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Block screenshots, screen recording, and hide app content in the
-        // recents/app-switcher preview. OS-enforced.
-        window.setFlags(
-            WindowManager.LayoutParams.FLAG_SECURE,
-            WindowManager.LayoutParams.FLAG_SECURE
-        )
+        // TEMP: screenshot block disabled for debugging. RE-ENABLE before release
+        // by un-commenting the FLAG_SECURE block below.
+        // window.setFlags(
+        //     WindowManager.LayoutParams.FLAG_SECURE,
+        //     WindowManager.LayoutParams.FLAG_SECURE
+        // )
     }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {

@@ -36,7 +36,9 @@ class _GreetingScreenState extends ConsumerState<GreetingScreen>
     super.initState();
 
     final user = ref.read(currentUserProvider);
-    _displayName = user?.fullName ?? 'Student';
+    _displayName = (user?.fullName.trim().isNotEmpty ?? false)
+        ? user!.fullName.trim()
+        : 'Student';
 
     // 3-second explicit animation timeline
     _controller = AnimationController(

@@ -189,15 +189,30 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         'id': firebaseUser.uid,
         'phone': firebaseUser.phoneNumber ?? '',
         'email': firebaseUser.email ?? '',
-        'name': firebaseUser.displayName ?? 'App ${_role.name}',
+        // Do NOT write a placeholder name here. A returning user already has
+        // full_name from onboarding; overwriting it (even into a different field)
+        // and caching the placeholder makes the name revert to "App student" on
+        // relaunch. Only set a name if Firebase actually gives us a real one.
+        if ((firebaseUser.displayName ?? '').trim().isNotEmpty)
+          'full_name': firebaseUser.displayName!.trim(),
         'role': 'student',
         'last_login': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
 
-      // 2. Exact match for YOUR MitraUser variables
+      // 2. Build the interim user from whatever REAL data we have. Never inject a
+      // placeholder like "App student" — the auth store will fetch the full
+      // profile (with the real full_name) from Firestore right after, and
+      // caching a placeholder here is what made the name revert on relaunch.
+      // Prefer an already-known name from the existing session if present.
+      final existing = ref.read(authProvider).user;
+      final knownName = (firebaseUser.displayName?.trim().isNotEmpty ?? false)
+          ? firebaseUser.displayName!.trim()
+          : (existing?.fullName.trim().isNotEmpty ?? false)
+              ? existing!.fullName.trim()
+              : '';
       final consumerUser = MitraUser(
         id: firebaseUser.uid,
-        fullName: firebaseUser.displayName ?? 'App ${_role.name}',
+        fullName: knownName, // empty until Firestore fills it; no placeholder
         phone: firebaseUser.phoneNumber ?? '',
         role: _role.name,
       );

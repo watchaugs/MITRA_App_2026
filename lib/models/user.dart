@@ -41,10 +41,14 @@ class MitraUser {
   bool get isStudent => role == 'student';
   bool get isTeacher => role == 'teacher';
 
-  // 🛠️ BUG-010 FIX: Safely handles empty names so the app doesn't crash
+  // 🛠️ Safely handles empty/blank names so the app shows a sensible fallback
+  // instead of a blank name during the brief window before Firestore loads.
   String get firstName {
-    final parts = fullName.trim().split(' ');
-    return parts.isNotEmpty ? parts.first : 'Student';
+    final trimmed = fullName.trim();
+    if (trimmed.isEmpty) return 'Student';
+    final parts = trimmed.split(' ');
+    final first = parts.first.trim();
+    return first.isEmpty ? 'Student' : first;
   }
 
   factory MitraUser.fromJson(Map<String, dynamic> json) {
