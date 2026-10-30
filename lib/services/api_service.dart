@@ -153,10 +153,6 @@ class AuthAPI {
             'sms', // 🚨 FIX 4: Forces the backend into the "Mobile OTP" lane
       });
 
-  static Future<Response> verifyOTP(String phone, String otp, String role) =>
-      api.post('/api/auth/verify-otp',
-          data: {'phone': phone, 'otp': otp, 'role': role});
-
   static Future<Response> me() => api.get('/api/auth/me');
 
   static Future<Response> logout() => api.post('/api/auth/logout');
