@@ -66,8 +66,10 @@ Future<void> main() async {
         await Firebase.initializeApp(
             options: DefaultFirebaseOptions.currentPlatform);
       }
-      // FirebaseMessaging.onBackgroundMessage(
-      //     _firebaseMessagingBackgroundHandler);
+      // Register the background handler so pushes show when the app is
+      // backgrounded or closed (Android delivers them via this isolate).
+      FirebaseMessaging.onBackgroundMessage(
+          _firebaseMessagingBackgroundHandler);
     } catch (e) {
       debugPrint('⚠️ Firebase: $e');
     }
@@ -239,6 +241,26 @@ class _MitraAppState extends ConsumerState<MitraApp>
         await _initLocalNotifications();
       } catch (e) {
         debugPrint('⚠️ local notif init: $e');
+      }
+    });
+    // Android 13+ (and iOS) require explicit runtime notification permission.
+    // Without this request the OS silently drops every push, so no tray
+    // notification ever appears even though the topic subscription succeeded.
+    Future(() async {
+      try {
+        await FirebaseMessaging.instance.requestPermission(
+          alert: true,
+          badge: true,
+          sound: true,
+        );
+        await FirebaseMessaging.instance
+            .setForegroundNotificationPresentationOptions(
+          alert: true,
+          badge: true,
+          sound: true,
+        );
+      } catch (e) {
+        debugPrint('⚠️ notif permission: $e');
       }
     });
     try {

@@ -372,6 +372,21 @@ class ArCatalog {
 /// Flatten a /manifest/<state> payload into the same maps the Learn screen
 /// already consumes. Returns null if the shape is unusable. A manifest only
 /// exists for a supported state, so territorySupported is true here.
+// Media URLs from the backend are RELATIVE (e.g. "/api/ar/file/xxx_lite.glb").
+// The 3D viewer, AR plugin and audio player all need an ABSOLUTE https URL, so
+// we prefix the API base URL. Values that are already absolute (http/https) or
+// bundled assets ("assets/...") are returned unchanged.
+String _absMedia(String url) {
+  final u = url.trim();
+  if (u.isEmpty) return u;
+  if (u.startsWith('http://') || u.startsWith('https://')) return u;
+  if (u.startsWith('assets/')) return u;
+  final base =
+      ApiService.instance.dio.options.baseUrl.replaceAll(RegExp(r'/+$'), '');
+  final path = u.startsWith('/') ? u : '/$u';
+  return '$base$path';
+}
+
 ArCatalog? _catalogFromManifest(dynamic data) {
   if (data is! Map) return null;
   final classes = data['classes'];
@@ -409,13 +424,13 @@ ArCatalog? _catalogFromManifest(dynamic data) {
           ));
           // flutter_url = Draco _lite.glb (for the on-screen 3D viewer).
           // native_url  = non-Draco _native.glb (for floor AR / Filament).
-          final glb = (l['flutter_url'] ?? '').toString();
+          final glb = _absMedia((l['flutter_url'] ?? '').toString());
           if (glb.isNotEmpty) glbById[id] = glb;
-          final nativeGlb = (l['native_url'] ?? '').toString();
+          final nativeGlb = _absMedia((l['native_url'] ?? '').toString());
           if (nativeGlb.isNotEmpty) nativeGlbById[id] = nativeGlb;
-          final vid = (l['video_url'] ?? '').toString();
+          final vid = _absMedia((l['video_url'] ?? '').toString());
           if (vid.isNotEmpty) videoById[id] = vid;
-          final aud = (l['audio_url'] ?? '').toString();
+          final aud = _absMedia((l['audio_url'] ?? '').toString());
           if (aud.isNotEmpty) audioById[id] = aud;
           if (l['chroma_enabled'] == true) {
             chromaById[id] = (l['chroma_color'] ?? '#00ff00').toString();
@@ -491,14 +506,15 @@ final arCatalogProvider = FutureProvider<ArCatalog>((ref) async {
         topic: (m['topic'] ?? subject).toString(),
         languageTag: (m['language_tag'] ?? m['language'] ?? 'all').toString(),
       ));
-      final glb =
-          (m['flutter_url'] ?? m['glb_url'] ?? m['model_url'] ?? '').toString();
+      final glb = _absMedia(
+          (m['flutter_url'] ?? m['glb_url'] ?? m['model_url'] ?? '')
+              .toString());
       if (glb.isNotEmpty) glbById[id] = glb;
-      final nativeGlb = (m['native_url'] ?? '').toString();
+      final nativeGlb = _absMedia((m['native_url'] ?? '').toString());
       if (nativeGlb.isNotEmpty) nativeGlbById[id] = nativeGlb;
-      final vid = (m['video_url'] ?? '').toString();
+      final vid = _absMedia((m['video_url'] ?? '').toString());
       if (vid.isNotEmpty) videoById[id] = vid;
-      final aud = (m['audio_url'] ?? '').toString();
+      final aud = _absMedia((m['audio_url'] ?? '').toString());
       if (aud.isNotEmpty) audioById[id] = aud;
       if (m['chroma_enabled'] == true) {
         chromaById[id] = (m['chroma_color'] ?? '#00ff00').toString();
