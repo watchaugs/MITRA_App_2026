@@ -20,6 +20,7 @@ import '../../demo/demo_data.dart';
 import '../../theme/theme_provider.dart';
 //import '../../providers/telemetry_provider.dart';
 import '../../stores/auth_store.dart';
+import '../../services/geo_state_service.dart';
 import '../../services/achievement_engine.dart'; // ✨ Added Engine Import
 
 class QuizScreen extends ConsumerStatefulWidget {
@@ -92,10 +93,18 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
     // per state (questions are fixed for the year) and cached on the device, so
     // taking a quiz makes NO network call. Only results sync back (batched).
     try {
-      final state = ref.read(currentUserProvider)?.assignedState ?? '';
+      // GPS-detected licensed state (same source as content), not just profile.
+      final state = ref.read(effectiveStateProvider);
       final store = ref.read(quizPackStoreProvider);
       await store.ensurePack(state); // no-op if already on the device
-      final loaded = await store.questionsFor(widget.quizId);
+      var loaded = await store.questionsFor(widget.quizId);
+      // Stale-pack guard: a pack cached BEFORE this quiz was published won't
+      // contain it. If the quiz is missing, force one fresh download and retry
+      // so newly-published quizzes appear without a reinstall.
+      if (loaded.isEmpty) {
+        await store.refresh(state);
+        loaded = await store.questionsFor(widget.quizId);
+      }
       setState(() {
         _questions = List.from(loaded); // may be empty → clean empty state
         _studentAnswers.addAll(List.filled(_questions.length, null));
