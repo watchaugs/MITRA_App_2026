@@ -9,7 +9,8 @@ build/
 
 # Environment — NEVER commit real .env values
 .env
-!.env.example
+.env.example
+*.jks
 
 # Android
 android/local.properties

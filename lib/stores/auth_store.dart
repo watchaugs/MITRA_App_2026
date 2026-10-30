@@ -21,6 +21,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../models/user.dart';
 import '../services/telemetry_service.dart';
 import '../providers/telemetry_provider.dart';
@@ -28,6 +29,10 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/widgets.dart';
 
 const _kCachedUserKey = 'mitra_cached_user_json';
+
+// The cached profile contains a minor's PII (name, phone, gender, state/district),
+// so it is stored ENCRYPTED via flutter_secure_storage, not plaintext SharedPreferences.
+const _secureProfileStore = FlutterSecureStorage();
 
 // ── Auth State class ───────────────────────────────────
 class AuthState {
@@ -81,8 +86,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         state = const AuthState(isLoggedIn: false, isLoading: false);
         return;
       }
-      final prefs = await SharedPreferences.getInstance();
-      final raw = prefs.getString(_kCachedUserKey);
+      final raw = await _secureProfileStore.read(key: _kCachedUserKey);
       if (raw != null && raw.isNotEmpty) {
         final map = jsonDecode(raw) as Map<String, dynamic>;
         final cached = MitraUser.fromJson(map);
@@ -152,8 +156,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   Future<void> _cacheUser(MitraUser user) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_kCachedUserKey, jsonEncode(user.toJson()));
+      await _secureProfileStore.write(
+          key: _kCachedUserKey, value: jsonEncode(user.toJson()));
     } catch (e) {
       debugPrint('⚠️  Cache user failed: $e');
     }
@@ -161,8 +165,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   Future<void> _clearCachedUser() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove(_kCachedUserKey);
+      await _secureProfileStore.delete(key: _kCachedUserKey);
     } catch (_) {}
   }
 
