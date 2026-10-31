@@ -37,12 +37,14 @@ class ArRoomScreen extends ConsumerStatefulWidget {
   final String topicId;
   final String? modelUrl; // https GLB from the catalog/backend (preferred)
   final String? audioUrl; // https narration audio (synced on placement)
+  final VoidCallback? onNativeLoadFailed;
 
   const ArRoomScreen({
     super.key,
     required this.topicId,
     this.modelUrl,
     this.audioUrl,
+    this.onNativeLoadFailed,
   });
 
   static const String _bundledAsset = 'assets/ar/models/mitra_demo_spin.glb';
@@ -202,7 +204,22 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
         _hint = 'Placed! Walk around it. Tap it to replay · ⟳ to move it.';
       });
     } else {
-      setState(() => _hint = 'Could not load the model. Check the model file.');
+      // Native Filament couldn't load this model (too heavy for the device, or a
+      // mis-tiered/Draco GLB slipped through). Rather than a dead end, offer the
+      // on-screen 3D viewer, which uses a full WebGL renderer (model_viewer_plus)
+      // that handles larger/compressed models far more gracefully than Filament.
+      if (mounted) {
+        setState(() =>
+            _hint = 'This model is heavy for live AR — switching to 3D view…');
+        await _anchorManager.removeAnchor(anchor);
+        _anchors.remove(anchor);
+        if (widget.onNativeLoadFailed != null) {
+          widget.onNativeLoadFailed!();
+        } else {
+          setState(() => _hint =
+              'Could not load the model in AR. Try the 3D view from the lesson, or re-upload a lighter model.');
+        }
+      }
     }
   }
 

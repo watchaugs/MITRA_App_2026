@@ -108,6 +108,10 @@ class _ArEntryScreenState extends ConsumerState<ArEntryScreen> {
                 ? widget.nativeModelUrl
                 : widget.modelUrl,
         audioUrl: widget.audioUrl,
+        // If native AR can't load the model, drop to the on-screen 3D viewer.
+        onNativeLoadFailed: () {
+          if (mounted) setState(() => _arCapable = false);
+        },
       );
     }
 
