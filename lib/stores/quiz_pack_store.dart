@@ -112,9 +112,26 @@ class QuizPackStore {
         while (opts.length < 4) {
           opts.add('');
         }
-        final ci = (m['correct_index'] is int)
-            ? m['correct_index'] as int
-            : int.tryParse('${m['correct_index']}') ?? 0;
+        // Accept every field name the dashboard/backend may use for the answer
+        // index (correct_answer_index is the canonical one; others are legacy).
+        // An old app must not silently default every question to "A".
+        dynamic rawCi = m['correct_answer_index'] ??
+            m['correct_index'] ??
+            m['correctIndex'] ??
+            m['answer_index'];
+        int ci;
+        if (rawCi is int) {
+          ci = rawCi;
+        } else {
+          ci = int.tryParse('${rawCi ?? ''}') ?? -1;
+          // Also accept a letter answer ('A'..'D').
+          if (ci < 0) {
+            final letter =
+                '${m['answer'] ?? m['correct'] ?? ''}'.trim().toUpperCase();
+            final li = ['A', 'B', 'C', 'D'].indexOf(letter);
+            ci = li >= 0 ? li : 0;
+          }
+        }
         return QuizQuestion(
           questionText: (m['question_text'] ?? '').toString(),
           options: opts,
