@@ -344,6 +344,7 @@ typedef ArLessonRec = ({
   String title,
   String topic,
   String languageTag,
+  String classTag,
 });
 
 /// The AR lessons to show (grouped by subject) plus a side map of each
@@ -401,6 +402,7 @@ ArCatalog? _catalogFromManifest(dynamic data) {
   final chromaById = <String, String>{};
   for (final c in classes) {
     if (c is! Map) continue;
+    final className = (c['class_name'] ?? c['class'] ?? '').toString();
     final subjects = c['subjects'];
     if (subjects is! List) continue;
     for (final sj in subjects) {
@@ -423,6 +425,7 @@ ArCatalog? _catalogFromManifest(dynamic data) {
             topic: topic,
             languageTag:
                 (l['language_tag'] ?? l['language'] ?? 'all').toString(),
+            classTag: (l['class_name'] ?? className).toString(),
           ));
           // flutter_url = Draco _lite.glb (for the on-screen 3D viewer).
           // native_url  = non-Draco _native.glb (for floor AR / Filament).
@@ -506,6 +509,7 @@ final arCatalogProvider = FutureProvider<ArCatalog>((ref) async {
         title: (m['title'] ?? id).toString(),
         topic: (m['topic'] ?? subject).toString(),
         languageTag: (m['language_tag'] ?? m['language'] ?? 'all').toString(),
+        classTag: (m['class_name'] ?? m['class'] ?? '').toString(),
       ));
       final glb = _absMedia(
           (m['flutter_url'] ?? m['glb_url'] ?? m['model_url'] ?? '')
@@ -583,25 +587,35 @@ class LearnScreen extends ConsumerStatefulWidget {
 
   // ✨ Hardcoded mapping of AR Lessons to their respective subjects
   static const _arLessonsBySubject = <String,
-      List<({String id, String title, String topic, String languageTag})>>{
+      List<
+          ({
+            String id,
+            String title,
+            String topic,
+            String languageTag,
+            String classTag
+          })>>{
     'Science': [
       (
         id: 'cell-division',
         title: 'Cell Division 3D',
         topic: 'Biology',
-        languageTag: 'all'
+        languageTag: 'all',
+        classTag: ''
       ),
       (
         id: 'atom-structure-en',
         title: 'Atom Structure (English Audio)',
         topic: 'Chemistry',
-        languageTag: 'en'
+        languageTag: 'en',
+        classTag: ''
       ),
       (
         id: 'atom-structure-hi',
         title: 'Atom Structure (Hindi Audio)',
         topic: 'Chemistry',
-        languageTag: 'hi'
+        languageTag: 'hi',
+        classTag: ''
       ),
     ],
     'Geography': [
@@ -609,13 +623,15 @@ class LearnScreen extends ConsumerStatefulWidget {
         id: 'solar-system',
         title: 'Solar System 3D',
         topic: 'Space',
-        languageTag: 'all'
+        languageTag: 'all',
+        classTag: ''
       ),
       (
         id: 'ocean-layers',
         title: 'Ocean Layers 3D',
         topic: 'Earth',
-        languageTag: 'all'
+        languageTag: 'all',
+        classTag: ''
       ),
     ],
     'History': [
@@ -623,7 +639,8 @@ class LearnScreen extends ConsumerStatefulWidget {
         id: 'ancient-rome',
         title: 'Ancient Rome 3D',
         topic: 'World History',
-        languageTag: 'all'
+        languageTag: 'all',
+        classTag: ''
       ),
     ],
   };
@@ -891,10 +908,25 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
                               final arLessonsForSubject =
                                   arBySubject[entry.key] ?? [];
 
+                              // Scope to the student's OWN class: a Class IX
+                              // student must not see other classes' modules.
+                              // Lessons with no class tag are shown (ungated
+                              // legacy content), as are exact class matches.
+                              final userClass =
+                                  (ref.watch(currentUserProvider)?.classGrade ??
+                                          '')
+                                      .trim()
+                                      .toLowerCase();
                               final filteredArLessons =
                                   arLessonsForSubject.where((ar) {
-                                return ar.languageTag == currentLang ||
+                                final langOk = ar.languageTag == currentLang ||
                                     ar.languageTag == 'all';
+                                final arClass =
+                                    ar.classTag.trim().toLowerCase();
+                                final classOk = userClass.isEmpty ||
+                                    arClass.isEmpty ||
+                                    arClass == userClass;
+                                return langOk && classOk;
                               }).toList();
 
                               if (entry.value.isEmpty &&
@@ -1116,8 +1148,7 @@ class _StatBadge extends StatelessWidget {
 class _SubjectSection extends ConsumerWidget {
   final String subject;
   final List<QuizSummary> quizzes;
-  final List<({String id, String title, String topic, String languageTag})>
-      arLessons;
+  final List<ArLessonRec> arLessons;
   final bool hideHeader; // ✨ New parameter to control header visibility
   final ValueChanged<String> onQuizTap;
   final ValueChanged<String> onArTap;
@@ -1319,7 +1350,7 @@ class _QuizTile extends StatelessWidget {
 // ── AR Lesson tile (gated + badge + N-questions subtext) ─────────────────
 
 class _ArTile extends StatelessWidget {
-  final ({String id, String title, String topic, String languageTag}) lesson;
+  final ArLessonRec lesson;
   final ValueChanged<String> onTap;
   final bool unlocked; // false = greyed, tap shows "unlock" hint
   final int bestPct; // 0..100 best score on this module

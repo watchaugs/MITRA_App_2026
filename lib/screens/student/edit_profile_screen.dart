@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import '../../constants/colors.dart';
 import '../../stores/auth_store.dart';
+import '../../providers/translation_provider.dart';
+import '../../providers/consent_i18n.dart';
 import '../../widgets/orbit_explorer.dart';
 
 const _kFirestoreTimeout = Duration(seconds: 10);
@@ -173,12 +175,25 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 (classChanged && !_classLocked) ? _class : user.classGrade,
           ));
 
+      // Apply the chosen language to the LIVE translation engines so the whole
+      // UI re-renders in it immediately — saving the profile field alone does
+      // not switch the interface language.
+      final langChanged = _lang != (user.languagePreference ?? '');
+      if (langChanged) {
+        await ref.read(translationProvider.notifier).loadLanguagePack(_lang);
+        await ref.read(consentI18nProvider.notifier).load(_lang);
+      }
+
       if (mounted) {
         _toast('Profile updated.');
         Navigator.of(context).maybePop();
       }
-    } catch (e) {
-      _toast('Could not save. Please try again.');
+    } catch (e, st) {
+      // TEMP DIAGNOSTIC: surface the REAL reason the save failed instead of a
+      // generic message. Revert to the generic toast once the cause is known.
+      debugPrint('🚨 PROFILE SAVE FAILED: $e');
+      debugPrint('$st');
+      _toast('Could not save: ${e.toString().split('\n').first}');
     } finally {
       if (mounted) setState(() => _saving = false);
     }

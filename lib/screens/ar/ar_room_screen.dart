@@ -175,14 +175,13 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
     String nodeUri;
     NodeType nodeType;
     if (isRemote) {
-      final cachedName = await _cacheRemoteModel(widget.modelUrl!);
-      if (cachedName != null) {
-        nodeUri = cachedName;
-        nodeType = NodeType.fileSystemAppFolderGLB;
-      } else {
-        nodeUri = widget.modelUrl!;
-        nodeType = NodeType.webGLB; // fallback: stream directly
-      }
+      // Stream the remote GLB directly. The file-cache path
+      // (fileSystemAppFolderGLB) resolved to a folder this plugin build does
+      // NOT read from, throwing FileNotFoundException and leaving a black scene.
+      // webGLB hands the URL straight to the native loader (same reliable path
+      // the narration audio already uses), so the model actually loads.
+      nodeUri = widget.modelUrl!;
+      nodeType = NodeType.webGLB;
     } else {
       nodeUri = await _ensureLocalModel();
       nodeType = NodeType.fileSystemAppFolderGLB;
