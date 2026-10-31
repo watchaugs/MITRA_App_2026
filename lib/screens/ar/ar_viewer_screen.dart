@@ -136,6 +136,9 @@ class _ArViewerScreenState extends ConsumerState<ArViewerScreen> {
                   mv.setAttribute('ar-placement', 'floor');
                   mv.setAttribute('ar-scale', 'auto');
                   mv.setAttribute('shadow-intensity', '1');
+                  mv.setAttribute('tone-mapping', 'neutral');
+                  mv.setAttribute('exposure', '1.2');
+                  mv.setAttribute('environment-image', 'neutral');
                 }
               ''',
             ),
