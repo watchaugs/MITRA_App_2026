@@ -30,6 +30,7 @@ import '../screens/ar/ar_entry_screen.dart';
 import '../stores/auth_store.dart';
 import '../screens/auth/consent_screen.dart';
 import '../screens/auth/location_screen.dart';
+import '../screens/auth/language_screen.dart';
 import '../screens/auth/greeting_screen.dart';
 import 'screens/student/edit_profile_screen.dart';
 import 'screens/legal/policy_screen.dart';
@@ -135,6 +136,13 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/location',
         builder: (context, state) => const LocationScreen(),
+      ),
+      GoRoute(
+        path: '/language',
+        builder: (context, state) => LanguageScreen(
+          nextRoute: state.uri.queryParameters['next'] ?? '/consent',
+          state: state.uri.queryParameters['state'],
+        ),
       ),
       GoRoute(
         path: '/setup/class',

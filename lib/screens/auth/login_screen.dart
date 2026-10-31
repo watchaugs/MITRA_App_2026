@@ -266,11 +266,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       final String homeRoute =
           _role == _Role.teacher ? '/teacher/home' : '/student/home';
 
+      // New users: determine LOCATION first → that sets the regional language →
+      // then the language picker → then consent (shown in the chosen language).
+      // Returning users who already consented skip straight to the greeting.
+      final onboardingDone = prefs.getBool('onboardingComplete') ?? false;
       if (consentGiven) {
-        // Intercept home routing and pass it via the Greeting page path
         context.go('/greeting?next=$homeRoute');
+      } else if (!onboardingDone) {
+        // location → language → consent → home
+        context.go('/location');
       } else {
-        context.go('/consent?next=$homeRoute');
+        // Location already captured earlier; go to language then consent.
+        final st = Uri.encodeComponent(_pendingState ?? '');
+        context.go(
+            '/language?next=${Uri.encodeComponent('/consent?next=$homeRoute')}&state=$st');
       }
     } catch (e) {
       debugPrint("🚨 FIRESTORE ERROR: $e");

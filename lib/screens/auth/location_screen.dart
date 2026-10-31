@@ -364,7 +364,12 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
         // ✨ Route through the animated greeting screen as the grand finale before Home!
         context.go('/greeting?next=${_LocRoutes.home}');
       } else {
-        context.go('${_LocRoutes.consent}?next=${_LocRoutes.home}');
+        // Location is known → pick the language (regional + Hindi + English),
+        // THEN show consent in that language. DPDP: consent in a chosen language.
+        final consentNext = Uri.encodeComponent(
+            '${_LocRoutes.consent}?next=${_LocRoutes.home}');
+        final st = Uri.encodeComponent(_state ?? '');
+        context.go('/language?next=$consentNext&state=$st');
       }
     } on TimeoutException {
       if (opId != _saveOpId || !mounted) return;

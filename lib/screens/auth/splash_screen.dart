@@ -119,9 +119,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
           final bool consentGiven = prefs.getBool('consentGiven') ?? false;
           final String homeRoute =
               role == 'teacher' ? '/teacher/home' : '/student/home';
-          _nextRoute = consentGiven
-              ? '/greeting?next=$homeRoute'
-              : '/consent?next=$homeRoute';
+          _nextRoute = consentGiven ? '/greeting?next=$homeRoute' : '/location';
         }
       } else {
         // No one is logged in. Check SharedPreferences to see if we skip Onboarding.
