@@ -119,6 +119,7 @@ class _ArEntryScreenState extends ConsumerState<ArEntryScreen> {
     return ArViewerScreen(
       topicId: widget.topicId,
       modelUrl: widget.modelUrl,
+      nativeModelUrl: widget.nativeModelUrl, // non-Draco → no black screen
       targetsUrl: widget.targetsUrl,
       audioUrl: widget.audioUrl,
       videoUrl: widget.videoUrl,

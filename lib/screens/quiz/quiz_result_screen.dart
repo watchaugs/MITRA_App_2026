@@ -4,14 +4,16 @@
 // ═══════════════════════════════════════════════════════
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../providers/tr_ext.dart';
 import '../../widgets/mitra_scaffold.dart';
 import '../../widgets/language_alphabet_background.dart';
 import '../../constants/colors.dart';
 import '../../models/quiz_model.dart';
 import 'package:lottie/lottie.dart';
 
-class QuizResultScreen extends StatelessWidget {
+class QuizResultScreen extends ConsumerWidget {
   final int score;
   final int total;
   final int xpEarned;
@@ -30,7 +32,7 @@ class QuizResultScreen extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final pct = total > 0 ? (score / total * 100).toInt() : 0;
 
     // ✨ Mastery Gate Logic
@@ -196,8 +198,10 @@ class QuizResultScreen extends StatelessWidget {
                                 )
                               ]),
                           alignment: Alignment.center,
-                          child: const Text('🔄 Re-watch AR Lesson',
-                              style: TextStyle(
+                          child: Text(
+                              context.tr(ref, 'quiz_rewatch_ar',
+                                  '🔄 Re-watch AR Lesson'),
+                              style: const TextStyle(
                                   fontFamily: 'Baloo2',
                                   fontWeight: FontWeight.w800,
                                   fontSize: 18,
@@ -221,8 +225,10 @@ class QuizResultScreen extends StatelessWidget {
                                     BorderRadius.circular(MitraRadius.pill),
                               ),
                               alignment: Alignment.center,
-                              child: const Text('Back to Home',
-                                  style: TextStyle(
+                              child: Text(
+                                  context.tr(
+                                      ref, 'quiz_back_home', 'Back to Home'),
+                                  style: const TextStyle(
                                       fontFamily: 'Baloo2',
                                       fontWeight: FontWeight.w700,
                                       fontSize: 16,
@@ -233,8 +239,10 @@ class QuizResultScreen extends StatelessWidget {
                         const SizedBox(height: 10),
                         TextButton(
                           onPressed: () => context.go('/student/learn'),
-                          child: const Text('Next Module',
-                              style: TextStyle(
+                          child: Text(
+                              context.tr(
+                                  ref, 'quiz_next_module', 'Next Module'),
+                              style: const TextStyle(
                                   fontFamily: 'Mukta',
                                   fontSize: 14,
                                   color: MitraColors.sky)),

@@ -42,6 +42,7 @@ import '../../services/api_service.dart';
 import '../../services/geo_state_service.dart';
 import '../../stores/auth_store.dart';
 import '../../providers/translation_provider.dart'; // ✨ Added for language filtering
+import '../../providers/tr_ext.dart';
 import '../../widgets/orbit_explorer.dart';
 import '../../stores/module_progress_store.dart';
 
@@ -682,7 +683,11 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
                         style: const TextStyle(fontSize: 48)),
                     const SizedBox(height: 16),
                     Text(
-                      isGps ? 'Location needed' : 'Not available here yet',
+                      isGps
+                          ? context.tr(
+                              ref, 'learn_location_needed', 'Location needed')
+                          : context.tr(ref, 'learn_not_available_here',
+                              'Not available here yet'),
                       textAlign: TextAlign.center,
                       style: const TextStyle(
                           fontFamily: 'Baloo2',
@@ -693,8 +698,10 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
                     Text(
                       geo.message ??
                           (isGps
-                              ? 'Turn on location to access your state\'s lessons.'
-                              : 'MITRA is not yet available in your location.'),
+                              ? context.tr(ref, 'learn_location_needed_body',
+                                  'Turn on location to access your state\'s lessons.')
+                              : context.tr(ref, 'learn_not_available_body',
+                                  'MITRA is not yet available in your location.')),
                       textAlign: TextAlign.center,
                       style: const TextStyle(
                           fontFamily: 'Mukta',
@@ -705,7 +712,8 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
                     if (isGps)
                       ElevatedButton(
                         onPressed: () => ref.invalidate(geoStateProvider),
-                        child: const Text('Try again'),
+                        child:
+                            Text(context.tr(ref, 'btn_try_again', 'Try again')),
                       ),
                   ],
                 ),

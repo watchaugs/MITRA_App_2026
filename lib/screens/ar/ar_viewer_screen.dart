@@ -24,6 +24,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:model_viewer_plus/model_viewer_plus.dart';
+import 'package:audioplayers/audioplayers.dart';
 import '../../constants/colors.dart';
 import '../../theme/theme_provider.dart';
 import '../../providers/device_capability_provider.dart';
@@ -31,7 +32,8 @@ import '../../services/device_probe.dart';
 
 class ArViewerScreen extends ConsumerStatefulWidget {
   final String topicId;
-  final String? modelUrl; // ?glb=
+  final String? modelUrl; // ?glb=  (Draco _lite.glb — needs a WASM decoder)
+  final String? nativeModelUrl; // ?nglb=  (non-Draco _native.glb — no decoder)
   final String? targetsUrl; // ?mind=  (kept for route compatibility; unused)
   final String? audioUrl; // ?audio=
   final String? videoUrl; // ?video=
@@ -41,6 +43,7 @@ class ArViewerScreen extends ConsumerStatefulWidget {
     super.key,
     required this.topicId,
     this.modelUrl,
+    this.nativeModelUrl,
     this.targetsUrl,
     this.audioUrl,
     this.videoUrl,
@@ -56,6 +59,31 @@ class ArViewerScreen extends ConsumerStatefulWidget {
 }
 
 class _ArViewerScreenState extends ConsumerState<ArViewerScreen> {
+  final AudioPlayer _audio = AudioPlayer();
+
+  @override
+  void initState() {
+    super.initState();
+    _startNarration();
+  }
+
+  // Narration is a SEPARATE file (glTF can't carry audio). The on-screen viewer
+  // previously declared audioUrl but never played it — this plays it on open.
+  Future<void> _startNarration() async {
+    final url = widget.audioUrl;
+    if (url == null || url.trim().isEmpty) return;
+    try {
+      await _audio.stop();
+      await _audio.play(UrlSource(url.trim()));
+    } catch (_) {/* narration is best-effort; never block the model */}
+  }
+
+  @override
+  void dispose() {
+    _audio.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = ref.watch(themeProvider);
@@ -68,10 +96,18 @@ class _ArViewerScreenState extends ConsumerState<ArViewerScreen> {
         );
     final arCapable = tier != DeviceTier.low;
 
-    final hasRemote =
-        widget.modelUrl != null && widget.modelUrl!.trim().isNotEmpty;
-    final src =
-        hasRemote ? widget.modelUrl!.trim() : ArViewerScreen._bundledDemoGlb;
+    // model_viewer renders in a WebView. A Draco-compressed GLB (_lite.glb)
+    // needs Google's decoder WASM fetched at runtime — on a restricted/offline
+    // school phone that fails SILENTLY and the model area is just BLACK. The
+    // non-Draco native tier (_native.glb, embedded JPEG textures) has no such
+    // dependency, so prefer it here; fall back to the Draco url, then the demo.
+    final nativeSrc = widget.nativeModelUrl?.trim();
+    final dracoSrc = widget.modelUrl?.trim();
+    final src = (nativeSrc != null && nativeSrc.isNotEmpty)
+        ? nativeSrc
+        : (dracoSrc != null && dracoSrc.isNotEmpty
+            ? dracoSrc
+            : ArViewerScreen._bundledDemoGlb);
 
     return Scaffold(
       backgroundColor: Colors.black,

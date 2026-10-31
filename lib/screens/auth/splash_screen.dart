@@ -15,6 +15,8 @@ import 'package:firebase_core/firebase_core.dart';
 // import '../../services/api_service.dart'; // Unused: kept for reference
 import '../../stores/auth_store.dart';
 import '../../models/user.dart';
+import '../../services/app_version_gate.dart';
+import 'update_required_screen.dart';
 import '../../widgets/mitra_scaffold.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
@@ -62,6 +64,20 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   }
 
   Future<void> _checkAuth() async {
+    // ── Force-update gate ──────────────────────────────────────────────────
+    // Before anything else, ask the backend whether this installed build is
+    // still supported. If the backend says it's too old to work, send the
+    // student to the update screen and stop. Best-effort: a failed check
+    // returns "ok" and the app proceeds as normal (never block on config).
+    try {
+      final vs = await AppVersionGate.check('');
+      if (vs.mustUpdate && mounted) {
+        Navigator.of(context).pushReplacement(MaterialPageRoute(
+          builder: (_) => UpdateRequiredScreen(updateUrl: vs.updateUrl),
+        ));
+        return;
+      }
+    } catch (_) {/* config unreachable → continue normally */}
     debugPrint("🚨 SPLASH: Checking native Firebase Auth...");
 
     try {

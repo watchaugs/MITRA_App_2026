@@ -10,6 +10,7 @@ import 'package:go_router/go_router.dart';
 import 'widgets/settings_group.dart';
 import 'widgets/data_rights_section.dart';
 import 'widgets/feedback_dialog.dart';
+import '../../providers/tr_ext.dart';
 
 class StudentProfileScreen extends ConsumerWidget {
   const StudentProfileScreen({super.key});
@@ -61,7 +62,8 @@ class StudentProfileScreen extends ConsumerWidget {
                   OutlinedButton.icon(
                     onPressed: () => context.push('/student/edit-profile'),
                     icon: const Icon(Icons.edit, size: 16),
-                    label: const Text('Edit Profile'),
+                    label:
+                        Text(context.tr(ref, 'profile_edit', 'Edit Profile')),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: Theme.of(context).colorScheme.onSurface,
                       side: BorderSide(
@@ -119,7 +121,8 @@ class StudentProfileScreen extends ConsumerWidget {
                             backgroundColor: Colors
                                 .transparent, // Keeps container overlay translucent
                             collapsedBackgroundColor: Colors.transparent,
-                            title: Text('Themes',
+                            title: Text(
+                                context.tr(ref, 'profile_themes', 'Themes'),
                                 style: TextStyle(
                                     fontFamily: 'Baloo2',
                                     fontWeight: FontWeight.w700,
@@ -256,7 +259,9 @@ class StudentProfileScreen extends ConsumerWidget {
                       child: ListTile(
                         leading:
                             const Text('💬', style: TextStyle(fontSize: 20)),
-                        title: Text('Share feedback',
+                        title: Text(
+                            context.tr(ref, 'profile_share_feedback',
+                                'Share feedback'),
                             style: TextStyle(
                                 fontFamily: 'Mukta',
                                 fontWeight: FontWeight.w600,
@@ -292,8 +297,9 @@ class StudentProfileScreen extends ConsumerWidget {
                                     BorderRadius.circular(MitraRadius.pill))),
                         onPressed: () =>
                             ref.read(authProvider.notifier).logout(),
-                        child: const Text('Sign Out',
-                            style: TextStyle(
+                        child: Text(
+                            context.tr(ref, 'profile_sign_out', 'Sign Out'),
+                            style: const TextStyle(
                                 fontFamily: 'Baloo2',
                                 fontWeight: FontWeight.w700)),
                       ),

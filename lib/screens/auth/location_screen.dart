@@ -368,7 +368,7 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
         // THEN show consent in that language. DPDP: consent in a chosen language.
         final consentNext = Uri.encodeComponent(
             '${_LocRoutes.consent}?next=${_LocRoutes.home}');
-        final st = Uri.encodeComponent(_state ?? '');
+        final st = Uri.encodeComponent(_state);
         context.go('/language?next=$consentNext&state=$st');
       }
     } on TimeoutException {

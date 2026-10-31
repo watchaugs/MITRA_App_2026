@@ -277,9 +277,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         context.go('/location');
       } else {
         // Location already captured earlier; go to language then consent.
-        final st = Uri.encodeComponent(_pendingState ?? '');
+        // State isn't known in this scope — the language screen falls back to
+        // Hindi + English, and the main onboarding path (/location) sets it.
         context.go(
-            '/language?next=${Uri.encodeComponent('/consent?next=$homeRoute')}&state=$st');
+            '/language?next=${Uri.encodeComponent('/consent?next=$homeRoute')}');
       }
     } catch (e) {
       debugPrint("🚨 FIRESTORE ERROR: $e");

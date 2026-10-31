@@ -22,6 +22,7 @@ import '../../theme/theme_provider.dart';
 import '../../stores/auth_store.dart';
 import '../../services/geo_state_service.dart';
 import '../../services/achievement_engine.dart'; // ✨ Added Engine Import
+import '../../providers/tr_ext.dart';
 
 class QuizScreen extends ConsumerStatefulWidget {
   final String quizId;
@@ -284,27 +285,28 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
                 onPressed: () => context.pop(),
               ),
             ),
-            body: const Center(
+            body: Center(
               child: Padding(
-                padding: EdgeInsets.all(32),
+                padding: const EdgeInsets.all(32),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text('📝', style: TextStyle(fontSize: 56)),
-                    SizedBox(height: 16),
+                    const Text('📝', style: TextStyle(fontSize: 56)),
+                    const SizedBox(height: 16),
                     Text(
-                      'No quiz yet',
-                      style: TextStyle(
+                      context.tr(ref, 'learn_no_quiz', 'No quiz yet'),
+                      style: const TextStyle(
                           fontFamily: 'Baloo2',
                           fontWeight: FontWeight.w800,
                           fontSize: 20,
                           color: MitraColors.textPrimary),
                     ),
-                    SizedBox(height: 8),
+                    const SizedBox(height: 8),
                     Text(
-                      "This module's quiz will appear here once it is released.",
+                      context.tr(ref, 'quiz_no_quiz_body',
+                          "This module's quiz will appear here once it is released."),
                       textAlign: TextAlign.center,
-                      style: TextStyle(
+                      style: const TextStyle(
                           fontFamily: 'Mukta',
                           fontSize: 14,
                           color: MitraColors.textSecondary),
@@ -334,7 +336,11 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
             backgroundColor: Colors.transparent,
             elevation: 0,
             title: Text(
-              'Question ${_current + 1}/${_questions.length}',
+              context.trp(
+                  ref, 'quiz_question_of', 'Question {current}/{total}', {
+                'current': '${_current + 1}',
+                'total': '${_questions.length}'
+              }),
               style: const TextStyle(
                   fontFamily: 'Baloo2',
                   fontWeight: FontWeight.w700,

@@ -7,6 +7,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../providers/tr_ext.dart';
 import '../../constants/colors.dart';
 import '../../stores/auth_store.dart';
 import '../../stores/module_progress_store.dart';
@@ -338,7 +339,7 @@ class HomeScreen extends ConsumerWidget {
 
                     // Subjects
                     _Section(
-                      title: 'Subjects',
+                      title: context.tr(ref, 'home_subjects', 'Subjects'),
                       child: subjectsAsync.when(
                         loading: () => const Padding(
                           padding: EdgeInsets.all(32.0),
@@ -346,16 +347,21 @@ class HomeScreen extends ConsumerWidget {
                               child: CircularProgressIndicator(
                                   color: MitraColors.saffron)),
                         ),
-                        error: (err, stack) => const Padding(
-                          padding: EdgeInsets.all(16.0),
-                          child: Text('Failed to load subjects',
-                              style: TextStyle(color: MitraColors.textMuted)),
+                        error: (err, stack) => Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Text(
+                              context.tr(ref, 'home_subjects_failed',
+                                  'Failed to load subjects'),
+                              style: const TextStyle(
+                                  color: MitraColors.textMuted)),
                         ),
                         data: (subjects) => subjects.isEmpty
-                            ? const Padding(
-                                padding: EdgeInsets.all(16.0),
-                                child: Text('No subjects found.',
-                                    style: TextStyle(
+                            ? Padding(
+                                padding: const EdgeInsets.all(16.0),
+                                child: Text(
+                                    context.tr(ref, 'home_no_subjects',
+                                        'No subjects found.'),
+                                    style: const TextStyle(
                                         color: MitraColors.textMuted)),
                               )
                             : GridView.builder(
@@ -377,11 +383,12 @@ class HomeScreen extends ConsumerWidget {
 
                     // Continue Learning
                     _Section(
-                      title: 'Continue Learning',
+                      title: context.tr(
+                          ref, 'home_continue_learning', 'Continue Learning'),
                       trailing: GestureDetector(
                         onTap: () => context.go('/student/learn'),
-                        child: const Text('See all',
-                            style: TextStyle(
+                        child: Text(context.tr(ref, 'home_see_all', 'See all'),
+                            style: const TextStyle(
                                 fontSize: 12,
                                 color: MitraColors.saffron,
                                 fontFamily: 'Mukta')),
@@ -483,30 +490,34 @@ class _ContinueLearningCard extends ConsumerWidget {
             border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
           ),
           padding: const EdgeInsets.all(MitraSpacing.md),
-          child: const Row(
+          child: Row(
             children: [
-              Text('🚀', style: TextStyle(fontSize: 22)),
-              SizedBox(width: 12),
+              const Text('🚀', style: TextStyle(fontSize: 22)),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Start learning',
-                        style: TextStyle(
+                    Text(
+                        context.tr(
+                            ref, 'home_start_learning', 'Start learning'),
+                        style: const TextStyle(
                             fontFamily: 'Baloo2',
                             fontWeight: FontWeight.w600,
                             fontSize: 16,
                             color: MitraColors.textPrimary)),
-                    SizedBox(height: 2),
-                    Text('Open a lesson to begin your journey',
-                        style: TextStyle(
+                    const SizedBox(height: 2),
+                    Text(
+                        context.tr(ref, 'home_open_lesson_hint',
+                            'Open a lesson to begin your journey'),
+                        style: const TextStyle(
                             fontFamily: 'Mukta',
                             fontSize: 12,
                             color: MitraColors.textMuted)),
                   ],
                 ),
               ),
-              Icon(Icons.chevron_right, color: MitraColors.textMuted),
+              const Icon(Icons.chevron_right, color: MitraColors.textMuted),
             ],
           ),
         ),
@@ -597,8 +608,8 @@ class _ContinueLearningCard extends ConsumerWidget {
                               color:
                                   MitraColors.saffron.withValues(alpha: 0.4)),
                         ),
-                        child: const Text('Resume →',
-                            style: TextStyle(
+                        child: Text(context.tr(ref, 'home_resume', 'Resume →'),
+                            style: const TextStyle(
                                 fontFamily: 'Baloo2',
                                 fontWeight: FontWeight.w700,
                                 fontSize: 11,
