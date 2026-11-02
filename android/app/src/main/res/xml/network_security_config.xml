@@ -1,9 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
-    <!-- DPDPA / CERT-In: no plaintext HTTP anywhere. All MITRA traffic is HTTPS. -->
+    <!-- DPDPA / CERT-In: no plaintext HTTP to any real network destination. -->
     <base-config cleartextTrafficPermitted="false">
         <trust-anchors>
             <certificates src="system" />
         </trust-anchors>
     </base-config>
+    <!-- EXCEPTION: on-device loopback servers (AR model cache + model_viewer_plus
+         both serve over http://127.0.0.1). Never leaves the device, no personal
+         data. Cleartext allowed ONLY for localhost. -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">127.0.0.1</domain>
+        <domain includeSubdomains="false">localhost</domain>
+    </domain-config>
 </network-security-config>

@@ -63,6 +63,7 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
   final List<ARNode> _nodes = [];
   ARNode? _placedNode; // the current model, for resize buttons
   double _modelScale = 0.3; // current uniform scale (matches placement)
+  double _modelY = 0.0; // vertical offset above the floor (metres)
   final List<ARAnchor> _anchors = [];
   bool _placed = false;
   String _hint = 'Move your phone slowly to find the floor…';
@@ -134,6 +135,11 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
                     ),
                     const SizedBox(height: 10),
                     _roundBtn(Icons.remove, () => _resizeBy(1 / 1.2)),
+                    const SizedBox(height: 18),
+                    // Lift the model up / down off the floor (Y axis).
+                    _roundBtn(Icons.keyboard_arrow_up, () => _moveY(0.05)),
+                    const SizedBox(height: 10),
+                    _roundBtn(Icons.keyboard_arrow_down, () => _moveY(-0.05)),
                   ],
                 ),
               ),
@@ -177,15 +183,15 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
     _anchorManager = anchorManager;
 
     _sessionManager.onInitialize(
-      // Feature points + animated guide help the student aim at a trackable
-      // surface, so plane detection feels much faster.
-      showFeaturePoints: true,
+      // ONE guide only: the blue plane grid. Feature points (the white/yellow
+      // dots) are turned OFF so the student doesn't see two confusing kinds of
+      // markers. The plane grid alone is the clear "tap here" cue.
+      showFeaturePoints: false,
       showAnimatedGuide: true,
       showPlanes: true,
       showWorldOrigin: false,
       handleTaps: true,
       // Built-in gestures: one-finger drag = move, two-finger twist = rotate.
-      // These default to false, which is why gestures did nothing before.
       handlePans: true,
       handleRotation: true,
     );
@@ -237,13 +243,25 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
       type: nodeType,
       uri: nodeUri,
       scale: vm.Vector3(_modelScale, _modelScale, _modelScale),
-      position: vm.Vector3(0, 0, 0),
+      position: vm.Vector3(0, _modelY, 0),
       rotation: vm.Vector4(1, 0, 0, 0),
     );
 
     final okNode = await _objectManager.addNode(node, planeAnchor: anchor);
     if (okNode == true) {
       _placedNode = node;
+      // Model is down — hide ALL placement guides (plane grid, feature points,
+      // animated guide) so the student sees only the model on a clean floor.
+      // Gestures stay enabled so they can still move/rotate it.
+      _sessionManager.onInitialize(
+        showFeaturePoints: false,
+        showAnimatedGuide: false,
+        showPlanes: false,
+        showWorldOrigin: false,
+        handleTaps: true,
+        handlePans: true,
+        handleRotation: true,
+      );
       // Award AR-view XP through the single growth engine (also advances the
       // daily streak). Fire-and-forget; topicId identifies the module.
       ref.read(achievementEngineProvider).recordArView(widget.topicId);
@@ -302,6 +320,16 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
     _modelScale = next;
     node.scale = vm.Vector3(next, next, next);
     setState(() {}); // refresh the on-screen % label
+  }
+
+  // Lift the model up / down off the floor (Y axis). Clamped so it can't fly
+  // away or sink through the ground.
+  void _moveY(double deltaMetres) {
+    final node = _placedNode;
+    if (node == null) return;
+    _modelY = (_modelY + deltaMetres).clamp(-0.5, 2.0);
+    node.position = vm.Vector3(0, _modelY, 0);
+    setState(() {});
   }
 
   Future<String> _ensureLocalModel() async {

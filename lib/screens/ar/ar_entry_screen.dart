@@ -17,6 +17,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../constants/colors.dart';
 import 'ar_room_screen.dart';
 import 'ar_viewer_screen.dart';
+import 'package:lottie/lottie.dart';
 
 class ArEntryScreen extends ConsumerStatefulWidget {
   final String topicId;
@@ -42,9 +43,12 @@ class ArEntryScreen extends ConsumerStatefulWidget {
   ConsumerState<ArEntryScreen> createState() => _ArEntryScreenState();
 }
 
+enum _ViewMode { ar, viewer }
+
 class _ArEntryScreenState extends ConsumerState<ArEntryScreen> {
   static const _ch = MethodChannel('mitra/device');
   bool _arCapable = false;
+  _ViewMode? _chosen; // null until the student picks AR or 3D
   bool _ready = false;
 
   @override
@@ -98,11 +102,18 @@ class _ArEntryScreenState extends ConsumerState<ArEntryScreen> {
       );
     }
 
-    if (_arCapable) {
+    // Capable phone + no choice made yet → show the chooser.
+    if (_arCapable && _chosen == null) {
+      return _ViewChooser(
+        topicId: widget.topicId,
+        onPickAr: () => setState(() => _chosen = _ViewMode.ar),
+        onPick3d: () => setState(() => _chosen = _ViewMode.viewer),
+      );
+    }
+
+    if (_arCapable && _chosen == _ViewMode.ar) {
       return ArRoomScreen(
         topicId: widget.topicId,
-        // Native Filament can't decode Draco → prefer the non-Draco native GLB;
-        // fall back to the Draco url only if no native tier exists yet.
         modelUrl:
             (widget.nativeModelUrl != null && widget.nativeModelUrl!.isNotEmpty)
                 ? widget.nativeModelUrl
@@ -110,7 +121,7 @@ class _ArEntryScreenState extends ConsumerState<ArEntryScreen> {
         audioUrl: widget.audioUrl,
         // If native AR can't load the model, drop to the on-screen 3D viewer.
         onNativeLoadFailed: () {
-          if (mounted) setState(() => _arCapable = false);
+          if (mounted) setState(() => _chosen = _ViewMode.viewer);
         },
       );
     }
@@ -126,4 +137,123 @@ class _ArEntryScreenState extends ConsumerState<ArEntryScreen> {
       chromaColor: widget.chromaColor,
     );
   }
+}
+
+// Chooser shown to AR-capable phones: a looping animation plays on top while
+// the student decides, then they pick in-room AR or on-screen 3D.
+class _ViewChooser extends StatelessWidget {
+  final String topicId;
+  final VoidCallback onPickAr;
+  final VoidCallback onPick3d;
+  const _ViewChooser({
+    required this.topicId,
+    required this.onPickAr,
+    required this.onPick3d,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
+      ),
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Looping animation plays until the student makes a choice.
+                  SizedBox(
+                    height: 160,
+                    child: Lottie.asset(
+                      'assets/animations/splash_animation.json',
+                      fit: BoxFit.contain,
+                      repeat: true,
+                      errorBuilder: (_, __, ___) => const Center(
+                        child: CircularProgressIndicator(color: Colors.white),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  const Text(
+                    'How would you like to view this?',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: 28),
+                  _choiceCard(
+                    icon: Icons.view_in_ar,
+                    title: 'View in your room (AR)',
+                    subtitle:
+                        'Place the model on the floor and walk around it.',
+                    onTap: onPickAr,
+                  ),
+                  const SizedBox(height: 14),
+                  _choiceCard(
+                    icon: Icons.threed_rotation,
+                    title: 'View on screen (3D)',
+                    subtitle: 'Spin and zoom the model right on your screen.',
+                    onTap: onPick3d,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _choiceCard({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) =>
+      GestureDetector(
+        onTap: onTap,
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.06),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+          ),
+          child: Row(
+            children: [
+              Icon(icon, color: Colors.white, size: 34),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title,
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 4),
+                    Text(subtitle,
+                        style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.6),
+                            fontSize: 12)),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right,
+                  color: Colors.white.withValues(alpha: 0.4)),
+            ],
+          ),
+        ),
+      );
 }
