@@ -107,7 +107,7 @@ class TelemetryBatchBuffer {
 
   /// Flush just the critical tier now — call this on app background/close so
   /// legal + session data is never left sitting locally for long.
-  Future<void> flushCriticalNow() => flushNow(tier: _Tier.critical);
+  Future<void> flushCriticalNow() => flushNow(tier: Tier.critical);
 
   /// Called by TelemetryService._write() instead of hitting Firestore
   /// directly — purely local, no network.
@@ -151,7 +151,7 @@ class TelemetryBatchBuffer {
       // Critical is flushed on every scheduler tick that finds critical data,
       // but throttled to the 12h interval via its own in-memory stamp.
       if (criticalDue && _criticalDue(now)) {
-        await flushNow(tier: _Tier.critical);
+        await flushNow(tier: Tier.critical);
       }
     }
 
@@ -162,7 +162,7 @@ class TelemetryBatchBuffer {
     final overCap = _box!.length >= telemetryMaxBufferedPerType;
 
     if (bulkDueByTime || bulkDueByMonthEnd || overCap) {
-      await flushNow(tier: _Tier.bulk);
+      await flushNow(tier: Tier.bulk);
       if (bulkDueByMonthEnd) await _markMonthEndDone(now);
     }
   }
@@ -223,7 +223,7 @@ class TelemetryBatchBuffer {
   /// Public so it can be triggered manually too.
   /// [tier] selects which events to send. `_Tier.all` sends everything (used by
   /// manual/force flushes); the scheduler passes `critical` or `bulk`.
-  Future<void> flushNow({_Tier tier = _Tier.all}) async {
+  Future<void> flushNow({Tier tier = Tier.all}) async {
     await _ensureBox();
     if (_isFlushing || _box!.isEmpty || _db == null) return;
     _isFlushing = true;
@@ -293,17 +293,17 @@ class TelemetryBatchBuffer {
   }
 
   // Does this collection belong in the tier currently being flushed?
-  bool _tierMatches(_Tier tier, String collection) {
+  bool _tierMatches(Tier tier, String collection) {
     switch (tier) {
-      case _Tier.all:
+      case Tier.all:
         return true;
-      case _Tier.critical:
+      case Tier.critical:
         return _isCritical(collection);
-      case _Tier.bulk:
+      case Tier.bulk:
         return !_isCritical(collection);
     }
   }
 }
 
 // Which slice of buffered events a flush should send.
-enum _Tier { all, critical, bulk }
+enum Tier { all, critical, bulk }

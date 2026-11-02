@@ -199,8 +199,9 @@ class QuizSyncNotifier extends StateNotifier<QuizSyncState> {
     final lastDay = DateTime(now.year, now.month + 1, 0).day;
     if (now.day != lastDay) return false;
     final tag = '${now.year}-${now.month}'; // e.g. "2026-11"
-    if (_lastMonthEndSyncTag == tag)
+    if (_lastMonthEndSyncTag == tag) {
       return false; // already synced this month-end
+    }
     _lastMonthEndSyncTag = tag;
     return true;
   }
