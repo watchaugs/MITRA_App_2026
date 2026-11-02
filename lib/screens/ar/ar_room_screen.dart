@@ -60,6 +60,8 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
 
   final AudioPlayer _audio = AudioPlayer();
   final List<ARNode> _nodes = [];
+  ARNode? _placedNode; // the current model, for resize buttons
+  double _modelScale = 0.3; // current uniform scale (matches placement)
   final List<ARAnchor> _anchors = [];
   bool _placed = false;
   String _hint = 'Move your phone slowly to find the floor…';
@@ -79,7 +81,9 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
         children: [
           ARView(
             onARViewCreated: _onARViewCreated,
-            planeDetectionConfig: PlaneDetectionConfig.horizontal,
+            // Detect floors AND walls/tables → a trackable surface is found
+            // sooner, so placement feels faster.
+            planeDetectionConfig: PlaneDetectionConfig.horizontalAndVertical,
           ),
           SafeArea(
             child: Padding(
@@ -100,6 +104,39 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
               ),
             ),
           ),
+          // Resize controls — appear once the model is placed.
+          if (_placed)
+            Positioned(
+              right: 14,
+              top: 0,
+              bottom: 0,
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _roundBtn(Icons.add, () => _resizeBy(1.2)),
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.5),
+                        borderRadius: BorderRadius.circular(MitraRadius.pill),
+                      ),
+                      child: Text(
+                        '${(_modelScale * 100).round()}%',
+                        style: const TextStyle(
+                            fontFamily: 'Mukta',
+                            color: Colors.white,
+                            fontSize: 11),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    _roundBtn(Icons.remove, () => _resizeBy(1 / 1.2)),
+                  ],
+                ),
+              ),
+            ),
           Positioned(
             left: 0,
             right: 0,
@@ -139,10 +176,17 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
     _anchorManager = anchorManager;
 
     _sessionManager.onInitialize(
-      showFeaturePoints: false,
+      // Feature points + animated guide help the student aim at a trackable
+      // surface, so plane detection feels much faster.
+      showFeaturePoints: true,
+      showAnimatedGuide: true,
       showPlanes: true,
       showWorldOrigin: false,
       handleTaps: true,
+      // Built-in gestures: one-finger drag = move, two-finger twist = rotate.
+      // These default to false, which is why gestures did nothing before.
+      handlePans: true,
+      handleRotation: true,
     );
     _objectManager.onInitialize();
 
@@ -189,13 +233,14 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
     final node = ARNode(
       type: nodeType,
       uri: nodeUri,
-      scale: vm.Vector3(0.3, 0.3, 0.3),
+      scale: vm.Vector3(_modelScale, _modelScale, _modelScale),
       position: vm.Vector3(0, 0, 0),
       rotation: vm.Vector4(1, 0, 0, 0),
     );
 
     final okNode = await _objectManager.addNode(node, planeAnchor: anchor);
     if (okNode == true) {
+      _placedNode = node;
       _nodes.add(node);
       _startNarration(); // auto-start audio on placement
       setState(() {
@@ -240,6 +285,17 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
   void _replay() {
     // Re-trigger narration. (The model's own animation loops via the GLB.)
     _startNarration();
+  }
+
+  // Resize the placed model by a factor (buttons). Sets node.scale directly —
+  // the simplest reliable path. Clamped so it can't vanish or fill the room.
+  void _resizeBy(double factor) {
+    final node = _placedNode;
+    if (node == null) return;
+    final next = (_modelScale * factor).clamp(0.05, 2.0);
+    _modelScale = next;
+    node.scale = vm.Vector3(next, next, next);
+    setState(() {}); // refresh the on-screen % label
   }
 
   // Downloads (or reuses) the remote GLB via GlbCacheManager, copies it into the

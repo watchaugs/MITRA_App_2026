@@ -108,6 +108,18 @@ class ApiService {
             }
             await _storage.write(key: 'mitra_access_token', value: newToken);
 
+            // CRITICAL: the backend ROTATES the refresh token on every refresh
+            // and revokes the old one. We MUST persist the new refresh token —
+            // otherwise the next refresh sends the now-revoked old token, which
+            // the server treats as reuse, revokes the whole session, and signs
+            // the user out (every ~8h when the access token expires). This is
+            // the fix for "the app logs me out after a few hours / daily".
+            final newRefresh = res.data?['refresh_token'] as String?;
+            if (newRefresh != null && newRefresh.isNotEmpty) {
+              await _storage.write(
+                  key: 'mitra_refresh_token', value: newRefresh);
+            }
+
             // Retry original request with new token
             final opts = error.requestOptions;
             opts.headers['Authorization'] = 'Bearer $newToken';
