@@ -27,8 +27,6 @@ import 'package:model_viewer_plus/model_viewer_plus.dart';
 import 'package:audioplayers/audioplayers.dart';
 import '../../constants/colors.dart';
 import '../../theme/theme_provider.dart';
-import '../../providers/device_capability_provider.dart';
-import '../../services/device_probe.dart';
 
 class ArViewerScreen extends ConsumerStatefulWidget {
   final String topicId;
@@ -90,12 +88,6 @@ class _ArViewerScreenState extends ConsumerState<ArViewerScreen> {
     final accent = ThemeHelper.getActiveHighlight(theme);
 
     // Only ARCore-capable phones get in-room AR; others clearly get on-screen 3D.
-    final tier = ref.watch(deviceCapabilityProvider).maybeWhen(
-          data: (r) => r.tier,
-          orElse: () => DeviceTier.medium,
-        );
-    final arCapable = tier != DeviceTier.low;
-
     // model_viewer renders in a WebView. A Draco-compressed GLB (_lite.glb)
     // needs Google's decoder WASM fetched at runtime — on a restricted/offline
     // school phone that fails SILENTLY and the model area is just BLACK. The
@@ -189,133 +181,7 @@ class _ArViewerScreenState extends ConsumerState<ArViewerScreen> {
               ),
             ),
           ),
-
-          // ── Bottom: theme-matched 3D | AR segmented toggle ───────────────
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 28,
-            child: Center(
-              child: _ModeToggle(
-                accent: accent,
-                arCapable: arCapable,
-                onPickAr: () {
-                  // The native model-viewer AR button is the real AR entry point.
-                  // This toggle signals AR mode and guides the student to it.
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: const Text(
-                            'Tap the AR icon on the model to place it in your room'),
-                        duration: const Duration(seconds: 3),
-                        backgroundColor: accent.withValues(alpha: 0.9),
-                      ),
-                    );
-                  }
-                },
-              ),
-            ),
-          ),
         ],
-      ),
-    );
-  }
-}
-
-// ── Theme-aware segmented control: [ 3D View | View in Your Room ] ──────────
-class _ModeToggle extends StatefulWidget {
-  final Color accent;
-  final bool arCapable;
-  final VoidCallback onPickAr;
-  const _ModeToggle({
-    required this.accent,
-    required this.arCapable,
-    required this.onPickAr,
-  });
-
-  @override
-  State<_ModeToggle> createState() => _ModeToggleState();
-}
-
-class _ModeToggleState extends State<_ModeToggle> {
-  bool _ar = false; // false = 3D (default), true = AR
-
-  @override
-  Widget build(BuildContext context) {
-    final a = widget.accent;
-    return Container(
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.55),
-        borderRadius: BorderRadius.circular(MitraRadius.pill),
-        border: Border.all(color: a.withValues(alpha: 0.35)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _seg(
-            label: '3D View',
-            icon: Icons.threed_rotation,
-            selected: !_ar,
-            enabled: true,
-            onTap: () => setState(() => _ar = false),
-          ),
-          _seg(
-            label: 'View in Your Room',
-            icon: Icons.view_in_ar,
-            selected: _ar,
-            enabled: widget.arCapable,
-            onTap: () {
-              setState(() => _ar = true);
-              widget.onPickAr();
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _seg({
-    required String label,
-    required IconData icon,
-    required bool selected,
-    required bool enabled,
-    required VoidCallback onTap,
-  }) {
-    final a = widget.accent;
-    final fg =
-        !enabled ? Colors.white30 : (selected ? Colors.black : Colors.white);
-    return Opacity(
-      opacity: enabled ? 1 : 0.6,
-      child: GestureDetector(
-        onTap: enabled ? onTap : null,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          decoration: BoxDecoration(
-            // The selected segment fills with the active theme's accent colour,
-            // so the control matches whichever of the 5 themes is on.
-            gradient: selected
-                ? LinearGradient(colors: [a, a.withValues(alpha: 0.82)])
-                : null,
-            borderRadius: BorderRadius.circular(MitraRadius.pill),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 16, color: fg),
-              const SizedBox(width: 6),
-              Text(
-                label,
-                style: TextStyle(
-                    fontFamily: 'Baloo2',
-                    fontWeight: FontWeight.w700,
-                    fontSize: 12.5,
-                    color: fg),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }

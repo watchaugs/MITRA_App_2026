@@ -172,9 +172,10 @@ class _ViewChooser extends StatelessWidget {
                   SizedBox(
                     height: 160,
                     child: Lottie.asset(
-                      'assets/animations/splash_animation.json',
+                      'assets/lotties/Earth globe rotating with Seamless loop animation.lottie',
                       fit: BoxFit.contain,
                       repeat: true,
+                      decoder: LottieComposition.decodeGZip,
                       errorBuilder: (_, __, ___) => const Center(
                         child: CircularProgressIndicator(color: Colors.white),
                       ),

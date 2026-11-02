@@ -1,6 +1,7 @@
 // ════════════════════════════════════════════════════════════
-// SCREEN S-04: Profile Setup — 3-step wizard
-// Step 1: Language, Step 2: Profile/Avatar, Step 3: Class
+// SCREEN S-04: Profile Setup — 2-step wizard
+// Step 1: Profile/Avatar, Step 2: Class
+// (Language selection lives in the location-aware LanguageScreen, not here.)
 // After Step 3 → /location (new screen)
 //
 // Improvements:
@@ -26,7 +27,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../constants/colors.dart';
 import 'package:firebase_core/firebase_core.dart';
-import '../../widgets/mitra_glass_card.dart';
 import '../../widgets/mitra_scaffold.dart';
 import '../../stores/auth_store.dart';
 import '../../providers/telemetry_provider.dart';
@@ -150,13 +150,17 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
     super.initState();
     final existingUser = ref.read(currentUserProvider);
     _nameCtrl = TextEditingController(text: existingUser?.fullName ?? '');
+    // Language is chosen earlier in the location-aware LanguageScreen; carry that
+    // choice through so this save doesn't overwrite it with a default.
+    final existingLang = existingUser?.languagePreference ?? '';
+    if (_isValidLanguage(existingLang)) _lang = existingLang;
     final existingGender = existingUser?.gender ?? '';
     if (_isValidGender(existingGender)) _gender = existingGender;
     final existingMobileOwner = existingUser?.mobileBelongsTo ?? '';
     if (_isValidMobileOwner(existingMobileOwner)) {
       _mobileBelongsTo = existingMobileOwner;
     }
-    if (widget.classOnly) _step = 2;
+    if (widget.classOnly) _step = 1;
   }
 
   @override
@@ -168,12 +172,11 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
   // ── Validation ──
 
   bool _validateCurrentStep() => switch (_step) {
-        0 => _isValidLanguage(_lang),
-        1 => _sanitiseName(_nameCtrl.text).isNotEmpty &&
+        0 => _sanitiseName(_nameCtrl.text).isNotEmpty &&
             _isValidAvatar(_avatar) &&
             _isValidGender(_gender) &&
             _isValidMobileOwner(_mobileBelongsTo),
-        2 => _isValidClass(_cls),
+        1 => _isValidClass(_cls),
         _ => false,
       };
 
@@ -183,7 +186,7 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
 
   void _goNext() {
     if (!_canGoNext) return;
-    if (_step < 2) {
+    if (_step < 1) {
       setState(() {
         _step++;
         _error = null;
@@ -314,11 +317,6 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
 
   // ── Selection handlers ──
 
-  void _selectLanguage(String code) {
-    if (_saving) return;
-    setState(() => _lang = code);
-  }
-
   void _selectAvatar(String emoji) {
     if (_saving) return;
     setState(() => _avatar = emoji);
@@ -384,7 +382,6 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
 
     // Dynamically translate the progress bar labels
     final translatedStepLabels = [
-      t.tr('step_language', 'Language'),
       t.tr('step_profile', 'Profile'),
       t.tr('step_class', 'Class'),
     ];
@@ -398,9 +395,7 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(MitraSpacing.lg),
                 child: switch (_step) {
-                  0 => _LanguageStep(
-                      selectedCode: _lang, onSelect: _selectLanguage),
-                  1 => _ProfileStep(
+                  0 => _ProfileStep(
                       nameController: _nameCtrl,
                       selectedAvatar: _avatar,
                       onAvatarTap: _selectAvatar,
@@ -409,7 +404,7 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
                       selectedMobileOwner: _mobileBelongsTo,
                       onMobileOwnerSelect: _selectMobileOwner,
                     ),
-                  2 => Column(
+                  1 => Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const _ClassHeader(),
@@ -429,7 +424,7 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
               loading: isBusy,
               onBack: _goBack,
               onNext: _goNext,
-              isLastStep: _step == 2,
+              isLastStep: _step == 1,
             ),
           ],
         ),
@@ -526,50 +521,7 @@ class _StepIndicator extends StatelessWidget {
 }
 
 // ════════════════════════════════════════════════════════════
-// Step 1: Language
-// ════════════════════════════════════════════════════════════
-
-class _LanguageStep extends ConsumerWidget {
-  // ✨ Upgraded to ConsumerWidget
-  final String selectedCode;
-  final ValueChanged<String> onSelect;
-
-  const _LanguageStep({required this.selectedCode, required this.onSelect});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final t = ref.watch(translationProvider.notifier); // ✨ Translation Engine
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(t.tr('select_language_title', 'Select Your Language'),
-            style: const TextStyle(
-              fontFamily: 'Baloo2',
-              fontWeight: FontWeight.w700,
-              fontSize: 20,
-              color: Colors.white,
-            )),
-        const SizedBox(height: MitraSpacing.lg),
-        Wrap(
-          spacing: MitraSpacing.sm,
-          runSpacing: MitraSpacing.sm,
-          children: _kLanguages
-              .map((lang) => MitraGlassCard(
-                    title: lang.nativeLabel,
-                    isSelected: selectedCode == lang.code,
-                    activeColor: MitraColors.saffron,
-                    onTap: () => onSelect(lang.code),
-                  ))
-              .toList(),
-        ),
-      ],
-    );
-  }
-}
-
-// ════════════════════════════════════════════════════════════
-// Step 2: Profile
+// Step 1: Profile
 // ════════════════════════════════════════════════════════════
 
 class _ProfileStep extends StatelessWidget {
