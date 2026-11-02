@@ -145,12 +145,9 @@ class TelemetryBatchBuffer {
       }
     });
     if (hasCritical) {
-      final criticalDue = _lastBulkFlushAt == null // reuse-safe clock reference
-          ? true
-          : true; // critical has no persisted clock; cadence is driven below
-      // Critical is flushed on every scheduler tick that finds critical data,
-      // but throttled to the 12h interval via its own in-memory stamp.
-      if (criticalDue && _criticalDue(now)) {
+      // Critical is flushed whenever the scheduler tick finds critical data,
+      // throttled to the 12h interval via its own in-memory stamp (_criticalDue).
+      if (_criticalDue(now)) {
         await flushNow(tier: Tier.critical);
       }
     }
