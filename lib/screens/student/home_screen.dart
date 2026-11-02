@@ -17,6 +17,7 @@ import '../../demo/demo_data.dart';
 import '../../theme/theme_provider.dart';
 import '../../services/quotes_service.dart';
 import '../../services/brain_spark_service.dart';
+import '../../services/achievement_engine.dart';
 import 'widgets/sponsor_banner.dart';
 
 // ═══════════════════════════════════════════════════════
@@ -275,7 +276,13 @@ class HomeScreen extends ConsumerWidget {
 
                   // ✨ NEW: Grouped Stats Row + Massive Achievement Tag
                   Builder(builder: (context) {
-                    final totalXp = (user?.totalXp ?? 0).toInt();
+                    // SINGLE SOURCE OF TRUTH: the live achievement-engine profile
+                    // (Isar stream), so XP + streak match everywhere and update
+                    // instantly after a quiz/AR view — not the frozen auth value.
+                    final profile =
+                        ref.watch(studentProfileProvider).valueOrNull;
+                    final totalXp = profile?.totalXp ?? 0;
+                    final streakDays = profile?.currentStreakDays ?? 0;
 
                     // Calculate the live tier based on XP
                     final currentTier = _galacticTiers.firstWhere(
@@ -288,8 +295,7 @@ class HomeScreen extends ConsumerWidget {
                       children: [
                         _StatChip('⭐ $totalXp XP', isDark),
                         const SizedBox(width: 8),
-                        _StatChip('🔥 ${user?.currentStreakDays ?? 0} Streak',
-                            isDark),
+                        _StatChip('🔥 $streakDays Streak', isDark),
                         const SizedBox(width: 16),
 
                         // The dynamic tag — tap to open My Level

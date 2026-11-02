@@ -105,7 +105,7 @@ Future<void> main() async {
     }
 
     try {
-      TelemetryBatchBuffer.instance.startScheduler();
+      unawaited(TelemetryBatchBuffer.instance.startScheduler());
     } catch (e) {
       debugPrint('⚠️ Telemetry: $e');
     }
@@ -165,6 +165,19 @@ class _MitraAppState extends ConsumerState<MitraApp>
   void didHaveMemoryPressure() {
     // OS reported low memory → device-health telemetry (Table A, "RAM").
     TelemetryService.current?.logDeviceHealth(lowMemory: true);
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // When the student leaves/closes the app, push the CRITICAL tier
+    // (compliance/consent + sessions) right away so legal + session data is
+    // never left sitting on the device for up to 12h. Bulk behavioural events
+    // (AR/screen views) stay on the 10-day + month-end cadence.
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.detached) {
+      TelemetryBatchBuffer.instance.flushCriticalNow();
+    }
+    super.didChangeAppLifecycleState(state);
   }
 
   @override

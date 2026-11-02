@@ -16,9 +16,10 @@ import 'package:path/path.dart' as p;
 import 'api_service.dart';
 
 // ── Configuration ──────────────────────────────────────
-// How often we attempt a batch sync. Change this ONE line to adjust
-// cadence — e.g. `Duration(days: 7)` for weekly.
-const quizSyncInterval = Duration(days: 1);
+// Routine batched sync cadence. Per the data-collection design, usage/analytics
+// are consolidated every 10 days, PLUS a compulsory sync on the last day of the
+// month (see _isMonthEndDue) for month-end submission.
+const quizSyncInterval = Duration(days: 10);
 
 // Safety valve: sync immediately if this many attempts pile up locally,
 // even if the interval above hasn't elapsed yet.
@@ -179,10 +180,33 @@ class QuizSyncNotifier extends StateNotifier<QuizSyncState> {
     final dueByTime = state.lastSyncAt == null ||
         DateTime.now().difference(state.lastSyncAt!) >= quizSyncInterval;
 
-    if (!dueByCap && !dueByTime) return;
+    // Compulsory month-end consolidation: on the LAST day of the month, force a
+    // sync so the state's monthly submission is complete, even if the 10-day
+    // timer hasn't elapsed. Guarded so it fires at most once per month-end day.
+    final dueByMonthEnd = _isMonthEndDue();
+
+    if (!dueByCap && !dueByTime && !dueByMonthEnd) return;
 
     await _syncNow();
   }
+
+  // True only on the last calendar day of the month, and only if we haven't
+  // already done the month-end sync for this month (tracked in prefs so it
+  // doesn't re-fire every hourly check on the 31st).
+  bool _isMonthEndDue() {
+    final now = DateTime.now();
+    // The last day of THIS month: day 0 of next month rolls back to it.
+    final lastDay = DateTime(now.year, now.month + 1, 0).day;
+    if (now.day != lastDay) return false;
+    final tag = '${now.year}-${now.month}'; // e.g. "2026-11"
+    if (_lastMonthEndSyncTag == tag)
+      return false; // already synced this month-end
+    _lastMonthEndSyncTag = tag;
+    return true;
+  }
+
+  // Remembers the month we last did the compulsory month-end sync for.
+  String? _lastMonthEndSyncTag;
 
   Future<void> _syncNow() async {
     _isSyncing = true;

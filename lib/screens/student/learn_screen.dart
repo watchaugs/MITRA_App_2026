@@ -45,6 +45,7 @@ import '../../providers/translation_provider.dart'; // ✨ Added for language fi
 import '../../providers/tr_ext.dart';
 import '../../widgets/orbit_explorer.dart';
 import '../../stores/module_progress_store.dart';
+import '../../services/achievement_engine.dart';
 
 // ═══════════════════════════════════════════════════════════
 // DOMAIN: Failures
@@ -1024,12 +1025,12 @@ class _LearnHeader extends ConsumerWidget {
     // ✨ Fetch real stats from the current user.
     // Using XP to estimate counts dynamically for the UI demo,
     // but you can wire this directly to your database variables later!
-    final user = ref.watch(currentUserProvider);
-    final xp = user?.totalXp;
-    // Progress counters derived from the student's XP. Default to 0 for a new
-    // user (was 12/4 placeholder, which looked like real content counts).
-    final topicsConsumed = xp != null ? (xp / 100).floor() : 0;
-    final quizzesTaken = xp != null ? (xp / 500).floor() : 0;
+    // Single source of truth: the achievement-engine profile (live Isar stream).
+    final profile = ref.watch(studentProfileProvider).valueOrNull;
+    final xp = profile?.totalXp ?? 0;
+    // Progress counters derived from the student's XP, matching the engine.
+    final topicsConsumed = (xp / 100).floor();
+    final quizzesTaken = (xp / 500).floor();
 
     final isAll = selectedSubject == 'All';
     final title = isAll ? 'Learn Modules' : selectedSubject;

@@ -16,7 +16,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:audioplayers/audioplayers.dart';
-import '../../services/glb_cache_manager.dart';
 import 'package:vector_math/vector_math_64.dart' as vm;
 
 import 'package:ar_flutter_plugin_2/ar_flutter_plugin.dart';
@@ -32,6 +31,8 @@ import 'package:ar_flutter_plugin_2/datatypes/config_planedetection.dart';
 import 'package:ar_flutter_plugin_2/datatypes/hittest_result_types.dart';
 
 import '../../constants/colors.dart';
+import '../../services/achievement_engine.dart';
+import '../../services/ar_model_cache.dart';
 
 class ArRoomScreen extends ConsumerStatefulWidget {
   final String topicId;
@@ -213,18 +214,20 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
 
     final isRemote =
         widget.modelUrl != null && widget.modelUrl!.startsWith('http');
-    // Remote models are cached on-device (download once, reuse for 30 days) and
-    // then loaded from the app folder, so re-opening a lesson is instant and we
-    // don't re-pay egress on every view. Falls back to streaming if caching fails.
+    // Remote models: try the on-device cache first. ArModelCache downloads the
+    // model ONCE, keeps the newest 5 on disk (FIFO), and serves them from a tiny
+    // loopback server — so the plugin still STREAMS a URL (its only reliable
+    // load path via webGLB), but a repeat view pays NO network egress. If the
+    // cache can't produce a local URL, we fall back to the plain remote URL so
+    // AR never breaks because of caching.
     String nodeUri;
     NodeType nodeType;
     if (isRemote) {
-      // Stream the remote GLB directly. The file-cache path
-      // (fileSystemAppFolderGLB) resolved to a folder this plugin build does
-      // NOT read from, throwing FileNotFoundException and leaving a black scene.
-      // webGLB hands the URL straight to the native loader (same reliable path
-      // the narration audio already uses), so the model actually loads.
-      nodeUri = widget.modelUrl!;
+      final localUrl =
+          await ArModelCache.instance.localUrlFor(widget.modelUrl!);
+      nodeUri = (localUrl != null && localUrl.isNotEmpty)
+          ? localUrl
+          : widget.modelUrl!;
       nodeType = NodeType.webGLB;
     } else {
       nodeUri = await _ensureLocalModel();
@@ -241,6 +244,9 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
     final okNode = await _objectManager.addNode(node, planeAnchor: anchor);
     if (okNode == true) {
       _placedNode = node;
+      // Award AR-view XP through the single growth engine (also advances the
+      // daily streak). Fire-and-forget; topicId identifies the module.
+      ref.read(achievementEngineProvider).recordArView(widget.topicId);
       _nodes.add(node);
       _startNarration(); // auto-start audio on placement
       setState(() {
@@ -296,28 +302,6 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
     _modelScale = next;
     node.scale = vm.Vector3(next, next, next);
     setState(() {}); // refresh the on-screen % label
-  }
-
-  // Downloads (or reuses) the remote GLB via GlbCacheManager, copies it into the
-  // app documents folder under a stable name, and returns that filename for
-  // NodeType.fileSystemAppFolderGLB. Returns null on any failure so the caller
-  // can fall back to streaming.
-  Future<String?> _cacheRemoteModel(String url) async {
-    try {
-      final file = await GlbCacheManager.instance.getSingleFile(url);
-      if (!await file.exists()) return null;
-      // ar_flutter_plugin_2 wants a name relative to the app documents dir.
-      final docs = await getApplicationDocumentsDirectory();
-      final fileName =
-          'ar_${url.hashCode.toUnsigned(32).toRadixString(16)}.glb';
-      final dest = File('${docs.path}/$fileName');
-      if (!await dest.exists()) {
-        await dest.writeAsBytes(await file.readAsBytes());
-      }
-      return fileName;
-    } catch (_) {
-      return null; // caller streams via webGLB instead
-    }
   }
 
   Future<String> _ensureLocalModel() async {

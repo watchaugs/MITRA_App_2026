@@ -11,6 +11,7 @@ import 'widgets/settings_group.dart';
 import 'widgets/data_rights_section.dart';
 import 'widgets/feedback_dialog.dart';
 import '../../providers/tr_ext.dart';
+import '../../services/achievement_engine.dart';
 
 class StudentProfileScreen extends ConsumerWidget {
   const StudentProfileScreen({super.key});
@@ -89,12 +90,14 @@ class StudentProfileScreen extends ConsumerWidget {
                     _StatCard(
                         emoji: '⭐',
                         label: 'Total XP',
-                        value: '${user?.totalXp ?? 0}'),
+                        value:
+                            '${ref.watch(studentProfileProvider).valueOrNull?.totalXp ?? 0}'),
                     const SizedBox(height: 12),
                     _StatCard(
                         emoji: '🔥',
                         label: 'Day Streak',
-                        value: '${user?.currentStreakDays ?? 0}'),
+                        value:
+                            '${ref.watch(studentProfileProvider).valueOrNull?.currentStreakDays ?? 0}'),
                     const SizedBox(height: 32),
 
                     // ── Data Consent (DPDPA) ───────────────────────────
