@@ -90,14 +90,14 @@ class ParsingFailure extends LearnFailure {
 enum QuizStatus { live, draft, closed }
 
 QuizStatus _parseQuizStatus(String? raw) => switch (raw?.toLowerCase()) {
-      'live' => QuizStatus.live,
-      'draft' => QuizStatus.draft,
-      'closed' => QuizStatus.closed,
-      // Unknown values default to `live` (API contract says
-      // only live quizzes are returned for this endpoint) but
-      // we log a warning so misconfigurations are caught early.
-      _ => QuizStatus.live,
-    };
+  'live' => QuizStatus.live,
+  'draft' => QuizStatus.draft,
+  'closed' => QuizStatus.closed,
+  // Unknown values default to `live` (API contract says
+  // only live quizzes are returned for this endpoint) but
+  // we log a warning so misconfigurations are caught early.
+  _ => QuizStatus.live,
+};
 
 /// Lightweight quiz summary for list screens.
 ///
@@ -169,10 +169,7 @@ class QuizSummary {
         }
         results.add(QuizSummary.fromMap(item));
       } on FormatException catch (e) {
-        developer.log(
-          'Malformed quiz at index $i: $e',
-          name: 'LearnScreen',
-        );
+        developer.log('Malformed quiz at index $i: $e', name: 'LearnScreen');
         // Skip this item but continue parsing the rest.
       }
     }
@@ -233,12 +230,12 @@ class QuizFilterParams {
   /// Converts to query parameters, omitting empty values so
   /// the API doesn't receive `?class_name=&state=`.
   Map<String, String> toQueryParams() => {
-        'status': 'live',
-        if (className.isNotEmpty) 'class_name': className,
-        if (state.isNotEmpty) 'state': state,
-        if (language.isNotEmpty) 'language': language,
-        _limitKey: _defaultLimit,
-      };
+    'status': 'live',
+    if (className.isNotEmpty) 'class_name': className,
+    if (state.isNotEmpty) 'state': state,
+    if (language.isNotEmpty) 'language': language,
+    _limitKey: _defaultLimit,
+  };
 
   @override
   bool operator ==(Object other) =>
@@ -272,9 +269,7 @@ class ApiQuizRepository implements QuizRepository {
   const ApiQuizRepository();
 
   @override
-  Future<List<QuizSummary>> fetchLiveQuizzes(
-    QuizFilterParams params,
-  ) async {
+  Future<List<QuizSummary>> fetchLiveQuizzes(QuizFilterParams params) async {
     try {
       final res = await QuizAPI.list(params.toQueryParams());
       final raw = res.data['data'];
@@ -385,8 +380,10 @@ String _absMedia(String url) {
   if (u.isEmpty) return u;
   if (u.startsWith('http://') || u.startsWith('https://')) return u;
   if (u.startsWith('assets/')) return u;
-  final base =
-      ApiService.instance.dio.options.baseUrl.replaceAll(RegExp(r'/+$'), '');
+  final base = ApiService.instance.dio.options.baseUrl.replaceAll(
+    RegExp(r'/+$'),
+    '',
+  );
   final path = u.startsWith('/') ? u : '/$u';
   return '$base$path';
 }
@@ -424,8 +421,8 @@ ArCatalog? _catalogFromManifest(dynamic data) {
             id: id,
             title: (l['title'] ?? id).toString(),
             topic: topic,
-            languageTag:
-                (l['language_tag'] ?? l['language'] ?? 'all').toString(),
+            languageTag: (l['language_tag'] ?? l['language'] ?? 'all')
+                .toString(),
             classTag: (l['class_name'] ?? className).toString(),
           ));
           // flutter_url = Draco _lite.glb (for the on-screen 3D viewer).
@@ -489,8 +486,9 @@ final arCatalogProvider = FutureProvider<ArCatalog>((ref) async {
   });
 
   final raw = res.data is Map ? res.data['data'] : null;
-  final territorySupported =
-      res.data is Map ? (res.data['territory_supported'] != false) : true;
+  final territorySupported = res.data is Map
+      ? (res.data['territory_supported'] != false)
+      : true;
   final bySubject = <String, List<ArLessonRec>>{};
   final glbById = <String, String>{};
   final nativeGlbById = <String, String>{};
@@ -513,8 +511,8 @@ final arCatalogProvider = FutureProvider<ArCatalog>((ref) async {
         classTag: (m['class_name'] ?? m['class'] ?? '').toString(),
       ));
       final glb = _absMedia(
-          (m['flutter_url'] ?? m['glb_url'] ?? m['model_url'] ?? '')
-              .toString());
+        (m['flutter_url'] ?? m['glb_url'] ?? m['model_url'] ?? '').toString(),
+      );
       if (glb.isNotEmpty) glbById[id] = glb;
       final nativeGlb = _absMedia((m['native_url'] ?? '').toString());
       if (nativeGlb.isNotEmpty) nativeGlbById[id] = nativeGlb;
@@ -549,10 +547,12 @@ final arCatalogProvider = FutureProvider<ArCatalog>((ref) async {
 /// Async quiz feed notifier — exposes typed errors through
 /// [LearnFailure] and supports explicit refresh that keeps
 /// existing data visible during pull-to-refresh.
-final quizFeedProvider = AsyncNotifierProvider.family<QuizFeedNotifier,
-    List<QuizSummary>, QuizFilterParams>(
-  QuizFeedNotifier.new,
-);
+final quizFeedProvider =
+    AsyncNotifierProvider.family<
+      QuizFeedNotifier,
+      List<QuizSummary>,
+      QuizFilterParams
+    >(QuizFeedNotifier.new);
 
 class QuizFeedNotifier
     extends FamilyAsyncNotifier<List<QuizSummary>, QuizFilterParams> {
@@ -587,64 +587,68 @@ class LearnScreen extends ConsumerStatefulWidget {
   const LearnScreen({super.key});
 
   // ✨ Hardcoded mapping of AR Lessons to their respective subjects
-  static const _arLessonsBySubject = <String,
-      List<
+  static const _arLessonsBySubject =
+      <
+        String,
+        List<
           ({
             String id,
             String title,
             String topic,
             String languageTag,
-            String classTag
-          })>>{
-    'Science': [
-      (
-        id: 'cell-division',
-        title: 'Cell Division 3D',
-        topic: 'Biology',
-        languageTag: 'all',
-        classTag: ''
-      ),
-      (
-        id: 'atom-structure-en',
-        title: 'Atom Structure (English Audio)',
-        topic: 'Chemistry',
-        languageTag: 'en',
-        classTag: ''
-      ),
-      (
-        id: 'atom-structure-hi',
-        title: 'Atom Structure (Hindi Audio)',
-        topic: 'Chemistry',
-        languageTag: 'hi',
-        classTag: ''
-      ),
-    ],
-    'Geography': [
-      (
-        id: 'solar-system',
-        title: 'Solar System 3D',
-        topic: 'Space',
-        languageTag: 'all',
-        classTag: ''
-      ),
-      (
-        id: 'ocean-layers',
-        title: 'Ocean Layers 3D',
-        topic: 'Earth',
-        languageTag: 'all',
-        classTag: ''
-      ),
-    ],
-    'History': [
-      (
-        id: 'ancient-rome',
-        title: 'Ancient Rome 3D',
-        topic: 'World History',
-        languageTag: 'all',
-        classTag: ''
-      ),
-    ],
-  };
+            String classTag,
+          })
+        >
+      >{
+        'Science': [
+          (
+            id: 'cell-division',
+            title: 'Cell Division 3D',
+            topic: 'Biology',
+            languageTag: 'all',
+            classTag: '',
+          ),
+          (
+            id: 'atom-structure-en',
+            title: 'Atom Structure (English Audio)',
+            topic: 'Chemistry',
+            languageTag: 'en',
+            classTag: '',
+          ),
+          (
+            id: 'atom-structure-hi',
+            title: 'Atom Structure (Hindi Audio)',
+            topic: 'Chemistry',
+            languageTag: 'hi',
+            classTag: '',
+          ),
+        ],
+        'Geography': [
+          (
+            id: 'solar-system',
+            title: 'Solar System 3D',
+            topic: 'Space',
+            languageTag: 'all',
+            classTag: '',
+          ),
+          (
+            id: 'ocean-layers',
+            title: 'Ocean Layers 3D',
+            topic: 'Earth',
+            languageTag: 'all',
+            classTag: '',
+          ),
+        ],
+        'History': [
+          (
+            id: 'ancient-rome',
+            title: 'Ancient Rome 3D',
+            topic: 'World History',
+            languageTag: 'all',
+            classTag: '',
+          ),
+        ],
+      };
 
   static Map<String, List<QuizSummary>> _groupQuizzesBySubject(
     List<QuizSummary> quizzes,
@@ -697,41 +701,58 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(isGps ? '📍' : '🌏',
-                        style: const TextStyle(fontSize: 48)),
+                    Text(
+                      isGps ? '📍' : '🌏',
+                      style: const TextStyle(fontSize: 48),
+                    ),
                     const SizedBox(height: 16),
                     Text(
                       isGps
                           ? context.tr(
-                              ref, 'learn_location_needed', 'Location needed')
-                          : context.tr(ref, 'learn_not_available_here',
-                              'Not available here yet'),
+                              ref,
+                              'learn_location_needed',
+                              'Location needed',
+                            )
+                          : context.tr(
+                              ref,
+                              'learn_not_available_here',
+                              'Not available here yet',
+                            ),
                       textAlign: TextAlign.center,
                       style: const TextStyle(
-                          fontFamily: 'Baloo2',
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700),
+                        fontFamily: 'Baloo2',
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     Text(
                       geo.message ??
                           (isGps
-                              ? context.tr(ref, 'learn_location_needed_body',
-                                  'Turn on location to access your state\'s lessons.')
-                              : context.tr(ref, 'learn_not_available_body',
-                                  'MITRA is not yet available in your location.')),
+                              ? context.tr(
+                                  ref,
+                                  'learn_location_needed_body',
+                                  'Turn on location to access your state\'s lessons.',
+                                )
+                              : context.tr(
+                                  ref,
+                                  'learn_not_available_body',
+                                  'MITRA is not yet available in your location.',
+                                )),
                       textAlign: TextAlign.center,
                       style: const TextStyle(
-                          fontFamily: 'Mukta',
-                          fontSize: 14,
-                          color: Colors.white70),
+                        fontFamily: 'Mukta',
+                        fontSize: 14,
+                        color: Colors.white70,
+                      ),
                     ),
                     const SizedBox(height: 20),
                     if (isGps)
                       ElevatedButton(
                         onPressed: () => ref.invalidate(geoStateProvider),
-                        child:
-                            Text(context.tr(ref, 'btn_try_again', 'Try again')),
+                        child: Text(
+                          context.tr(ref, 'btn_try_again', 'Try again'),
+                        ),
                       ),
                   ],
                 ),
@@ -784,8 +805,9 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
                         q.languageTag == 'all';
                   }).toList();
 
-                  final grouped =
-                      LearnScreen._groupQuizzesBySubject(filteredQuizzes);
+                  final grouped = LearnScreen._groupQuizzesBySubject(
+                    filteredQuizzes,
+                  );
 
                   for (final subject in arBySubject.keys) {
                     grouped.putIfAbsent(subject, () => []);
@@ -825,7 +847,8 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
                         child: ListView.builder(
                           scrollDirection: Axis.horizontal,
                           padding: const EdgeInsets.symmetric(
-                              horizontal: MitraSpacing.lg),
+                            horizontal: MitraSpacing.lg,
+                          ),
                           itemCount: allSubjects.length,
                           itemBuilder: (context, index) {
                             final subject = allSubjects[index];
@@ -842,8 +865,9 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
                                 margin: const EdgeInsets.only(right: 12),
                                 decoration: BoxDecoration(
                                   color: isSelected
-                                      ? MitraColors.saffron
-                                          .withValues(alpha: 0.15)
+                                      ? MitraColors.saffron.withValues(
+                                          alpha: 0.15,
+                                        )
                                       : onSurface.withValues(alpha: 0.05),
                                   borderRadius: BorderRadius.circular(16),
                                   border: Border.all(
@@ -857,10 +881,11 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     Text(
-                                        subject == 'All'
-                                            ? '🌐'
-                                            : _emojiFor(subject),
-                                        style: const TextStyle(fontSize: 32)),
+                                      subject == 'All'
+                                          ? '🌐'
+                                          : _emojiFor(subject),
+                                      style: const TextStyle(fontSize: 32),
+                                    ),
                                     const SizedBox(height: 8),
                                     Text(
                                       subject,
@@ -918,17 +943,21 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
                                           '')
                                       .trim()
                                       .toLowerCase();
-                              final filteredArLessons =
-                                  arLessonsForSubject.where((ar) {
-                                final langOk = ar.languageTag == currentLang ||
-                                    ar.languageTag == 'all';
-                                final arClass =
-                                    ar.classTag.trim().toLowerCase();
-                                final classOk = userClass.isEmpty ||
-                                    arClass.isEmpty ||
-                                    arClass == userClass;
-                                return langOk && classOk;
-                              }).toList();
+                              final filteredArLessons = arLessonsForSubject
+                                  .where((ar) {
+                                    final langOk =
+                                        ar.languageTag == currentLang ||
+                                        ar.languageTag == 'all';
+                                    final arClass = ar.classTag
+                                        .trim()
+                                        .toLowerCase();
+                                    final classOk =
+                                        userClass.isEmpty ||
+                                        arClass.isEmpty ||
+                                        arClass == userClass;
+                                    return langOk && classOk;
+                                  })
+                                  .toList();
 
                               if (entry.value.isEmpty &&
                                   filteredArLessons.isEmpty) {
@@ -939,7 +968,8 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
                                 subject: entry.key,
                                 quizzes: entry.value,
                                 arLessons: filteredArLessons,
-                                hideHeader: _selectedSubject !=
+                                hideHeader:
+                                    _selectedSubject !=
                                     'All', // ✨ Hides redundant headings when filtered!
                                 onQuizTap: (id) =>
                                     LearnScreen._navigateToQuiz(context, id),
@@ -950,8 +980,10 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
                                   final rec = filteredArLessons
                                       .where((l) => l.id == id)
                                       .cast<ArLessonRec?>()
-                                      .firstWhere((_) => true,
-                                          orElse: () => null);
+                                      .firstWhere(
+                                        (_) => true,
+                                        orElse: () => null,
+                                      );
                                   if (rec != null) {
                                     ref
                                         .read(moduleProgressStoreProvider)
@@ -978,7 +1010,8 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
                                   if (nativeGlb != null &&
                                       nativeGlb.isNotEmpty) {
                                     qp.add(
-                                        'nglb=${Uri.encodeComponent(nativeGlb)}');
+                                      'nglb=${Uri.encodeComponent(nativeGlb)}',
+                                    );
                                   }
                                   if (vid != null && vid.isNotEmpty) {
                                     qp.add('video=${Uri.encodeComponent(vid)}');
@@ -988,10 +1021,12 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
                                   }
                                   if (chroma != null && chroma.isNotEmpty) {
                                     qp.add(
-                                        'chroma=${Uri.encodeComponent(chroma)}');
+                                      'chroma=${Uri.encodeComponent(chroma)}',
+                                    );
                                   }
-                                  final query =
-                                      qp.isEmpty ? '' : '?${qp.join('&')}';
+                                  final query = qp.isEmpty
+                                      ? ''
+                                      : '?${qp.join('&')}';
                                   context.push('/student/ar/$id$query');
                                 },
                               );
@@ -1052,11 +1087,14 @@ class _LearnHeader extends ConsumerWidget {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
-                        color: themeColor.withValues(alpha: 0.5), width: 2),
+                      color: themeColor.withValues(alpha: 0.5),
+                      width: 2,
+                    ),
                     color: themeColor.withValues(alpha: 0.15),
                   ),
                   child: Center(
-                      child: Text(emoji, style: const TextStyle(fontSize: 26))),
+                    child: Text(emoji, style: const TextStyle(fontSize: 26)),
+                  ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -1066,9 +1104,10 @@ class _LearnHeader extends ConsumerWidget {
                       Text(
                         isAll ? 'Curriculum' : 'Subject',
                         style: TextStyle(
-                            fontFamily: 'Mukta',
-                            fontSize: 12,
-                            color: onSurface.withValues(alpha: 0.6)),
+                          fontFamily: 'Mukta',
+                          fontSize: 12,
+                          color: onSurface.withValues(alpha: 0.6),
+                        ),
                       ),
                       Text(
                         title,
@@ -1093,14 +1132,18 @@ class _LearnHeader extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               _StatBadge(
-                  icon: '🎯',
-                  label: '$topicsConsumed Topics',
-                  color: onSurface),
+                icon: '🎯',
+                label: '$topicsConsumed Topics',
+                color: onSurface,
+              ),
               const SizedBox(height: 6),
               _StatBadge(
-                  icon: '📝', label: '$quizzesTaken Quizzes', color: onSurface),
+                icon: '📝',
+                label: '$quizzesTaken Quizzes',
+                color: onSurface,
+              ),
             ],
-          )
+          ),
         ],
       ),
     );
@@ -1112,8 +1155,11 @@ class _StatBadge extends StatelessWidget {
   final String label;
   final Color color;
 
-  const _StatBadge(
-      {required this.icon, required this.label, required this.color});
+  const _StatBadge({
+    required this.icon,
+    required this.label,
+    required this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1186,8 +1232,10 @@ class _SubjectSection extends ConsumerWidget {
               padding: const EdgeInsets.only(bottom: MitraSpacing.sm),
               child: Row(
                 children: [
-                  Text(_emojiFor(subject),
-                      style: const TextStyle(fontSize: 20)),
+                  Text(
+                    _emojiFor(subject),
+                    style: const TextStyle(fontSize: 20),
+                  ),
                   const SizedBox(width: 8),
                   Flexible(
                     child: Text(
@@ -1196,21 +1244,25 @@ class _SubjectSection extends ConsumerWidget {
                         fontFamily: 'Baloo2',
                         fontWeight: FontWeight.w800,
                         fontSize: 18,
-                        color:
-                            Theme.of(context).colorScheme.onSurface, // ✨ Themed
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface, // ✨ Themed
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
                   const SizedBox(width: 8),
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: MitraColors.saffron.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(MitraRadius.pill),
                       border: Border.all(
-                          color: MitraColors.saffron.withValues(alpha: 0.3)),
+                        color: MitraColors.saffron.withValues(alpha: 0.3),
+                      ),
                     ),
                     child: Text(
                       '$totalItems',
@@ -1239,23 +1291,23 @@ class _SubjectSection extends ConsumerWidget {
               final matchedQuiz = quizById[ar.id];
               final qCount = matchedQuiz?.questionCount ?? 0;
 
-              widgets.add(_ArTile(
-                lesson: ar,
-                onTap: onArTap,
-                unlocked: unlocked,
-                bestPct: best,
-                questionCount: qCount,
-              ));
+              widgets.add(
+                _ArTile(
+                  lesson: ar,
+                  onTap: onArTap,
+                  unlocked: unlocked,
+                  bestPct: best,
+                  questionCount: qCount,
+                ),
+              );
 
               // The quiz becomes its own list item only after the AR is watched
               // once AND the module is unlocked.
               if (unlocked && watched && matchedQuiz != null) {
                 shownQuizIds.add(matchedQuiz.id);
-                widgets.add(_QuizTile(
-                  quiz: matchedQuiz,
-                  onTap: onQuizTap,
-                  bestPct: best,
-                ));
+                widgets.add(
+                  _QuizTile(quiz: matchedQuiz, onTap: onQuizTap, bestPct: best),
+                );
               }
 
               // Chain: the next module needs THIS one mastered.
@@ -1265,11 +1317,13 @@ class _SubjectSection extends ConsumerWidget {
             // Any quizzes with no matching AR module (standalone) show as before.
             for (final q in quizzes) {
               if (shownQuizIds.contains(q.id)) continue;
-              widgets.add(_QuizTile(
-                quiz: q,
-                onTap: onQuizTap,
-                bestPct: progress.bestPct(q.id),
-              ));
+              widgets.add(
+                _QuizTile(
+                  quiz: q,
+                  onTap: onQuizTap,
+                  bestPct: progress.bestPct(q.id),
+                ),
+              );
             }
             return widgets;
           }(),
@@ -1296,7 +1350,8 @@ class _QuizTile extends StatelessWidget {
 
     return Semantics(
       button: true,
-      label: '${quiz.title}. '
+      label:
+          '${quiz.title}. '
           '${quiz.questionCount} questions. '
           '${quiz.topic.isNotEmpty ? 'Topic: ${quiz.topic}.' : ''}'
           '${quiz.avgScore > 0 ? ' Average score ${quiz.avgScore.toStringAsFixed(0)} percent.' : ''}',
@@ -1324,10 +1379,7 @@ class _QuizTile extends StatelessWidget {
                 _QuestionCountBadge(count: quiz.questionCount),
                 const SizedBox(width: MitraSpacing.md),
                 Expanded(
-                  child: _QuizInfo(
-                    title: quiz.title,
-                    topic: quiz.topic,
-                  ),
+                  child: _QuizInfo(title: quiz.title, topic: quiz.topic),
                 ),
                 if (bestPct > 0) ...[
                   const SizedBox(width: 8),
@@ -1337,8 +1389,11 @@ class _QuizTile extends StatelessWidget {
                   _AvgScoreChip(score: quiz.avgScore),
                 ],
                 const SizedBox(width: 8),
-                Icon(Icons.arrow_forward_ios,
-                    size: 14, color: onSurface.withValues(alpha: 0.4)),
+                Icon(
+                  Icons.arrow_forward_ios,
+                  size: 14,
+                  color: onSurface.withValues(alpha: 0.4),
+                ),
               ],
             ),
           ),
@@ -1388,7 +1443,8 @@ class _ArTile extends StatelessWidget {
         ),
         borderRadius: BorderRadius.circular(MitraRadius.md),
         border: Border.all(
-            color: MitraColors.sky.withValues(alpha: unlocked ? 0.3 : 0.12)),
+          color: MitraColors.sky.withValues(alpha: unlocked ? 0.3 : 0.12),
+        ),
       ),
       child: Row(
         children: [
@@ -1401,8 +1457,10 @@ class _ArTile extends StatelessWidget {
               border: Border.all(color: MitraColors.sky.withValues(alpha: 0.3)),
             ),
             alignment: Alignment.center,
-            child: Text(unlocked ? '🧊' : '🔒',
-                style: const TextStyle(fontSize: 24)),
+            child: Text(
+              unlocked ? '🧊' : '🔒',
+              style: const TextStyle(fontSize: 24),
+            ),
           ),
           const SizedBox(width: MitraSpacing.md),
           Expanded(
@@ -1443,8 +1501,11 @@ class _ArTile extends StatelessWidget {
               ),
             )
           else
-            Icon(Icons.lock_outline,
-                size: 18, color: onSurface.withValues(alpha: 0.4)),
+            Icon(
+              Icons.lock_outline,
+              size: 18,
+              color: onSurface.withValues(alpha: 0.4),
+            ),
         ],
       ),
     );
@@ -1482,7 +1543,7 @@ class _ScoreBadge extends StatelessWidget {
         border: Border.all(color: color.withValues(alpha: 0.35)),
       ),
       child: Text(
-        '$pct%',
+        mastered ? '✓ COMPLETED 100%' : '$pct%',
         style: TextStyle(
           fontFamily: 'SpaceMono',
           fontSize: 10,
@@ -1508,8 +1569,9 @@ class _QuestionCountBadge extends StatelessWidget {
       decoration: BoxDecoration(
         color: MitraColors.indigoLight.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(MitraRadius.sm),
-        border:
-            Border.all(color: MitraColors.indigoLight.withValues(alpha: 0.25)),
+        border: Border.all(
+          color: MitraColors.indigoLight.withValues(alpha: 0.25),
+        ),
       ),
       alignment: Alignment.center,
       child: Column(
@@ -1545,8 +1607,9 @@ class _QuizInfo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final onSurface =
-        Theme.of(context).colorScheme.onSurface; // ✨ Automatically adapts
+    final onSurface = Theme.of(
+      context,
+    ).colorScheme.onSurface; // ✨ Automatically adapts
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1660,8 +1723,9 @@ class _RetryButton extends StatelessWidget {
           decoration: BoxDecoration(
             color: MitraColors.saffron.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(MitraRadius.pill),
-            border:
-                Border.all(color: MitraColors.saffron.withValues(alpha: 0.35)),
+            border: Border.all(
+              color: MitraColors.saffron.withValues(alpha: 0.35),
+            ),
           ),
           child: const Text(
             'Retry',
