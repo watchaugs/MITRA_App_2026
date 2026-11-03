@@ -317,19 +317,18 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
     _modelZ = 0.0;
     _rotY = 0.0;
 
-    final initialMatrix = _composeMatrix();
     final node = ARNode(
       type: nodeType,
       uri: nodeUri,
-      transformation: initialMatrix,
+      transformation: vm.Matrix4.identity(),
     );
 
     final okNode = await _objectManager.addNode(node);
     if (okNode == true) {
       _placedNode = node;
-      // Push the composed matrix (with 0.3 scale) cleanly so it doesn't spawn at
-      // 100% and jump on the first button press.
-      node.transform = initialMatrix;
+      // Push the composed matrix (with 0.3 scale and world position) after
+      // addNode so ValueNotifier fires transformationChanged to Android.
+      _applyTransform();
       // Model is down — hide ALL placement guides. Keep pans AND rotation ON so
       // button-driven transform updates propagate to the native node.
       _sessionManager.onInitialize(
