@@ -33,6 +33,7 @@ import 'package:ar_flutter_plugin_2/datatypes/hittest_result_types.dart';
 import '../../constants/colors.dart';
 import '../../services/achievement_engine.dart';
 import '../../services/ar_model_cache.dart';
+import '../../stores/module_progress_store.dart';
 
 class ArRoomScreen extends ConsumerStatefulWidget {
   final String topicId;
@@ -69,6 +70,23 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
   final List<ARAnchor> _anchors = [];
   bool _placed = false;
   String _hint = 'Move your phone slowly to find the floor…';
+
+  @override
+  void initState() {
+    super.initState();
+    // Track narration progress → unlock the quiz once ≥80% is heard.
+    _audio.onPositionChanged.listen((pos) {
+      final dur = _audioDuration;
+      if (dur == null || dur.inMilliseconds <= 0) return;
+      final pct = ((pos.inMilliseconds / dur.inMilliseconds) * 100).round();
+      ref
+          .read(moduleProgressStoreProvider)
+          .recordArProgress(widget.topicId, pct);
+    });
+    _audio.onDurationChanged.listen((d) => _audioDuration = d);
+  }
+
+  Duration? _audioDuration;
 
   @override
   void dispose() {
@@ -203,11 +221,11 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
       showPlanes: true,
       showWorldOrigin: false,
       handleTaps: true,
-      // Gestures OFF: the plugin's pan/rotation are unreliable (a one-finger
-      // drag re-orients the model unpredictably, and there is no Y-axis
-      // rotation). All movement is via on-screen buttons instead — deterministic
-      // and kid-friendly for classroom use.
-      handlePans: false,
+      // handlePans ON keeps the node transformable so the buttons work; it also
+      // allows a one-finger MOVE (no tumbling). handleRotation OFF removes the
+      // free-axis finger rotation (the somersault). Rotation is ONLY via the
+      // ⟲/⟳ buttons → Matrix3.rotationY = spinning-top (single Y axis).
+      handlePans: true,
       handleRotation: false,
     );
     _objectManager.onInitialize();
@@ -275,7 +293,11 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
         showPlanes: false,
         showWorldOrigin: false,
         handleTaps: true,
-        handlePans: false,
+        // handlePans ON keeps the node transformable so the buttons work; it also
+        // allows a one-finger MOVE (slide on the floor — no tumbling).
+        // handleRotation OFF removes the free-axis finger rotation (the somersault).
+        // Rotation is ONLY via the ⟲/⟳ buttons → Matrix3.rotationY = spinning-top.
+        handlePans: true,
         handleRotation: false,
       );
       // Award AR-view XP through the single growth engine (also advances the

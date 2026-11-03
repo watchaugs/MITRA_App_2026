@@ -96,7 +96,7 @@ class _ArEntryScreenState extends ConsumerState<ArEntryScreen> {
   Widget build(BuildContext context) {
     if (!_ready) {
       return const Scaffold(
-        backgroundColor: Colors.black,
+        backgroundColor: MitraColors.bgDeep,
         body: Center(
           child: CircularProgressIndicator(color: MitraColors.saffron),
         ),

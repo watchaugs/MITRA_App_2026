@@ -35,6 +35,12 @@ import '../theme/theme_provider.dart'; // sharedPreferencesProvider
 
 String _bestKey(String id) => 'mp_best_$id';
 String _arSeenKey(String id) => 'mp_arseen_$id';
+String _ansKey(String id) => 'mp_answers_$id'; // CSV of student answers
+String _correctKey(String id) => 'mp_correct_$id'; // CSV of correct indices
+String _qtextKey(String id) => 'mp_qtext_$id'; // \u0001-joined question texts
+String _optsKey(String id) => 'mp_opts_$id'; // \u0001 rows, \u0002 options
+String _explKey(String id) => 'mp_expl_$id'; // \u0001-joined explanations
+String _arPctKey(String id) => 'mp_arpct_$id'; // highest AR audio % reached
 const _lastModuleKey = 'mp_last_module';
 
 /// Immutable snapshot of one module's progress.
@@ -91,6 +97,70 @@ class ModuleProgressStore {
 
   /// Mark that the student has launched + watched this module's AR lesson once.
   /// This is what makes the quiz appear as its own list item.
+  // Highest AR-narration % reached (0..100). Once ≥80, the module counts as
+  // "watched" and its quiz unlocks. Monotonic — never decreases.
+  int arWatchedPct(String id) {
+    if (id.isEmpty) return 0;
+    return (_prefs.getInt(_arPctKey(id)) ?? 0).clamp(0, 100);
+  }
+
+  Future<void> recordArProgress(String id, int pct) async {
+    if (id.isEmpty) return;
+    final p = pct.clamp(0, 100);
+    if (p > arWatchedPct(id)) await _prefs.setInt(_arPctKey(id), p);
+    if (p >= 80) await markArWatched(id);
+  }
+
+  // Persist a finished quiz attempt so a passed quiz can be re-opened in
+  // read-only review without re-answering (survives relogin).
+  Future<void> saveQuizAttempt({
+    required String id,
+    required List<int?> answers,
+    required List<int> correct,
+    required List<String> questionTexts,
+    required List<List<String>> options,
+    required List<String?> explanations,
+  }) async {
+    if (id.isEmpty) return;
+    await _prefs.setString(
+        _ansKey(id), answers.map((e) => e == null ? '' : '$e').join(','));
+    await _prefs.setString(_correctKey(id), correct.join(','));
+    await _prefs.setString(_qtextKey(id), questionTexts.join('\u0001'));
+    await _prefs.setString(
+        _optsKey(id), options.map((o) => o.join('\u0002')).join('\u0001'));
+    await _prefs.setString(
+        _explKey(id), explanations.map((e) => e ?? '').join('\u0001'));
+  }
+
+  bool hasSavedAttempt(String id) =>
+      id.isNotEmpty && (_prefs.getString(_ansKey(id)) ?? '').isNotEmpty;
+
+  // Returns the saved attempt for the result screen, or null if none.
+  Map<String, dynamic>? readQuizAttempt(String id) {
+    if (!hasSavedAttempt(id)) return null;
+    final ans = (_prefs.getString(_ansKey(id)) ?? '')
+        .split(',')
+        .map((s) => s.isEmpty ? null : int.tryParse(s))
+        .toList();
+    final correct = (_prefs.getString(_correctKey(id)) ?? '')
+        .split(',')
+        .map((s) => int.tryParse(s) ?? 0)
+        .toList();
+    final qtexts = (_prefs.getString(_qtextKey(id)) ?? '').split('\u0001');
+    final opts = (_prefs.getString(_optsKey(id)) ?? '')
+        .split('\u0001')
+        .map((row) => row.split('\u0002'))
+        .toList();
+    final expl = (_prefs.getString(_explKey(id)) ?? '').split('\u0001');
+    return {
+      'answers': ans,
+      'correct': correct,
+      'questionTexts': qtexts,
+      'options': opts,
+      'explanations': expl,
+    };
+  }
+
   Future<void> markArWatched(String id) async {
     if (id.isEmpty) return;
     if (_prefs.getBool(_arSeenKey(id)) == true) return;

@@ -217,13 +217,17 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
       // Gating: keep the BEST percentage for this module (quizId == module id).
       // 100% unlocks the next module in the Learn list. This is device-local;
       // the raw attempt above already syncs to the cloud via the batch service.
-      unawaited(
-        ref.read(moduleProgressStoreProvider).recordQuiz(
-              widget.quizId,
-              _score,
-              _questions.length,
-            ),
-      );
+      final mps = ref.read(moduleProgressStoreProvider);
+      unawaited(mps.recordQuiz(widget.quizId, _score, _questions.length));
+      // Persist the attempt so a passed quiz re-opens in review (no re-answering).
+      unawaited(mps.saveQuizAttempt(
+        id: widget.quizId,
+        answers: _studentAnswers,
+        correct: _questions.map((q) => q.correctAnswerIndex).toList(),
+        questionTexts: _questions.map((q) => q.questionText).toList(),
+        options: _questions.map((q) => q.options).toList(),
+        explanations: _questions.map((q) => q.explanation).toList(),
+      ));
       ref.read(moduleProgressTickProvider.notifier).state++;
 
       // ✨ 2. Evaluate Quiz Achievements locally!

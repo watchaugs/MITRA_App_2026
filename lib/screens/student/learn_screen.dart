@@ -46,6 +46,7 @@ import '../../providers/tr_ext.dart';
 import '../../widgets/orbit_explorer.dart';
 import '../../stores/module_progress_store.dart';
 import '../../services/achievement_engine.dart';
+import '../../models/quiz_model.dart';
 
 // ═══════════════════════════════════════════════════════════
 // DOMAIN: Failures
@@ -90,14 +91,14 @@ class ParsingFailure extends LearnFailure {
 enum QuizStatus { live, draft, closed }
 
 QuizStatus _parseQuizStatus(String? raw) => switch (raw?.toLowerCase()) {
-  'live' => QuizStatus.live,
-  'draft' => QuizStatus.draft,
-  'closed' => QuizStatus.closed,
-  // Unknown values default to `live` (API contract says
-  // only live quizzes are returned for this endpoint) but
-  // we log a warning so misconfigurations are caught early.
-  _ => QuizStatus.live,
-};
+      'live' => QuizStatus.live,
+      'draft' => QuizStatus.draft,
+      'closed' => QuizStatus.closed,
+      // Unknown values default to `live` (API contract says
+      // only live quizzes are returned for this endpoint) but
+      // we log a warning so misconfigurations are caught early.
+      _ => QuizStatus.live,
+    };
 
 /// Lightweight quiz summary for list screens.
 ///
@@ -230,12 +231,12 @@ class QuizFilterParams {
   /// Converts to query parameters, omitting empty values so
   /// the API doesn't receive `?class_name=&state=`.
   Map<String, String> toQueryParams() => {
-    'status': 'live',
-    if (className.isNotEmpty) 'class_name': className,
-    if (state.isNotEmpty) 'state': state,
-    if (language.isNotEmpty) 'language': language,
-    _limitKey: _defaultLimit,
-  };
+        'status': 'live',
+        if (className.isNotEmpty) 'class_name': className,
+        if (state.isNotEmpty) 'state': state,
+        if (language.isNotEmpty) 'language': language,
+        _limitKey: _defaultLimit,
+      };
 
   @override
   bool operator ==(Object other) =>
@@ -421,8 +422,8 @@ ArCatalog? _catalogFromManifest(dynamic data) {
             id: id,
             title: (l['title'] ?? id).toString(),
             topic: topic,
-            languageTag: (l['language_tag'] ?? l['language'] ?? 'all')
-                .toString(),
+            languageTag:
+                (l['language_tag'] ?? l['language'] ?? 'all').toString(),
             classTag: (l['class_name'] ?? className).toString(),
           ));
           // flutter_url = Draco _lite.glb (for the on-screen 3D viewer).
@@ -486,9 +487,8 @@ final arCatalogProvider = FutureProvider<ArCatalog>((ref) async {
   });
 
   final raw = res.data is Map ? res.data['data'] : null;
-  final territorySupported = res.data is Map
-      ? (res.data['territory_supported'] != false)
-      : true;
+  final territorySupported =
+      res.data is Map ? (res.data['territory_supported'] != false) : true;
   final bySubject = <String, List<ArLessonRec>>{};
   final glbById = <String, String>{};
   final nativeGlbById = <String, String>{};
@@ -547,12 +547,8 @@ final arCatalogProvider = FutureProvider<ArCatalog>((ref) async {
 /// Async quiz feed notifier — exposes typed errors through
 /// [LearnFailure] and supports explicit refresh that keeps
 /// existing data visible during pull-to-refresh.
-final quizFeedProvider =
-    AsyncNotifierProvider.family<
-      QuizFeedNotifier,
-      List<QuizSummary>,
-      QuizFilterParams
-    >(QuizFeedNotifier.new);
+final quizFeedProvider = AsyncNotifierProvider.family<QuizFeedNotifier,
+    List<QuizSummary>, QuizFilterParams>(QuizFeedNotifier.new);
 
 class QuizFeedNotifier
     extends FamilyAsyncNotifier<List<QuizSummary>, QuizFilterParams> {
@@ -587,68 +583,64 @@ class LearnScreen extends ConsumerStatefulWidget {
   const LearnScreen({super.key});
 
   // ✨ Hardcoded mapping of AR Lessons to their respective subjects
-  static const _arLessonsBySubject =
-      <
-        String,
-        List<
+  static const _arLessonsBySubject = <String,
+      List<
           ({
             String id,
             String title,
             String topic,
             String languageTag,
             String classTag,
-          })
-        >
-      >{
-        'Science': [
-          (
-            id: 'cell-division',
-            title: 'Cell Division 3D',
-            topic: 'Biology',
-            languageTag: 'all',
-            classTag: '',
-          ),
-          (
-            id: 'atom-structure-en',
-            title: 'Atom Structure (English Audio)',
-            topic: 'Chemistry',
-            languageTag: 'en',
-            classTag: '',
-          ),
-          (
-            id: 'atom-structure-hi',
-            title: 'Atom Structure (Hindi Audio)',
-            topic: 'Chemistry',
-            languageTag: 'hi',
-            classTag: '',
-          ),
-        ],
-        'Geography': [
-          (
-            id: 'solar-system',
-            title: 'Solar System 3D',
-            topic: 'Space',
-            languageTag: 'all',
-            classTag: '',
-          ),
-          (
-            id: 'ocean-layers',
-            title: 'Ocean Layers 3D',
-            topic: 'Earth',
-            languageTag: 'all',
-            classTag: '',
-          ),
-        ],
-        'History': [
-          (
-            id: 'ancient-rome',
-            title: 'Ancient Rome 3D',
-            topic: 'World History',
-            languageTag: 'all',
-            classTag: '',
-          ),
-        ],
-      };
+          })>>{
+    'Science': [
+      (
+        id: 'cell-division',
+        title: 'Cell Division 3D',
+        topic: 'Biology',
+        languageTag: 'all',
+        classTag: '',
+      ),
+      (
+        id: 'atom-structure-en',
+        title: 'Atom Structure (English Audio)',
+        topic: 'Chemistry',
+        languageTag: 'en',
+        classTag: '',
+      ),
+      (
+        id: 'atom-structure-hi',
+        title: 'Atom Structure (Hindi Audio)',
+        topic: 'Chemistry',
+        languageTag: 'hi',
+        classTag: '',
+      ),
+    ],
+    'Geography': [
+      (
+        id: 'solar-system',
+        title: 'Solar System 3D',
+        topic: 'Space',
+        languageTag: 'all',
+        classTag: '',
+      ),
+      (
+        id: 'ocean-layers',
+        title: 'Ocean Layers 3D',
+        topic: 'Earth',
+        languageTag: 'all',
+        classTag: '',
+      ),
+    ],
+    'History': [
+      (
+        id: 'ancient-rome',
+        title: 'Ancient Rome 3D',
+        topic: 'World History',
+        languageTag: 'all',
+        classTag: '',
+      ),
+    ],
+  };
 
   static Map<String, List<QuizSummary>> _groupQuizzesBySubject(
     List<QuizSummary> quizzes,
@@ -660,11 +652,47 @@ class LearnScreen extends ConsumerStatefulWidget {
     return grouped;
   }
 
-  static void _navigateToQuiz(BuildContext context, String id) {
+  static void _navigateToQuiz(BuildContext context, WidgetRef ref, String id) {
     if (id.isEmpty) return;
     if (id.contains('/') || id.contains('..')) return;
-    // push (not go) so the back button returns to Learn, not Home. go() replaces
-    // the stack, leaving nothing to pop — which sent back straight to /student/home.
+    final mps = ref.read(moduleProgressStoreProvider);
+    // Already mastered + a saved attempt exists → open the RESULT screen in
+    // review mode instead of re-launching the quiz for re-answering.
+    if (mps.isMastered(id) && mps.hasSavedAttempt(id)) {
+      final a = mps.readQuizAttempt(id)!;
+      final qtexts = (a['questionTexts'] as List).cast<String>();
+      final opts = (a['options'] as List)
+          .map((o) => (o as List).cast<String>())
+          .toList();
+      final correct = (a['correct'] as List).cast<int>();
+      final expl = (a['explanations'] as List).cast<String>();
+      final answers = (a['answers'] as List).cast<int?>();
+      final questions = <QuizQuestion>[
+        for (int i = 0; i < qtexts.length; i++)
+          QuizQuestion(
+            questionText: qtexts[i],
+            options: i < opts.length ? opts[i] : const [],
+            correctAnswerIndex: i < correct.length ? correct[i] : 0,
+            explanation: i < expl.length && expl[i].isNotEmpty ? expl[i] : null,
+          ),
+      ];
+      final score = [
+        for (int i = 0; i < questions.length; i++)
+          if (i < answers.length &&
+              answers[i] == questions[i].correctAnswerIndex)
+            1
+      ].length;
+      context.push('/quiz-result', extra: {
+        'score': score,
+        'total': questions.length,
+        'xpEarned': score * 50,
+        'quizId': id,
+        'questions': questions,
+        'studentAnswers': answers,
+        'review': true,
+      });
+      return;
+    }
     context.push('/quiz/$id');
   }
 
@@ -943,21 +971,17 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
                                           '')
                                       .trim()
                                       .toLowerCase();
-                              final filteredArLessons = arLessonsForSubject
-                                  .where((ar) {
-                                    final langOk =
-                                        ar.languageTag == currentLang ||
-                                        ar.languageTag == 'all';
-                                    final arClass = ar.classTag
-                                        .trim()
-                                        .toLowerCase();
-                                    final classOk =
-                                        userClass.isEmpty ||
-                                        arClass.isEmpty ||
-                                        arClass == userClass;
-                                    return langOk && classOk;
-                                  })
-                                  .toList();
+                              final filteredArLessons =
+                                  arLessonsForSubject.where((ar) {
+                                final langOk = ar.languageTag == currentLang ||
+                                    ar.languageTag == 'all';
+                                final arClass =
+                                    ar.classTag.trim().toLowerCase();
+                                final classOk = userClass.isEmpty ||
+                                    arClass.isEmpty ||
+                                    arClass == userClass;
+                                return langOk && classOk;
+                              }).toList();
 
                               if (entry.value.isEmpty &&
                                   filteredArLessons.isEmpty) {
@@ -968,11 +992,10 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
                                 subject: entry.key,
                                 quizzes: entry.value,
                                 arLessons: filteredArLessons,
-                                hideHeader:
-                                    _selectedSubject !=
+                                hideHeader: _selectedSubject !=
                                     'All', // ✨ Hides redundant headings when filtered!
-                                onQuizTap: (id) =>
-                                    LearnScreen._navigateToQuiz(context, id),
+                                onQuizTap: (id) => LearnScreen._navigateToQuiz(
+                                    context, ref, id),
                                 onArTap: (id) {
                                   // Remember this as the last-opened lesson so
                                   // Home's "Continue Learning" card shows REAL
@@ -1024,9 +1047,8 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
                                       'chroma=${Uri.encodeComponent(chroma)}',
                                     );
                                   }
-                                  final query = qp.isEmpty
-                                      ? ''
-                                      : '?${qp.join('&')}';
+                                  final query =
+                                      qp.isEmpty ? '' : '?${qp.join('&')}';
                                   context.push('/student/ar/$id$query');
                                 },
                               );
@@ -1287,7 +1309,8 @@ class _SubjectSection extends ConsumerWidget {
               final ar = arLessons[i];
               final unlocked = (i == 0) || prevMastered;
               final best = progress.bestPct(ar.id);
-              final watched = progress.arWatched(ar.id);
+              // Quiz unlocks only after ≥80% of the AR narration is heard.
+              final watched = progress.arWatchedPct(ar.id) >= 80;
               final matchedQuiz = quizById[ar.id];
               final qCount = matchedQuiz?.questionCount ?? 0;
 
@@ -1298,6 +1321,7 @@ class _SubjectSection extends ConsumerWidget {
                   unlocked: unlocked,
                   bestPct: best,
                   questionCount: qCount,
+                  completed: watched, // ≥80% watched → Completed stamp
                 ),
               );
 
@@ -1350,8 +1374,7 @@ class _QuizTile extends StatelessWidget {
 
     return Semantics(
       button: true,
-      label:
-          '${quiz.title}. '
+      label: '${quiz.title}. '
           '${quiz.questionCount} questions. '
           '${quiz.topic.isNotEmpty ? 'Topic: ${quiz.topic}.' : ''}'
           '${quiz.avgScore > 0 ? ' Average score ${quiz.avgScore.toStringAsFixed(0)} percent.' : ''}',
@@ -1411,6 +1434,7 @@ class _ArTile extends StatelessWidget {
   final bool unlocked; // false = greyed, tap shows "unlock" hint
   final int bestPct; // 0..100 best score on this module
   final int questionCount; // shown as "N questions" subtext
+  final bool completed; // ≥80% AR narration watched → Completed stamp
 
   const _ArTile({
     required this.lesson,
@@ -1418,6 +1442,7 @@ class _ArTile extends StatelessWidget {
     this.unlocked = true,
     this.bestPct = 0,
     this.questionCount = 0,
+    this.completed = false,
   });
 
   @override
@@ -1472,6 +1497,27 @@ class _ArTile extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
+          // AR "Completed 100%" stamp once ≥80% of the narration is watched.
+          if (completed) ...[
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: MitraColors.emerald.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(MitraRadius.pill),
+                border: Border.all(
+                    color: MitraColors.emerald.withValues(alpha: 0.35)),
+              ),
+              child: const Text(
+                '✓ COMPLETED 100%',
+                style: TextStyle(
+                    fontFamily: 'SpaceMono',
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    color: MitraColors.emerald),
+              ),
+            ),
+            const SizedBox(width: 8),
+          ],
           // Badge: 100% once mastered, otherwise best % so far (if attempted).
           if (bestPct > 0) ...[
             _ScoreBadge(pct: bestPct),
