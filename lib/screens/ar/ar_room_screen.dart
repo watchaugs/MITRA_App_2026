@@ -69,7 +69,8 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
   double _modelZ = 0.0; // depth offset: + = farther, − = nearer (metres)
   double _rotY = 0.0; // rotation about the vertical (Y) axis, in radians
   Timer? _spinTimer; // drives smooth hold-to-spin
-  ARAnchor? _modelAnchor; // the anchor the model sits on (for re-placing)
+  ARPlaneAnchor?
+      _modelAnchor; // the plane anchor the model sits on (for re-placing)
   bool _replacing = false; // guards against overlapping re-place calls
 
   // Rotation tuning.
