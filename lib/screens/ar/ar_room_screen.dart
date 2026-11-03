@@ -69,9 +69,7 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
   double _modelZ = 0.0; // depth offset: + = farther, − = nearer (metres)
   double _rotY = 0.0; // rotation about the vertical (Y) axis, in radians
   Timer? _spinTimer; // drives smooth hold-to-spin
-  ARPlaneAnchor?
-      _modelAnchor; // the plane anchor the model sits on (for re-placing)
-  bool _replacing = false; // guards against overlapping re-place calls
+  vm.Matrix4 _baseTransform = vm.Matrix4.identity(); // placement world pose
 
   // Rotation tuning.
   static const double _twoPi = 6.28318530718;
@@ -114,13 +112,34 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
     return Scaffold(
       backgroundColor: Colors.black,
       body: Stack(
+        fit: StackFit.expand,
         children: [
-          ARView(
-            onARViewCreated: _onARViewCreated,
-            // Detect floors AND walls/tables → a trackable surface is found
-            // sooner, so placement feels faster.
-            planeDetectionConfig: PlaneDetectionConfig.horizontalAndVertical,
+          Positioned.fill(
+            child: ARView(
+              onARViewCreated: _onARViewCreated,
+              // Detect floors AND walls/tables → a trackable surface is found
+              // sooner, so placement feels faster.
+              planeDetectionConfig: PlaneDetectionConfig.horizontalAndVertical,
+            ),
           ),
+          // Drag-absorber: swallows one/two-finger DRAG & PINCH so fingers can
+          // never tumble or move the model (buttons do that). It does NOT eat
+          // taps — tap-to-place (before placement) and tap-to-replay (after)
+          // still reach the plugin. Only active once the model is placed.
+          if (_placed)
+            Positioned.fill(
+              // Absorb drag/pinch so fingers can't tumble the model (buttons do
+              // that). onScale* is a SUPERSET of onPan* in Flutter — it covers
+              // single-finger drag AND two-finger pinch — so we use ONLY scale
+              // (having both pan and scale throws "redundant recognizer"). Single
+              // taps are not claimed → tap-to-replay still reaches the model.
+              child: GestureDetector(
+                behavior: HitTestBehavior.translucent,
+                onScaleStart: (_) {},
+                onScaleUpdate: (_) {},
+                onScaleEnd: (_) {},
+              ),
+            ),
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.all(12),
@@ -235,13 +254,12 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
       showPlanes: true,
       showWorldOrigin: false,
       handleTaps: true,
-      // ALL finger gestures OFF. In ar_flutter_plugin_2 a one-finger pan is a
-      // free tumble (there is no "slide-only" pan), so any gesture = somersault.
-      // We drive move / zoom / rotate entirely from the buttons, applied by
-      // RE-PLACING the node with a fresh transform (addNode always applies the
-      // transform natively; the in-place rotation setter does not). So we don't
-      // need the node to stay "transformable" — gestures can be fully off.
-      handlePans: false,
+      // pans ON is REQUIRED: ar_flutter_plugin_2 only propagates node.transform
+      // updates (our move/lift/rotate buttons) while the node is "transformable",
+      // which needs handlePans. We stop fingers from tumbling the model with a
+      // transparent drag-absorber overlay (see _DragAbsorber in build) — so pans
+      // are on for the setter, but finger drags never reach the plugin.
+      handlePans: true,
       handleRotation: false,
     );
     _objectManager.onInitialize();
@@ -297,11 +315,16 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
           vm.Vector4(0, 1, 0, _rotY), // axis = Y, angle = _rotY (spinning top)
     );
 
-    final okNode = await _objectManager.addNode(node, planeAnchor: anchor);
+    // Add WITHOUT planeAnchor: a plane-anchored node has its FULL pose (position,
+    // rotation, AND the node.transform we set) re-asserted by the anchor every
+    // frame, so the move/rotate/lift buttons had no visible effect. Seeding the
+    // node's transform from the hit's worldTransform makes it land exactly where
+    // the student tapped; from then on our _applyTransform owns it.
+    node.transform = hit.worldTransform;
+    final okNode = await _objectManager.addNode(node);
     if (okNode == true) {
       _placedNode = node;
-      _modelAnchor =
-          anchor; // keep it — buttons re-place the node on this anchor
+      _baseTransform = hit.worldTransform.clone(); // placement pose to build on
       // Model is down — hide ALL placement guides (plane grid, feature points,
       // animated guide) so the student sees only the model on a clean floor.
       _sessionManager.onInitialize(
@@ -310,9 +333,9 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
         showPlanes: false,
         showWorldOrigin: false,
         handleTaps: true,
-        // Gestures stay OFF (see placement-phase note) so fingers can never
-        // tumble the model. All manipulation is via the side buttons.
-        handlePans: false,
+        // pans ON (needed for node.transform to propagate); finger drags are
+        // absorbed by the overlay so they can't tumble the model.
+        handlePans: true,
         handleRotation: false,
       );
       // Award AR-view XP through the single growth engine (also advances the
@@ -366,82 +389,61 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
   }
 
   // ── Transform engine ──────────────────────────────────────────────────────
-  // Every button change (scale / move / rotate) is applied by REMOVING the node
-  // and ADDING a fresh one on the same anchor with the new transform. This is
-  // the one path that applies ALL transforms reliably in ar_flutter_plugin_2 —
-  // including Y-rotation, which the in-place `node.rotation` setter silently
-  // drops. Because the transform rides on addNode, gestures can stay fully off,
-  // so fingers never tumble the model.
-  Future<void> _reapplyTransform() async {
-    final anchor = _modelAnchor;
-    final old = _placedNode;
-    if (anchor == null || old == null) return;
-    if (_replacing) return; // skip if a re-place is already in flight
-    _replacing = true;
-    try {
-      await _objectManager.removeNode(old);
-      _nodes.remove(old);
-
-      final node = ARNode(
-        type: old.type,
-        uri: old.uri,
-        scale: vm.Vector3(_modelScale, _modelScale, _modelScale),
-        position: vm.Vector3(0, _modelY, _modelZ),
-        // axis = Y (0,1,0), angle = _rotY → pure spinning-top rotation.
-        rotation: vm.Vector4(0, 1, 0, _rotY),
-      );
-      final ok = await _objectManager.addNode(node, planeAnchor: anchor);
-      if (ok == true) {
-        _placedNode = node;
-        _nodes.add(node);
-      } else {
-        // Re-add failed — keep the old reference so we don't lose the model.
-        _placedNode = old;
-        _nodes.add(old);
-      }
-    } catch (_) {
-      _placedNode = old;
-    } finally {
-      _replacing = false;
-    }
+  // All manipulation goes through ONE composed Matrix4 on the placed node's
+  // `transform`. In ar_flutter_plugin_2 the `transform` setter propagates every
+  // component (translate + rotate + scale) to native reliably — unlike the
+  // separate `position`/`rotation` setters, where a plane-anchored node ignores
+  // position & rotation (the anchor pose wins). That is why only resize worked.
+  // Composing our own matrix and pushing it via `transform` makes move, lift,
+  // depth AND rotation all take effect.
+  void _applyTransform() {
+    final node = _placedNode;
+    if (node == null) return;
+    // Compose our offsets ON TOP of the placement world pose so the model stays
+    // where it was tapped, then moves/rotates/scales relative to that.
+    final m = _baseTransform.clone()
+      ..translateByDouble(0.0, _modelY, _modelZ, 1.0)
+      ..rotateY(_rotY)
+      ..scaleByDouble(_modelScale, _modelScale, _modelScale, 1.0);
+    node.transform = m;
+    setState(() {}); // refresh the % label
   }
 
   // Resize — clamped so it can't vanish or fill the room.
   void _resizeBy(double factor) {
     if (_placedNode == null) return;
     _modelScale = (_modelScale * factor).clamp(0.05, 2.0);
-    setState(() {}); // refresh the % label immediately
-    _reapplyTransform();
+    _applyTransform();
   }
 
-  // Lift up / down off the floor (Y position).
+  // Lift up / down off the floor (Y).
   void _moveY(double deltaMetres) {
     if (_placedNode == null) return;
     _modelY = (_modelY + deltaMetres).clamp(-0.5, 2.0);
-    _reapplyTransform();
+    _applyTransform();
   }
 
   // Move nearer / farther (Z depth).
   void _moveZ(double deltaMetres) {
     if (_placedNode == null) return;
     _modelZ = (_modelZ + deltaMetres).clamp(-1.5, 1.5);
-    _reapplyTransform();
+    _applyTransform();
   }
 
   // Rotate about the vertical (Y) axis by a fixed step (single tap = 30°).
   void _rotateStep(int dir) {
     if (_placedNode == null) return;
     _rotY = (_rotY + dir * _tapStep) % _twoPi;
-    _reapplyTransform();
+    _applyTransform();
   }
 
-  // Hold-to-spin: nudge _rotY every 50ms and re-place → smooth 360° in ~3.5s.
+  // Hold-to-spin: nudge _rotY every 50ms → smooth 360° in ~3.5s.
   void _startSpin(int dir) {
     if (_placedNode == null) return;
     _spinTimer?.cancel();
     _spinTimer = Timer.periodic(const Duration(milliseconds: 50), (_) {
       _rotY = (_rotY + dir * _holdStep) % _twoPi;
-      _reapplyTransform();
+      _applyTransform();
     });
   }
 

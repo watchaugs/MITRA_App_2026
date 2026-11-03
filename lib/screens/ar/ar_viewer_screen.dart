@@ -103,121 +103,152 @@ class _ArViewerScreenState extends ConsumerState<ArViewerScreen> {
             ? dracoSrc
             : ArViewerScreen._bundledDemoGlb);
 
+    final media = MediaQuery.sizeOf(context);
+
     return Scaffold(
-      backgroundColor: Colors.black,
-      body: Stack(
-        children: [
-          // ── 3D / AR surface ──────────────────────────────────────────────
-          Positioned.fill(
-            child: ModelViewer(
-              key: ValueKey(src),
-              src: src,
-              alt: 'A 3D model for ${widget.topicId}',
-              // Surface WebView JS console (incl. model-viewer load errors) to
-              // the Dart log so a black screen's real cause is visible.
-              relatedCss: '',
-              onWebViewCreated: (controller) {
-                debugPrint('🟣 ModelViewer WebView created for src=$src');
-              },
-              // AR is handled by the native ArRoomScreen (via the entry chooser),
-              // NOT by model-viewer's button: its WebXR mode is unsupported in
-              // Android WebView and crashes the app. Keep this view 3D-only.
-              ar: false,
-              autoRotate: true,
-              cameraControls: true,
-              backgroundColor: const Color(0xFF0B0B12),
-              // 3D-only framing. NO ar-* attributes here — ar-scale/ar-placement
-              // are AR-session attributes and can shrink/mis-position the model
-              // even with ar:false. We force model-viewer to frame the model so
-              // it fills the viewport, centered, regardless of the GLB's authored
-              // scale.
-              relatedJs: '''
-                const mv = document.querySelector('model-viewer');
-                if (mv) {
-                  // Fill the WebView: the host page body/model-viewer must be 100%.
-                  document.documentElement.style.height = '100%';
-                  document.body.style.height = '100%';
-                  document.body.style.margin = '0';
-                  mv.style.width = '100%';
-                  mv.style.height = '100vh';
-                  mv.style.display = 'block';
+      backgroundColor: const Color(0xFF0B0B12),
+      body: LayoutBuilder(
+        builder: (context, c) {
+          // Real PIXEL size for the WebView — not 100vh/100%, which evaluate
+          // against the WebView's collapsed 150px default and stay 150px.
+          final w = (c.maxWidth.isFinite && c.maxWidth > 0)
+              ? c.maxWidth
+              : media.width;
+          final h = (c.maxHeight.isFinite && c.maxHeight > 0)
+              ? c.maxHeight
+              : media.height;
+          final wPx = w.ceil();
+          final hPx = h.ceil();
 
-                  mv.setAttribute('autoplay', '');
-                  mv.setAttribute('shadow-intensity', '1');
-                  mv.setAttribute('tone-mapping', 'neutral');
-                  mv.setAttribute('exposure', '1.1');
-                  mv.setAttribute('environment-image', 'neutral');
+          return Stack(
+            fit: StackFit.expand,
+            children: [
+              Positioned.fill(
+                child: ModelViewer(
+                  key: ValueKey('$src-${wPx}x$hPx'),
+                  src: src,
+                  alt: 'A 3D model for ${widget.topicId}',
+                  onWebViewCreated: (controller) {
+                    debugPrint(
+                        '🟣 ModelViewer WebView created (${wPx}x$hPx) for src=$src');
+                  },
+                  // AR is handled by the native ArRoomScreen (via the entry chooser),
+                  // NOT by model-viewer's button: its WebXR mode is unsupported in
+                  // Android WebView and crashes the app. Keep this view 3D-only.
+                  ar: false,
+                  autoRotate: true,
+                  cameraControls: true,
+                  backgroundColor: const Color(0xFF0B0B12),
+                  // ROOT CAUSE: model_viewer_plus 1.8.0 injects relatedCss INSIDE
+                  // the `model-viewer { ... }` rule. Passing full selector blocks
+                  // nested them → they matched nothing → <model-viewer> fell back
+                  // to its 150px Shadow-DOM default (the top strip). So pass ONLY
+                  // bare properties here (they land on <model-viewer> correctly),
+                  // with a fixed PIXEL height — not vh/% (which = 100% of 150px).
+                  relatedCss: '''
+                    position: fixed !important;
+                    top: 0 !important;
+                    left: 0 !important;
+                    width: ${wPx}px !important;
+                    height: ${hPx}px !important;
+                    display: block !important;
+                    --poster-color: transparent;
+                  ''',
+                  // html & body get no height from the package → size them here in
+                  // explicit pixels via an injected top-level <style> (no nesting
+                  // trap), reinforced by direct style sets each tick.
+                  relatedJs: '''
+                    (function () {
+                      var s = document.createElement('style');
+                      s.innerHTML =
+                        'html,body{width:${wPx}px!important;height:${hPx}px!important;margin:0!important;padding:0!important;overflow:hidden!important;background:#0B0B12!important;}';
+                      document.head.appendChild(s);
+                      var n = 0;
+                      var iv = setInterval(function () {
+                        var mv = document.querySelector('model-viewer');
+                        if (document.documentElement) {
+                          document.documentElement.style.height = '${hPx}px';
+                        }
+                        if (document.body) {
+                          document.body.style.height = '${hPx}px';
+                        }
+                        if (mv) {
+                          mv.style.width = '${wPx}px';
+                          mv.style.height = '${hPx}px';
+                          mv.setAttribute('shadow-intensity', '1');
+                          mv.setAttribute('exposure', '1.1');
+                          window.dispatchEvent(new Event('resize'));
+                        }
+                        if (++n > 20) clearInterval(iv);
+                      }, 100);
+                    })();
+                  ''',
+                  minCameraOrbit: 'auto auto auto',
+                  maxCameraOrbit: 'auto auto auto',
+                  cameraOrbit: '0deg 75deg 105%',
+                  fieldOfView: '30deg',
+                  minFieldOfView: '25deg',
+                  maxFieldOfView: '45deg',
+                  cameraTarget: 'auto auto auto',
+                  autoPlay: true,
+                ),
+              ),
 
-                  // Camera framing: center the orbit and let model-viewer auto-fit
-                  // the model to the frame. 'auto' radius = model-viewer computes
-                  // the distance so the bounding box fills the view.
-                  mv.setAttribute('camera-target', 'auto auto auto');
-                  mv.setAttribute('camera-orbit', '0deg 75deg auto');
-                  mv.setAttribute('field-of-view', '30deg');
-                  mv.setAttribute('min-field-of-view', '10deg');
-                  mv.setAttribute('max-field-of-view', '45deg');
-                  mv.setAttribute('interpolation-decay', '100');
-
-                  // After the model loads, snap the camera to frame it tightly.
-                  mv.addEventListener('load', () => {
-                    try {
-                      const orbit = mv.getCameraOrbit();
-                      // Pull the camera to the auto-computed framing distance.
-                      mv.cameraOrbit = orbit.theta + 'rad ' + orbit.phi + 'rad auto';
-                      mv.jumpCameraToGoal();
-                    } catch (e) {}
-                  });
-                }
-              ''',
-            ),
-          ),
-
-          // ── Top bar: close + topic chip ──────────────────────────────────
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Row(
-                children: [
-                  _RoundIconButton(
-                    icon: Icons.close,
-                    onTap: () {
-                      if (context.canPop()) {
-                        context.pop();
-                      } else {
-                        context.go('/student/learn');
-                      }
-                    },
-                  ),
-                  const Spacer(),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.5),
-                      borderRadius: BorderRadius.circular(MitraRadius.pill),
-                      border: Border.all(color: accent.withValues(alpha: 0.5)),
-                    ),
+              // ── Top bar: close + topic chip ──────────────────────────────
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
                     child: Row(
-                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.view_in_ar, color: accent, size: 14),
-                        const SizedBox(width: 6),
-                        const Text(
-                          'AR Lesson',
-                          style: TextStyle(
-                              fontFamily: 'Baloo2',
-                              fontWeight: FontWeight.w700,
-                              fontSize: 12,
-                              color: Colors.white),
+                        _RoundIconButton(
+                          icon: Icons.close,
+                          onTap: () {
+                            if (context.canPop()) {
+                              context.pop();
+                            } else {
+                              context.go('/student/learn');
+                            }
+                          },
+                        ),
+                        const Spacer(),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.5),
+                            borderRadius:
+                                BorderRadius.circular(MitraRadius.pill),
+                            border: Border.all(
+                                color: accent.withValues(alpha: 0.5)),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.view_in_ar, color: accent, size: 14),
+                              const SizedBox(width: 6),
+                              const Text(
+                                'AR Lesson',
+                                style: TextStyle(
+                                    fontFamily: 'Baloo2',
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 12,
+                                    color: Colors.white),
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
                   ),
-                ],
+                ),
               ),
-            ),
-          ),
-        ],
+            ],
+          );
+        },
       ),
     );
   }
