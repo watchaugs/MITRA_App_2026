@@ -18,6 +18,7 @@ import '../../constants/colors.dart';
 import 'ar_room_screen.dart';
 import 'ar_viewer_screen.dart';
 import 'package:lottie/lottie.dart';
+import '../../theme/theme_provider.dart';
 
 class ArEntryScreen extends ConsumerStatefulWidget {
   final String topicId;
@@ -139,9 +140,8 @@ class _ArEntryScreenState extends ConsumerState<ArEntryScreen> {
   }
 }
 
-// Chooser shown to AR-capable phones: a looping animation plays on top while
-// the student decides, then they pick in-room AR or on-screen 3D.
-class _ViewChooser extends StatelessWidget {
+// Chooser shown to AR-capable phones — fully theme-linked (bg, accent, cards).
+class _ViewChooser extends ConsumerWidget {
   final String topicId;
   final VoidCallback onPickAr;
   final VoidCallback onPick3d;
@@ -152,13 +152,18 @@ class _ViewChooser extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = ref.watch(themeProvider);
+    final accent = ThemeHelper.getActiveHighlight(theme);
+    final textPrimary = ThemeHelper.textPrimary(theme);
+    final textSecondary = ThemeHelper.textSecondary(theme);
+
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: MitraColors.bgDeep,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.white),
+        iconTheme: IconThemeData(color: textPrimary),
       ),
       body: SafeArea(
         child: Center(
@@ -168,25 +173,23 @@ class _ViewChooser extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Looping animation plays until the student makes a choice.
                   SizedBox(
                     height: 160,
                     child: Lottie.asset(
                       'assets/lotties/Earth globe rotating with Seamless loop animation.lottie',
                       fit: BoxFit.contain,
                       repeat: true,
-                      decoder: LottieComposition.decodeGZip,
-                      errorBuilder: (_, __, ___) => const Center(
-                        child: CircularProgressIndicator(color: Colors.white),
-                      ),
+                      decoder: LottieComposition.decodeZip,
+                      errorBuilder: (_, __, ___) => Center(
+                          child: CircularProgressIndicator(color: accent)),
                     ),
                   ),
                   const SizedBox(height: 20),
-                  const Text(
+                  Text(
                     'How would you like to view this?',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                        color: Colors.white,
+                        color: textPrimary,
                         fontSize: 20,
                         fontWeight: FontWeight.w700),
                   ),
@@ -197,6 +200,9 @@ class _ViewChooser extends StatelessWidget {
                     subtitle:
                         'Place the model on the floor and walk around it.',
                     onTap: onPickAr,
+                    accent: accent,
+                    textPrimary: textPrimary,
+                    textSecondary: textSecondary,
                   ),
                   const SizedBox(height: 14),
                   _choiceCard(
@@ -204,6 +210,9 @@ class _ViewChooser extends StatelessWidget {
                     title: 'View on screen (3D)',
                     subtitle: 'Spin and zoom the model right on your screen.',
                     onTap: onPick3d,
+                    accent: accent,
+                    textPrimary: textPrimary,
+                    textSecondary: textSecondary,
                   ),
                 ],
               ),
@@ -219,6 +228,9 @@ class _ViewChooser extends StatelessWidget {
     required String title,
     required String subtitle,
     required VoidCallback onTap,
+    required Color accent,
+    required Color textPrimary,
+    required Color textSecondary,
   }) =>
       GestureDetector(
         onTap: onTap,
@@ -226,33 +238,30 @@ class _ViewChooser extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.06),
+            color: accent.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+            border: Border.all(color: accent.withValues(alpha: 0.35)),
           ),
           child: Row(
             children: [
-              Icon(icon, color: Colors.white, size: 34),
+              Icon(icon, color: accent, size: 34),
               const SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(title,
-                        style: const TextStyle(
-                            color: Colors.white,
+                        style: TextStyle(
+                            color: textPrimary,
                             fontSize: 16,
                             fontWeight: FontWeight.w600)),
                     const SizedBox(height: 4),
                     Text(subtitle,
-                        style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.6),
-                            fontSize: 12)),
+                        style: TextStyle(color: textSecondary, fontSize: 12)),
                   ],
                 ),
               ),
-              Icon(Icons.chevron_right,
-                  color: Colors.white.withValues(alpha: 0.4)),
+              Icon(Icons.chevron_right, color: accent.withValues(alpha: 0.6)),
             ],
           ),
         ),

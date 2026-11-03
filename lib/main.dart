@@ -100,8 +100,15 @@ Future<void> main() async {
         [StudentProfileSchema, TopicProgressSchema],
         directory: dir.path,
       );
-    } catch (e) {
-      debugPrint('⚠️ Isar Gamification DB Error: $e');
+    } catch (e, st) {
+      debugPrint(
+          '🚨 Isar Gamification DB FAILED TO OPEN — XP/streak will NOT persist: $e\n$st');
+      // Surface to crash telemetry so a silent XP wipe is never invisible again.
+      TelemetryService.current?.logCrash(
+          errorType: 'isar_open',
+          message: e.toString(),
+          stackSummary: st.toString(),
+          fatal: false);
     }
 
     try {

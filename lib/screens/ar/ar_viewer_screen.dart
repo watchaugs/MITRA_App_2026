@@ -114,7 +114,7 @@ class _ArViewerScreenState extends ConsumerState<ArViewerScreen> {
               // ar:true → model-viewer shows its OWN built-in AR button on
               // capable phones (this is the AR entry point — guaranteed to work).
               ar: true,
-              arModes: const ['scene-viewer', 'webxr', 'quick-look'],
+              arModes: const ['webxr'],
               autoRotate: true,
               cameraControls: true,
               backgroundColor: const Color(0xFF0B0B12),
