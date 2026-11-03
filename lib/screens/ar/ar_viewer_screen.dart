@@ -111,10 +111,10 @@ class _ArViewerScreenState extends ConsumerState<ArViewerScreen> {
               key: ValueKey(src),
               src: src,
               alt: 'A 3D model for ${widget.topicId}',
-              // ar:true → model-viewer shows its OWN built-in AR button on
-              // capable phones (this is the AR entry point — guaranteed to work).
-              ar: true,
-              arModes: const ['webxr'],
+              // AR is handled by the native ArRoomScreen (via the entry chooser),
+              // NOT by model-viewer's button: its WebXR mode is unsupported in
+              // Android WebView and crashes the app. Keep this view 3D-only.
+              ar: false,
               autoRotate: true,
               cameraControls: true,
               backgroundColor: const Color(0xFF0B0B12),

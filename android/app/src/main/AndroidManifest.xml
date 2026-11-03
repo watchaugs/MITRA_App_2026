@@ -29,6 +29,13 @@
         android:icon="@mipmap/ic_launcher"
         android:usesCleartextTraffic="false"
         android:networkSecurityConfig="@xml/network_security_config">
+        <!-- model_viewer_plus renders WebGL inside a WebView. Impeller (Vulkan)
+             conflicts with the WebView's GL surface on some devices → the 3D
+             canvas gets EGL_NO_DISPLAY and shows black. Disable Impeller so the
+             WebView renders correctly. -->
+        <meta-data
+            android:name="io.flutter.embedding.android.EnableImpeller"
+            android:value="false" />
 
         <activity
             android:name=".MainActivity"
