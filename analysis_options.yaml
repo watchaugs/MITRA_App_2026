@@ -13,6 +13,12 @@ include: package:flutter_lints/flutter.yaml
 analyzer:
   exclude:
     - "**/*.g.dart"
+    # Vendored third-party plugin — not our code to lint. We patched its
+    # ArView.kt (native) for the AR rotation fix, but its Dart lib/ is the
+    # upstream author's and uses looser style (print, non-const ctors, etc.)
+    # that floods our Problems panel. None of it affects the build. Exclude the
+    # whole vendored package from analysis so only OUR code shows issues.
+    - "packages/**"
 
 linter:
   # The lint rules applied to this project can be customized in the

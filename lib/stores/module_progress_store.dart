@@ -167,6 +167,88 @@ class ModuleProgressStore {
     await _prefs.setBool(_arSeenKey(id), true);
   }
 
+  // ── Cloud-sync export / merge ──────────────────────────────────────────────
+  // Serialize ALL per-module progress into a plain map for the cloud snapshot.
+  // Enumerates the mp_* keys so no module catalog is needed. Quiz ATTEMPT review
+  // data (answers/options/etc.) is per-module and bundled so review survives a
+  // reinstall too.
+  Map<String, dynamic> exportProgress() {
+    final out = <String, dynamic>{};
+    for (final key in _prefs.getKeys()) {
+      // Extract topicId from each known prefix.
+      String? id;
+      if (key.startsWith('mp_best_')) {
+        id = key.substring('mp_best_'.length);
+      } else if (key.startsWith('mp_arpct_')) {
+        id = key.substring('mp_arpct_'.length);
+      } else if (key.startsWith('mp_arseen_')) {
+        id = key.substring('mp_arseen_'.length);
+      }
+      if (id == null || id.isEmpty) continue;
+      out.putIfAbsent(id, () {
+        final m = <String, dynamic>{
+          'best': bestPct(id!),
+          'arPct': arWatchedPct(id),
+          'arSeen': arWatched(id),
+        };
+        // Bundle the saved quiz attempt if one exists (for review-after-restore).
+        final attempt = readQuizAttempt(id);
+        if (attempt != null) m['attempt'] = attempt;
+        return m;
+      });
+    }
+    return out;
+  }
+
+  // Merge a cloud snapshot into local, MAX-WINS: higher quiz %, higher AR %,
+  // OR'd arSeen, and keep a quiz attempt from whichever side has one (local
+  // preferred — it's the review data the student already saw).
+  Future<void> mergeProgress(Map<String, dynamic> cloud) async {
+    for (final entry in cloud.entries) {
+      final id = entry.key;
+      final m = entry.value;
+      if (id.isEmpty || m is! Map) continue;
+
+      final cBest = (m['best'] as num?)?.toInt() ?? 0;
+      if (cBest > bestPct(id)) await _prefs.setInt(_bestKey(id), cBest);
+
+      final cArPct = (m['arPct'] as num?)?.toInt() ?? 0;
+      if (cArPct > arWatchedPct(id)) {
+        await _prefs.setInt(_arPctKey(id), cArPct.clamp(0, 100));
+      }
+
+      if (m['arSeen'] == true) await markArWatched(id);
+
+      // Restore a quiz attempt only if local has none (don't clobber local).
+      if (!hasSavedAttempt(id) && m['attempt'] is Map) {
+        final a = (m['attempt'] as Map).cast<String, dynamic>();
+        try {
+          final answers = (a['answers'] as List)
+              .map((e) => e == null ? null : (e as num).toInt())
+              .toList()
+              .cast<int?>();
+          final correct =
+              (a['correct'] as List).map((e) => (e as num).toInt()).toList();
+          final qtexts = (a['questionTexts'] as List).cast<String>();
+          final opts = (a['options'] as List)
+              .map((o) => (o as List).cast<String>())
+              .toList();
+          final expl = (a['explanations'] as List)
+              .map((e) => e == null ? '' : e.toString())
+              .toList();
+          await saveQuizAttempt(
+            id: id,
+            answers: answers,
+            correct: correct,
+            questionTexts: qtexts,
+            options: opts,
+            explanations: expl.map((e) => e.isEmpty ? null : e).toList(),
+          );
+        } catch (_) {/* malformed cloud attempt — skip, never crash login */}
+      }
+    }
+  }
+
   /// Remember the last AR lesson the student opened, so Home's "Continue
   /// Learning" card can show it with real progress. Called when a lesson opens.
   Future<void> recordOpenedModule({

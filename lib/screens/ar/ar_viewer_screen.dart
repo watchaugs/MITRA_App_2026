@@ -27,6 +27,7 @@ import 'package:model_viewer_plus/model_viewer_plus.dart';
 import 'package:audioplayers/audioplayers.dart';
 import '../../constants/colors.dart';
 import '../../theme/theme_provider.dart';
+import '../../stores/module_progress_store.dart';
 
 class ArViewerScreen extends ConsumerStatefulWidget {
   final String topicId;
@@ -58,12 +59,25 @@ class ArViewerScreen extends ConsumerStatefulWidget {
 
 class _ArViewerScreenState extends ConsumerState<ArViewerScreen> {
   final AudioPlayer _audio = AudioPlayer();
+  Duration? _audioDuration;
 
   @override
   void initState() {
     super.initState();
     debugPrint('🟣 ArViewerScreen OPENED — topicId=${widget.topicId} '
         'nativeUrl=${widget.nativeModelUrl} modelUrl=${widget.modelUrl}');
+    // Track narration progress → credit the AR module toward the ≥80% quiz gate,
+    // exactly like ArRoomScreen. Without this, students who watch via the 3D
+    // viewer (every non-ARCore phone) never unlock the quiz.
+    _audio.onDurationChanged.listen((d) => _audioDuration = d);
+    _audio.onPositionChanged.listen((pos) {
+      final dur = _audioDuration;
+      if (dur == null || dur.inMilliseconds <= 0) return;
+      final pct = ((pos.inMilliseconds / dur.inMilliseconds) * 100).round();
+      ref
+          .read(moduleProgressStoreProvider)
+          .recordArProgress(widget.topicId, pct);
+    });
     _startNarration();
   }
 

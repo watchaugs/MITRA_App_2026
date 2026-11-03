@@ -23,7 +23,8 @@ class AchievementEngine {
       profile.currentStreakDays = 1;
     } else {
       // Was the last active day exactly yesterday?
-      final lastDate = DateTime(last ~/ 10000, (last % 10000) ~/ 100, last % 100);
+      final lastDate =
+          DateTime(last ~/ 10000, (last % 10000) ~/ 100, last % 100);
       final diffDays = DateTime(now.year, now.month, now.day)
           .difference(DateTime(lastDate.year, lastDate.month, lastDate.day))
           .inDays;
@@ -135,6 +136,62 @@ class AchievementEngine {
       badges.add(badgeId);
       profile.unlockedBadges = badges;
     }
+  }
+
+  // ── Cloud-sync export / merge ──────────────────────────────────────────────
+  // Snapshot the global profile (XP / streak / tier / badges) for the cloud.
+  Future<Map<String, dynamic>> exportProfile() async {
+    final profile = await isar.collection<StudentProfile>().where().findFirst();
+    if (profile == null) return {};
+    return {
+      'totalXp': profile.totalXp,
+      'currentStreakDays': profile.currentStreakDays,
+      'lastActiveYmd': profile.lastActiveYmd,
+      'currentTier': profile.currentTier,
+      'unlockedBadges': profile.unlockedBadges,
+    };
+  }
+
+  // Merge a cloud profile snapshot into local, MAX-WINS: higher XP, higher
+  // streak (with the more recent lastActiveYmd), union of badges. Tier is then
+  // recomputed from the merged XP so it's always consistent.
+  Future<void> mergeProfile(Map<String, dynamic> cloud) async {
+    if (cloud.isEmpty) return;
+    await isar.writeTxn(() async {
+      final col = isar.collection<StudentProfile>();
+      final profile = (await col.where().findFirst()) ?? StudentProfile();
+
+      final cXp = (cloud['totalXp'] as num?)?.toInt() ?? 0;
+      profile.totalXp = profile.totalXp > cXp ? profile.totalXp : cXp; // max
+
+      final cStreak = (cloud['currentStreakDays'] as num?)?.toInt() ?? 0;
+      final cYmd = (cloud['lastActiveYmd'] as num?)?.toInt() ?? 0;
+      if (cStreak > profile.currentStreakDays) {
+        profile.currentStreakDays = cStreak;
+      }
+      if (cYmd > profile.lastActiveYmd) profile.lastActiveYmd = cYmd;
+
+      // Union of badges.
+      final merged = <String>{...profile.unlockedBadges};
+      for (final b in (cloud['unlockedBadges'] as List? ?? const [])) {
+        if (b is String) merged.add(b);
+      }
+      profile.unlockedBadges = merged.toList();
+
+      // Recompute tier from merged XP (keep it consistent with the ladder).
+      final xp = profile.totalXp;
+      profile.currentTier = xp >= 10000
+          ? 'Gyani'
+          : xp >= 5000
+              ? 'Acharya'
+              : xp >= 2000
+                  ? 'Vidwan'
+                  : xp >= 500
+                      ? 'Anveshak'
+                      : 'Jigyasu';
+
+      await col.put(profile);
+    });
   }
 }
 

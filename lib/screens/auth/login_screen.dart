@@ -22,6 +22,7 @@ import '../../models/user.dart';
 import '../../widgets/mitra_scaffold.dart';
 import '../../theme/theme_provider.dart';
 import '../../services/api_service.dart';
+import '../../services/progress_sync_service.dart';
 //import '../../theme/theme_provider.dart';
 
 enum _LoginStep { phone, otp }
@@ -177,6 +178,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   // ── ☁️ FIRESTORE DATABASE SAVER ──
   Future<void> _saveUserAndNavigate(User firebaseUser) async {
+    // Capture ref-derived objects BEFORE any await. If the user backs out during
+    // the Firestore/network round-trips below, this State disposes and a later
+    // `ref.read(...)` would throw "Cannot use ref after the widget was disposed".
+    // Reading them up front (ref is safe synchronously here) avoids that crash.
+    final existingUser = ref.read(authProvider).user;
+    final authNotifier = ref.read(authProvider.notifier);
+    final progressSync = ref.read(progressSyncServiceProvider);
     try {
       // 1. Save the new user directly into your SPECIFIC '(default)' Database Instance
       await FirebaseFirestore.instanceFor(
@@ -204,7 +212,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       // profile (with the real full_name) from Firestore right after, and
       // caching a placeholder here is what made the name revert on relaunch.
       // Prefer an already-known name from the existing session if present.
-      final existing = ref.read(authProvider).user;
+      final existing = existingUser;
       final knownName = (firebaseUser.displayName?.trim().isNotEmpty ?? false)
           ? firebaseUser.displayName!.trim()
           : (existing?.fullName.trim().isNotEmpty ?? false)
@@ -217,9 +225,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         role: _role.name,
       );
 
-      ref.read(authProvider.notifier).setUser(consumerUser);
+      authNotifier.setUser(consumerUser);
       await _storage.write(key: 'mitra_consumer_logged_in', value: 'true');
       await _storage.write(key: 'mitra_consumer_role', value: _role.name);
+
+      // Restore + merge cloud progress (XP/streak/modules) so a reinstall or a
+      // new device recovers the student's progress. Max-wins merge; best-effort.
+      await progressSync.restoreAndMerge(firebaseUser.uid);
 
       // ── Get backend JWT by exchanging the Firebase ID token ──────
       // The student is already signed in with real Firebase Phone OTP above.
