@@ -35,6 +35,7 @@ import '../../constants/colors.dart';
 import '../../services/achievement_engine.dart';
 import '../../services/ar_model_cache.dart';
 import '../../stores/module_progress_store.dart';
+import '../../theme/theme_provider.dart'; // getActiveHighlight + sharedPreferencesProvider
 
 class ArRoomScreen extends ConsumerStatefulWidget {
   final String topicId;
@@ -82,6 +83,10 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
   final List<ARAnchor> _anchors = [];
   bool _placed = false;
   String _hint = 'Move your phone slowly to find the floor…';
+
+  // One-time coach marks: shown on first placement ever, then remembered.
+  static const String _coachSeenKey = 'ar_room_coach_seen_v1';
+  bool _showCoach = false;
 
   @override
   void initState() {
@@ -141,6 +146,7 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
                 onScaleEnd: (_) {},
               ),
             ),
+          // ── Top bar: close (left) · refresh + help (right) ───────────────
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.all(12),
@@ -155,82 +161,109 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
                     }
                   }),
                   const Spacer(),
-                  if (_placed) _roundBtn(Icons.refresh, _reset),
+                  if (_placed) ...[
+                    // "?" re-shows the control hints anytime.
+                    _roundBtn(Icons.help_outline,
+                        () => setState(() => _showCoach = true)),
+                    const SizedBox(width: 10),
+                    _roundBtn(Icons.refresh, _reset),
+                  ],
                 ],
               ),
             ),
           ),
-          // Resize controls — appear once the model is placed.
+
+          // ── Hint pill (only BEFORE placement; after placement the toolbar
+          //    replaces it so controls own the bottom zone) ─────────────────
+          if (!_placed)
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 28,
+              child: IgnorePointer(
+                child: Center(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.5),
+                      borderRadius: BorderRadius.circular(MitraRadius.pill),
+                    ),
+                    child: Text(
+                      _hint,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                          fontFamily: 'Mukta',
+                          color: Colors.white,
+                          fontSize: 13),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+          // ── Grouped bottom toolbar (after placement) ─────────────────────
+          // Three labeled clusters in the thumb zone. Big 48px targets with
+          // generous spacing → no accidental taps. Dividers separate groups.
           if (_placed)
             Positioned(
-              right: 14,
-              top: 0,
+              left: 0,
+              right: 0,
               bottom: 0,
-              child: Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _roundBtn(Icons.add, () => _resizeBy(1.2)),
-                    const SizedBox(height: 10),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.5),
-                        borderRadius: BorderRadius.circular(MitraRadius.pill),
-                      ),
-                      child: Text(
-                        '${(_modelScale * 100).round()}%',
-                        style: const TextStyle(
-                            fontFamily: 'Mukta',
-                            color: Colors.white,
-                            fontSize: 11),
-                      ),
+              child: SafeArea(
+                top: false,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 14),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.6),
+                      borderRadius: BorderRadius.circular(22),
+                      border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.08)),
                     ),
-                    const SizedBox(height: 10),
-                    _roundBtn(Icons.remove, () => _resizeBy(1 / 1.2)),
-                    const SizedBox(height: 18),
-                    // Lift the model up / down off the floor (Y axis).
-                    _roundBtn(Icons.keyboard_arrow_up, () => _moveY(0.05)),
-                    const SizedBox(height: 10),
-                    _roundBtn(Icons.keyboard_arrow_down, () => _moveY(-0.05)),
-                    const SizedBox(height: 18),
-                    // Rotate about Y — tap = 30° step, press & hold = smooth spin.
-                    _spinBtn(Icons.rotate_left, -1),
-                    const SizedBox(height: 10),
-                    _spinBtn(Icons.rotate_right, 1),
-                    const SizedBox(height: 18),
-                    // Near / far (depth)
-                    _roundBtn(Icons.zoom_out_map, () => _moveZ(-0.1)), // nearer
-                    const SizedBox(height: 10),
-                    _roundBtn(Icons.zoom_in_map, () => _moveZ(0.1)), // farther
-                  ],
-                ),
-              ),
-            ),
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 28,
-            child: IgnorePointer(
-              child: Center(
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.5),
-                    borderRadius: BorderRadius.circular(MitraRadius.pill),
-                  ),
-                  child: Text(
-                    _hint,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                        fontFamily: 'Mukta', color: Colors.white, fontSize: 13),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        // ROTATE — tap = 30°, hold = smooth spin.
+                        _toolGroup('Rotate', [
+                          _spinBig(Icons.rotate_left, -1),
+                          _spinBig(Icons.rotate_right, 1),
+                        ]),
+                        _divider(),
+                        // MOVE — up / down off the floor.
+                        _toolGroup('Move', [
+                          _bigBtn(Icons.keyboard_arrow_up, () => _moveY(0.05)),
+                          _bigBtn(
+                              Icons.keyboard_arrow_down, () => _moveY(-0.05)),
+                        ]),
+                        _divider(),
+                        // SIZE — with a live % read-out between the buttons.
+                        _toolGroup(
+                            'Size',
+                            [
+                              _bigBtn(Icons.remove, () => _resizeBy(1 / 1.2)),
+                              _bigBtn(Icons.add, () => _resizeBy(1.2)),
+                            ],
+                            caption: '${(_modelScale * 100).round()}%'),
+                        _divider(),
+                        // DEPTH — nearer / farther.
+                        _toolGroup('Depth', [
+                          _bigBtn(Icons.remove_circle_outline,
+                              () => _moveZ(-0.1)), // nearer
+                          _bigBtn(Icons.add_circle_outline,
+                              () => _moveZ(0.1)), // farther
+                        ]),
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
+
+          // ── One-time coach marks ─────────────────────────────────────────
+          if (_placed && _showCoach) _coachOverlay(context),
         ],
       ),
     );
@@ -350,6 +383,7 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
         _hint =
             'Placed! Walk around it. Tap it to replay · use the buttons to move & rotate.';
       });
+      _maybeShowCoach(); // first-ever placement → show control hints once
     } else {
       // Native Filament couldn't load this model (too heavy for the device, or a
       // mis-tiered/Draco GLB slipped through). Rather than a dead end, offer the
@@ -513,31 +547,226 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
   Widget _roundBtn(IconData icon, VoidCallback onTap) => GestureDetector(
         onTap: onTap,
         child: Container(
-          width: 40,
-          height: 40,
+          width: 44,
+          height: 44,
           decoration: BoxDecoration(
             color: Colors.black.withValues(alpha: 0.5),
             shape: BoxShape.circle,
           ),
-          child: Icon(icon, color: Colors.white, size: 20),
+          child: Icon(icon, color: Colors.white, size: 22),
         ),
       );
 
-  // Rotate button: single tap steps 30°; press-and-hold spins smoothly and
-  // stops on release. dir = -1 (left) or +1 (right).
-  Widget _spinBtn(IconData icon, int dir) => GestureDetector(
+  // ── Bottom-toolbar building blocks ─────────────────────────────────────────
+  // A labeled cluster: a small caption on top, then its 48px buttons in a row.
+  // An optional middle caption (used by SIZE to show the live %).
+  Widget _toolGroup(String label, List<Widget> buttons, {String? caption}) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontFamily: 'Mukta',
+            color: Colors.white70,
+            fontSize: 10,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.4,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            buttons[0],
+            if (caption != null) ...[
+              const SizedBox(width: 4),
+              SizedBox(
+                width: 34,
+                child: Text(
+                  caption,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                      fontFamily: 'Mukta', color: Colors.white, fontSize: 11),
+                ),
+              ),
+              const SizedBox(width: 4),
+            ] else
+              const SizedBox(width: 8),
+            buttons[1],
+          ],
+        ),
+      ],
+    );
+  }
+
+  // A big 48px tappable control for the toolbar (clear target, no overlap).
+  Widget _bigBtn(IconData icon, VoidCallback onTap) => GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: Container(
+          width: 48,
+          height: 48,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.10),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, color: Colors.white, size: 24),
+        ),
+      );
+
+  // Rotate button for the toolbar: tap = 30° step, hold = smooth spin.
+  Widget _spinBig(IconData icon, int dir) => GestureDetector(
         onTap: () => _rotateStep(dir),
         onLongPressStart: (_) => _startSpin(dir),
         onLongPressEnd: (_) => _stopSpin(),
         onLongPressCancel: _stopSpin,
+        behavior: HitTestBehavior.opaque,
         child: Container(
-          width: 40,
-          height: 40,
+          width: 48,
+          height: 48,
+          alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: 0.5),
+            color: Colors.white.withValues(alpha: 0.10),
             shape: BoxShape.circle,
           ),
-          child: Icon(icon, color: Colors.white, size: 20),
+          child: Icon(icon, color: Colors.white, size: 24),
         ),
       );
+
+  Widget _divider() => Container(
+        width: 1,
+        height: 40,
+        color: Colors.white.withValues(alpha: 0.12),
+      );
+
+  // Show the coach marks only the first time a model is ever placed.
+  Future<void> _maybeShowCoach() async {
+    try {
+      final prefs = ref.read(sharedPreferencesProvider);
+      if (prefs.getBool(_coachSeenKey) == true) return;
+      if (mounted) setState(() => _showCoach = true);
+    } catch (_) {/* prefs unavailable — skip, never block AR */}
+  }
+
+  Future<void> _dismissCoach() async {
+    try {
+      ref.read(sharedPreferencesProvider).setBool(_coachSeenKey, true);
+    } catch (_) {}
+    if (mounted) setState(() => _showCoach = false);
+  }
+
+  // Full-screen dimmed overlay that explains each toolbar group, dismissed with
+  // "Got it". Re-openable anytime via the "?" button in the top bar.
+  Widget _coachOverlay(BuildContext context) {
+    final accent = ThemeHelper.getActiveHighlight(ref.watch(themeProvider));
+    Widget tip(IconData icon, String title, String body) => Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: accent.withValues(alpha: 0.18),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, color: accent, size: 20),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title,
+                        style: const TextStyle(
+                            fontFamily: 'Baloo2',
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 14)),
+                    const SizedBox(height: 2),
+                    Text(body,
+                        style: const TextStyle(
+                            fontFamily: 'Mukta',
+                            color: Colors.white70,
+                            fontSize: 12)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+
+    return Positioned.fill(
+      child: GestureDetector(
+        onTap: _dismissCoach, // tap anywhere to dismiss
+        child: Container(
+          color: Colors.black.withValues(alpha: 0.78),
+          alignment: Alignment.center,
+          padding: const EdgeInsets.all(24),
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(20, 22, 20, 18),
+            decoration: BoxDecoration(
+              color: MitraColors.bgCard,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: accent.withValues(alpha: 0.4)),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('How to control the model',
+                    style: TextStyle(
+                        fontFamily: 'Baloo2',
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 17)),
+                const SizedBox(height: 4),
+                const Text('Use the buttons at the bottom',
+                    style: TextStyle(
+                        fontFamily: 'Mukta',
+                        color: Colors.white54,
+                        fontSize: 12)),
+                const SizedBox(height: 10),
+                tip(Icons.rotate_right, 'Rotate',
+                    'Tap to turn 30°. Press & hold to spin it around.'),
+                tip(Icons.swap_vert, 'Move',
+                    'Lift the model up or set it down on the floor.'),
+                tip(Icons.photo_size_select_large, 'Size',
+                    'Make it bigger or smaller. The % shows current size.'),
+                tip(Icons.unfold_more, 'Depth',
+                    'Bring it nearer to you or push it farther away.'),
+                const SizedBox(height: 8),
+                Text('Tip: tap the model to replay the narration.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                        fontFamily: 'Mukta', color: accent, fontSize: 12)),
+                const SizedBox(height: 16),
+                GestureDetector(
+                  onTap: _dismissCoach,
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: accent,
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: const Text('Got it',
+                        style: TextStyle(
+                            fontFamily: 'Baloo2',
+                            color: Colors.white,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 15)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
