@@ -62,6 +62,8 @@ class _ArViewerScreenState extends ConsumerState<ArViewerScreen> {
   @override
   void initState() {
     super.initState();
+    debugPrint('🟣 ArViewerScreen OPENED — topicId=${widget.topicId} '
+        'nativeUrl=${widget.nativeModelUrl} modelUrl=${widget.modelUrl}');
     _startNarration();
   }
 
@@ -111,6 +113,12 @@ class _ArViewerScreenState extends ConsumerState<ArViewerScreen> {
               key: ValueKey(src),
               src: src,
               alt: 'A 3D model for ${widget.topicId}',
+              // Surface WebView JS console (incl. model-viewer load errors) to
+              // the Dart log so a black screen's real cause is visible.
+              relatedCss: '',
+              onWebViewCreated: (controller) {
+                debugPrint('🟣 ModelViewer WebView created for src=$src');
+              },
               // AR is handled by the native ArRoomScreen (via the entry chooser),
               // NOT by model-viewer's button: its WebXR mode is unsupported in
               // Android WebView and crashes the app. Keep this view 3D-only.
@@ -118,19 +126,47 @@ class _ArViewerScreenState extends ConsumerState<ArViewerScreen> {
               autoRotate: true,
               cameraControls: true,
               backgroundColor: const Color(0xFF0B0B12),
-              // Autoplay animation + floor placement, set directly on the web
-              // component (plain <model-viewer> attributes — no version-specific
-              // Dart enums).
+              // 3D-only framing. NO ar-* attributes here — ar-scale/ar-placement
+              // are AR-session attributes and can shrink/mis-position the model
+              // even with ar:false. We force model-viewer to frame the model so
+              // it fills the viewport, centered, regardless of the GLB's authored
+              // scale.
               relatedJs: '''
                 const mv = document.querySelector('model-viewer');
                 if (mv) {
+                  // Fill the WebView: the host page body/model-viewer must be 100%.
+                  document.documentElement.style.height = '100%';
+                  document.body.style.height = '100%';
+                  document.body.style.margin = '0';
+                  mv.style.width = '100%';
+                  mv.style.height = '100vh';
+                  mv.style.display = 'block';
+
                   mv.setAttribute('autoplay', '');
-                  mv.setAttribute('ar-placement', 'floor');
-                  mv.setAttribute('ar-scale', 'auto');
                   mv.setAttribute('shadow-intensity', '1');
                   mv.setAttribute('tone-mapping', 'neutral');
-                  mv.setAttribute('exposure', '1.2');
+                  mv.setAttribute('exposure', '1.1');
                   mv.setAttribute('environment-image', 'neutral');
+
+                  // Camera framing: center the orbit and let model-viewer auto-fit
+                  // the model to the frame. 'auto' radius = model-viewer computes
+                  // the distance so the bounding box fills the view.
+                  mv.setAttribute('camera-target', 'auto auto auto');
+                  mv.setAttribute('camera-orbit', '0deg 75deg auto');
+                  mv.setAttribute('field-of-view', '30deg');
+                  mv.setAttribute('min-field-of-view', '10deg');
+                  mv.setAttribute('max-field-of-view', '45deg');
+                  mv.setAttribute('interpolation-decay', '100');
+
+                  // After the model loads, snap the camera to frame it tightly.
+                  mv.addEventListener('load', () => {
+                    try {
+                      const orbit = mv.getCameraOrbit();
+                      // Pull the camera to the auto-computed framing distance.
+                      mv.cameraOrbit = orbit.theta + 'rad ' + orbit.phi + 'rad auto';
+                      mv.jumpCameraToGoal();
+                    } catch (e) {}
+                  });
                 }
               ''',
             ),

@@ -10,6 +10,7 @@
 // Audio:  audioplayers.
 // ═══════════════════════════════════════════════════════════════════════════
 import 'dart:io';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -67,6 +68,17 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
   double _modelY = 0.0; // vertical offset above the floor (metres)
   double _modelZ = 0.0; // depth offset: + = farther, − = nearer (metres)
   double _rotY = 0.0; // rotation about the vertical (Y) axis, in radians
+  Timer? _spinTimer; // drives smooth hold-to-spin
+  ARAnchor? _modelAnchor; // the anchor the model sits on (for re-placing)
+  bool _replacing = false; // guards against overlapping re-place calls
+
+  // Rotation tuning.
+  static const double _twoPi = 6.28318530718;
+  static const double _tapStep = 0.5236; // 30° per single tap
+  // Hold: a full 360° in ~3.5s. Tick every 50ms → 20 ticks/sec → 70 ticks for
+  // 2π → step = 2π / 70.
+  static const double _holdStep = _twoPi / 70;
+
   final List<ARAnchor> _anchors = [];
   bool _placed = false;
   String _hint = 'Move your phone slowly to find the floor…';
@@ -90,6 +102,7 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
 
   @override
   void dispose() {
+    _spinTimer?.cancel();
     _sessionManager.dispose();
     _audio.dispose();
     super.dispose();
@@ -161,10 +174,10 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
                     const SizedBox(height: 10),
                     _roundBtn(Icons.keyboard_arrow_down, () => _moveY(-0.05)),
                     const SizedBox(height: 18),
-                    // Rotate about Y
-                    _roundBtn(Icons.rotate_left, () => _rotateY(-0.3)),
+                    // Rotate about Y — tap = 30° step, press & hold = smooth spin.
+                    _spinBtn(Icons.rotate_left, -1),
                     const SizedBox(height: 10),
-                    _roundBtn(Icons.rotate_right, () => _rotateY(0.3)),
+                    _spinBtn(Icons.rotate_right, 1),
                     const SizedBox(height: 18),
                     // Near / far (depth)
                     _roundBtn(Icons.zoom_out_map, () => _moveZ(-0.1)), // nearer
@@ -221,11 +234,13 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
       showPlanes: true,
       showWorldOrigin: false,
       handleTaps: true,
-      // handlePans ON keeps the node transformable so the buttons work; it also
-      // allows a one-finger MOVE (no tumbling). handleRotation OFF removes the
-      // free-axis finger rotation (the somersault). Rotation is ONLY via the
-      // ⟲/⟳ buttons → Matrix3.rotationY = spinning-top (single Y axis).
-      handlePans: true,
+      // ALL finger gestures OFF. In ar_flutter_plugin_2 a one-finger pan is a
+      // free tumble (there is no "slide-only" pan), so any gesture = somersault.
+      // We drive move / zoom / rotate entirely from the buttons, applied by
+      // RE-PLACING the node with a fresh transform (addNode always applies the
+      // transform natively; the in-place rotation setter does not). So we don't
+      // need the node to stay "transformable" — gestures can be fully off.
+      handlePans: false,
       handleRotation: false,
     );
     _objectManager.onInitialize();
@@ -284,20 +299,19 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
     final okNode = await _objectManager.addNode(node, planeAnchor: anchor);
     if (okNode == true) {
       _placedNode = node;
+      _modelAnchor =
+          anchor; // keep it — buttons re-place the node on this anchor
       // Model is down — hide ALL placement guides (plane grid, feature points,
       // animated guide) so the student sees only the model on a clean floor.
-      // Gestures stay enabled so they can still move/rotate it.
       _sessionManager.onInitialize(
         showFeaturePoints: false,
         showAnimatedGuide: false,
         showPlanes: false,
         showWorldOrigin: false,
         handleTaps: true,
-        // handlePans ON keeps the node transformable so the buttons work; it also
-        // allows a one-finger MOVE (slide on the floor — no tumbling).
-        // handleRotation OFF removes the free-axis finger rotation (the somersault).
-        // Rotation is ONLY via the ⟲/⟳ buttons → Matrix3.rotationY = spinning-top.
-        handlePans: true,
+        // Gestures stay OFF (see placement-phase note) so fingers can never
+        // tumble the model. All manipulation is via the side buttons.
+        handlePans: false,
         handleRotation: false,
       );
       // Award AR-view XP through the single growth engine (also advances the
@@ -350,43 +364,89 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
     _startNarration();
   }
 
-  // Resize the placed model by a factor (buttons). Sets node.scale directly —
-  // the simplest reliable path. Clamped so it can't vanish or fill the room.
+  // ── Transform engine ──────────────────────────────────────────────────────
+  // Every button change (scale / move / rotate) is applied by REMOVING the node
+  // and ADDING a fresh one on the same anchor with the new transform. This is
+  // the one path that applies ALL transforms reliably in ar_flutter_plugin_2 —
+  // including Y-rotation, which the in-place `node.rotation` setter silently
+  // drops. Because the transform rides on addNode, gestures can stay fully off,
+  // so fingers never tumble the model.
+  Future<void> _reapplyTransform() async {
+    final anchor = _modelAnchor;
+    final old = _placedNode;
+    if (anchor == null || old == null) return;
+    if (_replacing) return; // skip if a re-place is already in flight
+    _replacing = true;
+    try {
+      await _objectManager.removeNode(old);
+      _nodes.remove(old);
+
+      final node = ARNode(
+        type: old.type,
+        uri: old.uri,
+        scale: vm.Vector3(_modelScale, _modelScale, _modelScale),
+        position: vm.Vector3(0, _modelY, _modelZ),
+        // axis = Y (0,1,0), angle = _rotY → pure spinning-top rotation.
+        rotation: vm.Vector4(0, 1, 0, _rotY),
+      );
+      final ok = await _objectManager.addNode(node, planeAnchor: anchor);
+      if (ok == true) {
+        _placedNode = node;
+        _nodes.add(node);
+      } else {
+        // Re-add failed — keep the old reference so we don't lose the model.
+        _placedNode = old;
+        _nodes.add(old);
+      }
+    } catch (_) {
+      _placedNode = old;
+    } finally {
+      _replacing = false;
+    }
+  }
+
+  // Resize — clamped so it can't vanish or fill the room.
   void _resizeBy(double factor) {
-    final node = _placedNode;
-    if (node == null) return;
-    final next = (_modelScale * factor).clamp(0.05, 2.0);
-    _modelScale = next;
-    node.scale = vm.Vector3(next, next, next);
-    setState(() {}); // refresh the on-screen % label
+    if (_placedNode == null) return;
+    _modelScale = (_modelScale * factor).clamp(0.05, 2.0);
+    setState(() {}); // refresh the % label immediately
+    _reapplyTransform();
   }
 
-  // Lift the model up / down off the floor (Y axis). Clamped so it can't fly
-  // away or sink through the ground.
+  // Lift up / down off the floor (Y position).
   void _moveY(double deltaMetres) {
-    final node = _placedNode;
-    if (node == null) return;
+    if (_placedNode == null) return;
     _modelY = (_modelY + deltaMetres).clamp(-0.5, 2.0);
-    node.position = vm.Vector3(0, _modelY, _modelZ);
-    setState(() {});
+    _reapplyTransform();
   }
 
-  // Move the model nearer / farther (depth, Z axis).
+  // Move nearer / farther (Z depth).
   void _moveZ(double deltaMetres) {
-    final node = _placedNode;
-    if (node == null) return;
+    if (_placedNode == null) return;
     _modelZ = (_modelZ + deltaMetres).clamp(-1.5, 1.5);
-    node.position = vm.Vector3(0, _modelY, _modelZ);
-    setState(() {});
+    _reapplyTransform();
   }
 
-  // Rotate the model about its vertical (Y) axis.
-  void _rotateY(double deltaRadians) {
-    final node = _placedNode;
-    if (node == null) return;
-    _rotY = (_rotY + deltaRadians) % (2 * 3.14159265);
-    node.rotation = vm.Matrix3.rotationY(_rotY);
-    setState(() {});
+  // Rotate about the vertical (Y) axis by a fixed step (single tap = 30°).
+  void _rotateStep(int dir) {
+    if (_placedNode == null) return;
+    _rotY = (_rotY + dir * _tapStep) % _twoPi;
+    _reapplyTransform();
+  }
+
+  // Hold-to-spin: nudge _rotY every 50ms and re-place → smooth 360° in ~3.5s.
+  void _startSpin(int dir) {
+    if (_placedNode == null) return;
+    _spinTimer?.cancel();
+    _spinTimer = Timer.periodic(const Duration(milliseconds: 50), (_) {
+      _rotY = (_rotY + dir * _holdStep) % _twoPi;
+      _reapplyTransform();
+    });
+  }
+
+  void _stopSpin() {
+    _spinTimer?.cancel();
+    _spinTimer = null;
   }
 
   Future<String> _ensureLocalModel() async {
@@ -418,6 +478,24 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
 
   Widget _roundBtn(IconData icon, VoidCallback onTap) => GestureDetector(
         onTap: onTap,
+        child: Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.5),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, color: Colors.white, size: 20),
+        ),
+      );
+
+  // Rotate button: single tap steps 30°; press-and-hold spins smoothly and
+  // stops on release. dir = -1 (left) or +1 (right).
+  Widget _spinBtn(IconData icon, int dir) => GestureDetector(
+        onTap: () => _rotateStep(dir),
+        onLongPressStart: (_) => _startSpin(dir),
+        onLongPressEnd: (_) => _stopSpin(),
+        onLongPressCancel: _stopSpin,
         child: Container(
           width: 40,
           height: 40,
