@@ -69,11 +69,12 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
   double _modelZ = 0.0; // depth offset: + = farther, − = nearer (metres)
   double _rotY = 0.0; // rotation about the vertical (Y) axis, in radians
   Timer? _spinTimer; // drives smooth hold-to-spin
-  vm.Matrix4 _baseTransform = vm.Matrix4.identity(); // placement world pose
+  vm.Vector3 _basePosition = vm.Vector3.zero(); // upright world placement point
 
   // Rotation tuning.
-  static const double _twoPi = 6.28318530718;
-  static const double _tapStep = 0.5236; // 30° per single tap
+  static const double _pi = 3.141592653589793;
+  static const double _twoPi = 6.283185307179586;
+  static const double _tapStep = 0.5235987755982988; // 30° per single tap
   // Hold: a full 360° in ~3.5s. Tick every 50ms → 20 ticks/sec → 70 ticks for
   // 2π → step = 2π / 70.
   static const double _holdStep = _twoPi / 70;
@@ -254,13 +255,13 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
       showPlanes: true,
       showWorldOrigin: false,
       handleTaps: true,
-      // pans ON is REQUIRED: ar_flutter_plugin_2 only propagates node.transform
-      // updates (our move/lift/rotate buttons) while the node is "transformable",
-      // which needs handlePans. We stop fingers from tumbling the model with a
-      // transparent drag-absorber overlay (see _DragAbsorber in build) — so pans
-      // are on for the setter, but finger drags never reach the plugin.
+      // Both handlePans AND handleRotation MUST be true: ar_flutter_plugin_2's
+      // native transformationChanged handler gates POSITION behind handlePans and
+      // ROTATION behind handleRotation. With handleRotation:false the rotate
+      // buttons were silently dropped. Finger twists/drags are blocked by the
+      // GestureDetector overlay, so turning this on doesn't let fingers tumble it.
       handlePans: true,
-      handleRotation: false,
+      handleRotation: true,
     );
     _objectManager.onInitialize();
 
@@ -306,37 +307,39 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
       nodeUri = await _ensureLocalModel();
       nodeType = NodeType.fileSystemAppFolderGLB;
     }
+    // Extract ONLY the world translation from the hit pose so the model stands
+    // strictly upright along world Y (gravity). Building on hit.worldTransform
+    // would bake in a tilted plane normal → rotateY would tumble it like a wheel
+    // on a wall instead of spinning upright like a top.
+    _basePosition = hit.worldTransform.getTranslation();
+    _modelScale = 0.3;
+    _modelY = 0.0;
+    _modelZ = 0.0;
+    _rotY = 0.0;
+
+    final initialMatrix = _composeMatrix();
     final node = ARNode(
       type: nodeType,
       uri: nodeUri,
-      scale: vm.Vector3(_modelScale, _modelScale, _modelScale),
-      position: vm.Vector3(0, _modelY, _modelZ),
-      rotation:
-          vm.Vector4(0, 1, 0, _rotY), // axis = Y, angle = _rotY (spinning top)
+      transformation: initialMatrix,
     );
 
-    // Add WITHOUT planeAnchor: a plane-anchored node has its FULL pose (position,
-    // rotation, AND the node.transform we set) re-asserted by the anchor every
-    // frame, so the move/rotate/lift buttons had no visible effect. Seeding the
-    // node's transform from the hit's worldTransform makes it land exactly where
-    // the student tapped; from then on our _applyTransform owns it.
-    node.transform = hit.worldTransform;
     final okNode = await _objectManager.addNode(node);
     if (okNode == true) {
       _placedNode = node;
-      _baseTransform = hit.worldTransform.clone(); // placement pose to build on
-      // Model is down — hide ALL placement guides (plane grid, feature points,
-      // animated guide) so the student sees only the model on a clean floor.
+      // Push the composed matrix (with 0.3 scale) cleanly so it doesn't spawn at
+      // 100% and jump on the first button press.
+      node.transform = initialMatrix;
+      // Model is down — hide ALL placement guides. Keep pans AND rotation ON so
+      // button-driven transform updates propagate to the native node.
       _sessionManager.onInitialize(
         showFeaturePoints: false,
         showAnimatedGuide: false,
         showPlanes: false,
         showWorldOrigin: false,
         handleTaps: true,
-        // pans ON (needed for node.transform to propagate); finger drags are
-        // absorbed by the overlay so they can't tumble the model.
         handlePans: true,
-        handleRotation: false,
+        handleRotation: true,
       );
       // Award AR-view XP through the single growth engine (also advances the
       // daily streak). Fire-and-forget; topicId identifies the module.
@@ -388,25 +391,34 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
     _startNarration();
   }
 
-  // ── Transform engine ──────────────────────────────────────────────────────
-  // All manipulation goes through ONE composed Matrix4 on the placed node's
-  // `transform`. In ar_flutter_plugin_2 the `transform` setter propagates every
-  // component (translate + rotate + scale) to native reliably — unlike the
-  // separate `position`/`rotation` setters, where a plane-anchored node ignores
-  // position & rotation (the anchor pose wins). That is why only resize worked.
-  // Composing our own matrix and pushing it via `transform` makes move, lift,
-  // depth AND rotation all take effect.
+  // ── Upright world-space transform engine ──────────────────────────────────
+  // Clean TRS in WORLD coordinates: translate to (_basePosition + user offsets),
+  // rotate around the upright world Y axis, scale uniformly. Rebuilding from
+  // identity (not the tilted hit pose) makes Y-rotation always spin upright.
+  vm.Matrix4 _composeMatrix() {
+    var safeRotY = _rotY % _twoPi;
+    if (safeRotY < 0) safeRotY += _twoPi;
+    // Guard the π (180°) singularity: ar_flutter_plugin_2's native
+    // deserializeMatrix4 computes qw = sqrt(1 + r00 + r11 + r22)/2 = 0 at π and
+    // divides by 4*qw → NaN (model freezes/vanishes at 180°). Nudge past it.
+    if ((safeRotY - _pi).abs() < 0.001) {
+      safeRotY += 0.002;
+    }
+    return vm.Matrix4.identity()
+      ..setTranslation(vm.Vector3(
+        _basePosition.x,
+        _basePosition.y + _modelY,
+        _basePosition.z + _modelZ,
+      ))
+      ..rotateY(safeRotY)
+      ..scaleByDouble(_modelScale, _modelScale, _modelScale, 1.0);
+  }
+
   void _applyTransform() {
     final node = _placedNode;
     if (node == null) return;
-    // Compose our offsets ON TOP of the placement world pose so the model stays
-    // where it was tapped, then moves/rotates/scales relative to that.
-    final m = _baseTransform.clone()
-      ..translateByDouble(0.0, _modelY, _modelZ, 1.0)
-      ..rotateY(_rotY)
-      ..scaleByDouble(_modelScale, _modelScale, _modelScale, 1.0);
-    node.transform = m;
-    setState(() {}); // refresh the % label
+    node.transform = _composeMatrix();
+    if (mounted) setState(() {}); // refresh the % label
   }
 
   // Resize — clamped so it can't vanish or fill the room.
@@ -434,6 +446,7 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
   void _rotateStep(int dir) {
     if (_placedNode == null) return;
     _rotY = (_rotY + dir * _tapStep) % _twoPi;
+    if (_rotY < 0) _rotY += _twoPi;
     _applyTransform();
   }
 
@@ -443,6 +456,7 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
     _spinTimer?.cancel();
     _spinTimer = Timer.periodic(const Duration(milliseconds: 50), (_) {
       _rotY = (_rotY + dir * _holdStep) % _twoPi;
+      if (_rotY < 0) _rotY += _twoPi;
       _applyTransform();
     });
   }
@@ -464,6 +478,7 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
   }
 
   Future<void> _reset() async {
+    _stopSpin();
     await _audio.stop();
     for (final n in _nodes) {
       await _objectManager.removeNode(n);
@@ -473,6 +488,23 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
     }
     _nodes.clear();
     _anchors.clear();
+    _placedNode = null;
+    _modelScale = 0.3;
+    _modelY = 0.0;
+    _modelZ = 0.0;
+    _rotY = 0.0;
+
+    // Re-enable plane guides so the student can pick a new floor spot.
+    _sessionManager.onInitialize(
+      showFeaturePoints: false,
+      showAnimatedGuide: true,
+      showPlanes: true,
+      showWorldOrigin: false,
+      handleTaps: true,
+      handlePans: true,
+      handleRotation: true,
+    );
+
     setState(() {
       _placed = false;
       _hint = 'Tap the floor to place the model.';
