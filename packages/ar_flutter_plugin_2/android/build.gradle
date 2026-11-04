@@ -2,22 +2,23 @@ group 'com.uhg0.ar_flutter_plugin_2'
 version '1.0-SNAPSHOT'
 
 buildscript {
-    ext.kotlin_version = '1.9.10'
+    ext.kotlin_version = '2.2.20'
     repositories {
-        mavenLocal()
         google()
         mavenCentral()
     }
-
     dependencies {
-        classpath 'com.android.tools.build:gradle:8.3.2'
+        // Match the APP's AGP (8.7.3) + Kotlin (2.2.20). The original 8.3.2 here
+        // referenced the removed Gradle `HasConvention` API and crashed under the
+        // app's Gradle 9.8.1; removing it entirely made AGP unavailable ("plugin
+        // not found"). Matching the app's versions is the correct middle ground.
+        classpath 'com.android.tools.build:gradle:8.7.3'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
     }
 }
 
-allprojects {
+rootProject.allprojects {
     repositories {
-        mavenLocal()
         google()
         mavenCentral()
     }
@@ -27,16 +28,16 @@ apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 
 android {
-    compileSdk 34
+    compileSdk 36
     namespace 'com.uhg0.ar_flutter_plugin_2'
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_17
-        targetCompatibility JavaVersion.VERSION_17
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
     }
 
     kotlinOptions {
-        jvmTarget = '17'
+        jvmTarget = '1.8'
     }
 
     sourceSets {
@@ -45,12 +46,10 @@ android {
 
     defaultConfig {
         minSdkVersion 28
-        targetSdkVersion 34
     }
 }
 
 dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     implementation 'io.github.sceneview:arsceneview:2.2.1'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
 }
