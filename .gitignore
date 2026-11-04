@@ -48,3 +48,9 @@ lib/firebase_options.dart
 *.hprof
 java_pid*.hprof
 android/.kotlin/
+
+# Vendored plugin build artifacts (Gradle cache — regenerated every build)
+packages/*/android/.gradle/
+packages/*/.gradle/
+packages/*/build/
+packages/*/android/build/
