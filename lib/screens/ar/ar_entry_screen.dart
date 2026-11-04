@@ -25,6 +25,7 @@ class ArEntryScreen extends ConsumerStatefulWidget {
   final String? modelUrl; // Draco _lite.glb (the 3D viewer decodes Draco)
   final String? nativeModelUrl; // non-Draco _native.glb (native Filament AR)
   final String? audioUrl;
+  final Map<String, String>? audios; // multi-language narration {lang: url}
   final String? targetsUrl;
   final String? videoUrl;
   final String? chromaColor;
@@ -35,6 +36,7 @@ class ArEntryScreen extends ConsumerStatefulWidget {
     this.modelUrl,
     this.nativeModelUrl,
     this.audioUrl,
+    this.audios,
     this.targetsUrl,
     this.videoUrl,
     this.chromaColor,
@@ -120,6 +122,7 @@ class _ArEntryScreenState extends ConsumerState<ArEntryScreen> {
                 ? widget.nativeModelUrl
                 : widget.modelUrl,
         audioUrl: widget.audioUrl,
+        audios: widget.audios,
         // If native AR can't load the model, drop to the on-screen 3D viewer.
         onNativeLoadFailed: () {
           if (mounted) setState(() => _chosen = _ViewMode.viewer);
@@ -134,6 +137,7 @@ class _ArEntryScreenState extends ConsumerState<ArEntryScreen> {
       nativeModelUrl: widget.nativeModelUrl, // non-Draco → no black screen
       targetsUrl: widget.targetsUrl,
       audioUrl: widget.audioUrl,
+      audios: widget.audios,
       videoUrl: widget.videoUrl,
       chromaColor: widget.chromaColor,
     );

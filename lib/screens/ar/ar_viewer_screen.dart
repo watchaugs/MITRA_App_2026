@@ -28,6 +28,11 @@ import 'package:audioplayers/audioplayers.dart';
 import '../../constants/colors.dart';
 import '../../theme/theme_provider.dart';
 import '../../stores/module_progress_store.dart';
+import '../../services/language_options_service.dart';
+import '../../services/geo_state_service.dart';
+import '../../services/telemetry_batch_buffer.dart';
+import '../auth/state_language_map.dart';
+import '../../stores/auth_store.dart';
 
 class ArViewerScreen extends ConsumerStatefulWidget {
   final String topicId;
@@ -35,6 +40,7 @@ class ArViewerScreen extends ConsumerStatefulWidget {
   final String? nativeModelUrl; // ?nglb=  (non-Draco _native.glb — no decoder)
   final String? targetsUrl; // ?mind=  (kept for route compatibility; unused)
   final String? audioUrl; // ?audio=
+  final Map<String, String>? audios; // multi-language narration {lang: url}
   final String? videoUrl; // ?video=
   final String? chromaColor; // ?chroma=
 
@@ -45,6 +51,7 @@ class ArViewerScreen extends ConsumerStatefulWidget {
     this.nativeModelUrl,
     this.targetsUrl,
     this.audioUrl,
+    this.audios,
     this.videoUrl,
     this.chromaColor,
   });
@@ -60,6 +67,111 @@ class ArViewerScreen extends ConsumerStatefulWidget {
 class _ArViewerScreenState extends ConsumerState<ArViewerScreen> {
   final AudioPlayer _audio = AudioPlayer();
   Duration? _audioDuration;
+
+  // Multi-language narration.
+  Map<String, String> _audios = const {};
+  List<String> _availableLangs = const [];
+  String? _activeLang;
+
+  Future<void> _resolveLanguages() async {
+    if (_audios.isEmpty) return;
+    final svc = ref.read(languageOptionsServiceProvider);
+    await svc.ensureLoaded();
+    final state = ref.read(effectiveStateProvider);
+    final allowed = svc.allowedFor(state);
+    final avail = _audios.keys.where(allowed.contains).toList();
+    final list = avail.isNotEmpty ? avail : _audios.keys.toList();
+    final prefer = [consentLangForState(state), 'en', 'hi'];
+    final active = prefer.firstWhere(list.contains, orElse: () => list.first);
+    if (!mounted) return;
+    setState(() {
+      _availableLangs = list;
+      _activeLang = active;
+    });
+  }
+
+  String _langLabel(String code) {
+    const m = {
+      'hi': 'हिंदी',
+      'en': 'English',
+      'gu': 'ગુજરાતી',
+      'mr': 'मराठी',
+      'ta': 'தமிழ்',
+      'te': 'తెలుగు',
+      'kn': 'ಕನ್ನಡ',
+      'ml': 'മലയാളം',
+      'bn': 'বাংলা',
+      'pa': 'ਪੰਜਾਬੀ',
+      'or': 'ଓଡ଼ିଆ',
+      'as': 'অসমীয়া',
+      'ur': 'اردو'
+    };
+    return m[code] ?? code.toUpperCase();
+  }
+
+  void _onPickLanguage(String lang) {
+    if (lang == _activeLang) return;
+    setState(() => _activeLang = lang);
+    _logLanguageChoice(lang, switched: true);
+    _startNarration();
+  }
+
+  void _logLanguageChoice(String lang, {required bool switched}) {
+    try {
+      final uid = ref.read(currentUserProvider)?.id ?? 'anon';
+      TelemetryBatchBuffer.instance.buffer(
+        collection: 'ar_language',
+        studentId: uid,
+        data: {
+          'topicId': widget.topicId,
+          'language': lang,
+          'switched': switched,
+          'surface': 'viewer',
+          'ts': DateTime.now().toIso8601String(),
+        },
+      );
+    } catch (_) {}
+  }
+
+  Widget _languageChip() {
+    final accent = ThemeHelper.getActiveHighlight(ref.watch(themeProvider));
+    return PopupMenuButton<String>(
+      onSelected: _onPickLanguage,
+      color: MitraColors.bgCard,
+      itemBuilder: (_) => _availableLangs
+          .map((l) => PopupMenuItem<String>(
+                value: l,
+                child: Row(children: [
+                  Icon(l == _activeLang ? Icons.check : Icons.circle_outlined,
+                      size: 16, color: accent),
+                  const SizedBox(width: 8),
+                  Text(_langLabel(l),
+                      style: const TextStyle(color: Colors.white)),
+                ]),
+              ))
+          .toList(),
+      child: Container(
+        height: 40,
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        decoration: BoxDecoration(
+          color: Colors.black.withValues(alpha: 0.5),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: accent.withValues(alpha: 0.5)),
+        ),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          Icon(Icons.language, color: accent, size: 16),
+          const SizedBox(width: 6),
+          Text(_langLabel(_activeLang ?? ''),
+              style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontFamily: 'Baloo2',
+                  fontWeight: FontWeight.w700)),
+          const Icon(Icons.arrow_drop_down, color: Colors.white70, size: 16),
+        ]),
+      ),
+    );
+  }
 
   @override
   void initState() {
@@ -78,17 +190,20 @@ class _ArViewerScreenState extends ConsumerState<ArViewerScreen> {
           .read(moduleProgressStoreProvider)
           .recordArProgress(widget.topicId, pct);
     });
+    _audios = widget.audios ?? const {};
+    _resolveLanguages();
     _startNarration();
   }
 
-  // Narration is a SEPARATE file (glTF can't carry audio). The on-screen viewer
-  // previously declared audioUrl but never played it — this plays it on open.
+  // Narration: prefer the chosen-language audio; fall back to single audioUrl.
   Future<void> _startNarration() async {
-    final url = widget.audioUrl;
-    if (url == null || url.trim().isEmpty) return;
+    final chosen = _activeLang != null ? _audios[_activeLang] : null;
+    final url = (chosen ?? widget.audioUrl)?.trim();
+    if (url == null || url.isEmpty) return;
+    if (_activeLang != null) _logLanguageChoice(_activeLang!, switched: false);
     try {
       await _audio.stop();
-      await _audio.play(UrlSource(url.trim()));
+      await _audio.play(UrlSource(url));
     } catch (_) {/* narration is best-effort; never block the model */}
   }
 
@@ -229,6 +344,10 @@ class _ArViewerScreenState extends ConsumerState<ArViewerScreen> {
                           },
                         ),
                         const Spacer(),
+                        if (_availableLangs.length >= 2) ...[
+                          _languageChip(),
+                          const SizedBox(width: 10),
+                        ],
                         Container(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 12, vertical: 6),

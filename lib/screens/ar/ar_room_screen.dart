@@ -36,11 +36,17 @@ import '../../services/achievement_engine.dart';
 import '../../services/ar_model_cache.dart';
 import '../../stores/module_progress_store.dart';
 import '../../theme/theme_provider.dart'; // getActiveHighlight + sharedPreferencesProvider
+import '../../services/language_options_service.dart';
+import '../../services/geo_state_service.dart'; // effectiveStateProvider
+import '../../services/telemetry_batch_buffer.dart';
+import '../auth/state_language_map.dart'; // consentLangForState
+import '../../stores/auth_store.dart'; // currentUserProvider
 
 class ArRoomScreen extends ConsumerStatefulWidget {
   final String topicId;
   final String? modelUrl; // https GLB from the catalog/backend (preferred)
   final String? audioUrl; // https narration audio (synced on placement)
+  final Map<String, String>? audios; // multi-language narration {lang: url}
   final VoidCallback? onNativeLoadFailed;
 
   const ArRoomScreen({
@@ -48,6 +54,7 @@ class ArRoomScreen extends ConsumerStatefulWidget {
     required this.topicId,
     this.modelUrl,
     this.audioUrl,
+    this.audios,
     this.onNativeLoadFailed,
   });
 
@@ -84,6 +91,11 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
   bool _placed = false;
   String _hint = 'Move your phone slowly to find the floor…';
 
+  // Multi-language narration.
+  Map<String, String> _audios = const {}; // lang -> url
+  List<String> _availableLangs = const []; // allowed ∩ uploaded
+  String? _activeLang;
+
   // One-time coach marks: shown on first placement ever, then remembered.
   static const String _coachSeenKey = 'ar_room_coach_seen_v1';
   bool _showCoach = false;
@@ -101,6 +113,112 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
           .recordArProgress(widget.topicId, pct);
     });
     _audio.onDurationChanged.listen((d) => _audioDuration = d);
+    _audios = widget.audios ?? const {};
+    _resolveLanguages();
+  }
+
+  // Compute which languages this student may choose for THIS model, then start
+  // the preferred one. allowed = (region ∪ {hi,en}); available = allowed ∩ uploaded.
+  Future<void> _resolveLanguages() async {
+    if (_audios.isEmpty) {
+      return; // no multi-lang → single audioUrl plays as before
+    }
+    final svc = ref.read(languageOptionsServiceProvider);
+    await svc.ensureLoaded();
+    final state = ref.read(effectiveStateProvider);
+    final allowed = svc.allowedFor(state);
+    final avail = _audios.keys.where(allowed.contains).toList();
+    final list = avail.isNotEmpty ? avail : _audios.keys.toList();
+    final prefer = [consentLangForState(state), 'en', 'hi'];
+    final active = prefer.firstWhere(list.contains, orElse: () => list.first);
+    if (!mounted) return;
+    setState(() {
+      _availableLangs = list;
+      _activeLang = active;
+    });
+  }
+
+  String _langLabel(String code) {
+    const m = {
+      'hi': 'हिंदी',
+      'en': 'English',
+      'gu': 'ગુજરાતી',
+      'mr': 'मराठी',
+      'ta': 'தமிழ்',
+      'te': 'తెలుగు',
+      'kn': 'ಕನ್ನಡ',
+      'ml': 'മലയാളം',
+      'bn': 'বাংলা',
+      'pa': 'ਪੰਜਾਬੀ',
+      'or': 'ଓଡ଼ିଆ',
+      'as': 'অসমীয়া',
+      'ur': 'اردو'
+    };
+    return m[code] ?? code.toUpperCase();
+  }
+
+  void _onPickLanguage(String lang) {
+    if (lang == _activeLang) return;
+    setState(() => _activeLang = lang);
+    _logLanguageChoice(lang, switched: true);
+    _startNarration(); // restart in the new language
+  }
+
+  void _logLanguageChoice(String lang, {required bool switched}) {
+    try {
+      final uid = ref.read(currentUserProvider)?.id ?? 'anon';
+      TelemetryBatchBuffer.instance.buffer(
+        collection: 'ar_language',
+        studentId: uid,
+        data: {
+          'topicId': widget.topicId,
+          'language': lang,
+          'switched': switched,
+          'surface': 'room',
+          'ts': DateTime.now().toIso8601String(),
+        },
+      );
+    } catch (_) {}
+  }
+
+  Widget _languageChip() {
+    final accent = ThemeHelper.getActiveHighlight(ref.watch(themeProvider));
+    return PopupMenuButton<String>(
+      onSelected: _onPickLanguage,
+      color: MitraColors.bgCard,
+      itemBuilder: (_) => _availableLangs
+          .map((l) => PopupMenuItem<String>(
+                value: l,
+                child: Row(children: [
+                  Icon(l == _activeLang ? Icons.check : Icons.circle_outlined,
+                      size: 16, color: accent),
+                  const SizedBox(width: 8),
+                  Text(_langLabel(l),
+                      style: const TextStyle(color: Colors.white)),
+                ]),
+              ))
+          .toList(),
+      child: Container(
+        height: 44,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        decoration: BoxDecoration(
+          color: Colors.black.withValues(alpha: 0.5),
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: accent.withValues(alpha: 0.5)),
+        ),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          Icon(Icons.language, color: accent, size: 18),
+          const SizedBox(width: 6),
+          Text(_langLabel(_activeLang ?? ''),
+              style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontFamily: 'Baloo2',
+                  fontWeight: FontWeight.w700)),
+          const Icon(Icons.arrow_drop_down, color: Colors.white70, size: 18),
+        ]),
+      ),
+    );
   }
 
   Duration? _audioDuration;
@@ -146,29 +264,42 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
                 onScaleEnd: (_) {},
               ),
             ),
-          // ── Top bar: close (left) · refresh + help (right) ───────────────
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Row(
-                children: [
-                  _roundBtn(Icons.close, () {
-                    _audio.stop();
-                    if (context.canPop()) {
-                      context.pop();
-                    } else {
-                      context.go('/student/learn');
-                    }
-                  }),
-                  const Spacer(),
-                  if (_placed) ...[
-                    // "?" re-shows the control hints anytime.
-                    _roundBtn(Icons.help_outline,
-                        () => setState(() => _showCoach = true)),
-                    const SizedBox(width: 10),
-                    _roundBtn(Icons.refresh, _reset),
+          // ── Top bar: close (left) · language + help + refresh (right) ────
+          // Pinned to the TOP of the screen (Positioned at top:0). Without this
+          // it sat inside StackFit.expand with no alignment and got centred
+          // vertically — the buttons floated in the middle of the edges.
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Row(
+                  children: [
+                    _roundBtn(Icons.close, () {
+                      _audio.stop();
+                      if (context.canPop()) {
+                        context.pop();
+                      } else {
+                        context.go('/student/learn');
+                      }
+                    }),
+                    const Spacer(),
+                    // Language chip (shows only if ≥2 languages are available).
+                    if (_availableLangs.length >= 2) ...[
+                      _languageChip(),
+                      const SizedBox(width: 10),
+                    ],
+                    if (_placed) ...[
+                      // "?" re-shows the control hints anytime.
+                      _roundBtn(Icons.help_outline,
+                          () => setState(() => _showCoach = true)),
+                      const SizedBox(width: 10),
+                      _roundBtn(Icons.refresh, _reset),
+                    ],
                   ],
-                ],
+                ),
               ),
             ),
           ),
@@ -223,39 +354,53 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
                       border: Border.all(
                           color: Colors.white.withValues(alpha: 0.08)),
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        // ROTATE — tap = 30°, hold = smooth spin.
-                        _toolGroup('Rotate', [
-                          _spinBig(Icons.rotate_left, -1),
-                          _spinBig(Icons.rotate_right, 1),
-                        ]),
-                        _divider(),
-                        // MOVE — up / down off the floor.
-                        _toolGroup('Move', [
-                          _bigBtn(Icons.keyboard_arrow_up, () => _moveY(0.05)),
-                          _bigBtn(
-                              Icons.keyboard_arrow_down, () => _moveY(-0.05)),
-                        ]),
-                        _divider(),
-                        // SIZE — with a live % read-out between the buttons.
-                        _toolGroup(
-                            'Size',
-                            [
-                              _bigBtn(Icons.remove, () => _resizeBy(1 / 1.2)),
-                              _bigBtn(Icons.add, () => _resizeBy(1.2)),
-                            ],
-                            caption: '${(_modelScale * 100).round()}%'),
-                        _divider(),
-                        // DEPTH — nearer / farther.
-                        _toolGroup('Depth', [
-                          _bigBtn(Icons.remove_circle_outline,
-                              () => _moveZ(-0.1)), // nearer
-                          _bigBtn(Icons.add_circle_outline,
-                              () => _moveZ(0.1)), // farther
-                        ]),
-                      ],
+                    // Horizontally scrollable so NO group is ever cut off on a
+                    // narrow phone. On wide screens all four fit and centre;
+                    // on narrow ones the user swipes the toolbar sideways.
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      physics: const BouncingScrollPhysics(),
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          minWidth: MediaQuery.sizeOf(context).width - 48,
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            // ROTATE — tap = 30°, hold = smooth spin.
+                            _toolGroup('Rotate', [
+                              _spinBig(Icons.rotate_left, -1),
+                              _spinBig(Icons.rotate_right, 1),
+                            ]),
+                            _divider(),
+                            // MOVE — up / down off the floor.
+                            _toolGroup('Move', [
+                              _bigBtn(
+                                  Icons.keyboard_arrow_up, () => _moveY(0.05)),
+                              _bigBtn(Icons.keyboard_arrow_down,
+                                  () => _moveY(-0.05)),
+                            ]),
+                            _divider(),
+                            // SIZE — live % read-out between the buttons.
+                            _toolGroup(
+                                'Size',
+                                [
+                                  _bigBtn(
+                                      Icons.remove, () => _resizeBy(1 / 1.2)),
+                                  _bigBtn(Icons.add, () => _resizeBy(1.2)),
+                                ],
+                                caption: '${(_modelScale * 100).round()}%'),
+                            _divider(),
+                            // DEPTH — nearer / farther.
+                            _toolGroup('Depth', [
+                              _bigBtn(Icons.remove_circle_outline,
+                                  () => _moveZ(-0.1)), // nearer
+                              _bigBtn(Icons.add_circle_outline,
+                                  () => _moveZ(0.1)), // farther
+                            ]),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -407,8 +552,12 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
   // Narration: a SEPARATE audio file (glTF cannot carry audio). Starts when the
   // model is placed, and again when the model is tapped.
   Future<void> _startNarration() async {
-    final url = widget.audioUrl;
+    // Prefer the chosen-language audio; fall back to the single audioUrl.
+    final url =
+        (_activeLang != null ? _audios[_activeLang] : null) ?? widget.audioUrl;
     if (url == null || url.isEmpty) return;
+    // Log the initial language choice once narration actually starts.
+    if (_activeLang != null) _logLanguageChoice(_activeLang!, switched: false);
     try {
       await _audio.stop();
       if (url.startsWith('http')) {
@@ -592,7 +741,7 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
               ),
               const SizedBox(width: 4),
             ] else
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
             buttons[1],
           ],
         ),
@@ -605,8 +754,8 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
         onTap: onTap,
         behavior: HitTestBehavior.opaque,
         child: Container(
-          width: 48,
-          height: 48,
+          width: 46,
+          height: 46,
           alignment: Alignment.center,
           decoration: BoxDecoration(
             color: Colors.white.withValues(alpha: 0.10),
@@ -624,8 +773,8 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
         onLongPressCancel: _stopSpin,
         behavior: HitTestBehavior.opaque,
         child: Container(
-          width: 48,
-          height: 48,
+          width: 46,
+          height: 46,
           alignment: Alignment.center,
           decoration: BoxDecoration(
             color: Colors.white.withValues(alpha: 0.10),

@@ -31,6 +31,7 @@
 // 10. Structured logging for observability.
 // ═════════════════════════════════════════════════════════════
 
+import 'dart:convert';
 import 'dart:developer' as developer;
 
 import 'package:flutter/material.dart';
@@ -352,6 +353,7 @@ class ArCatalog {
   final Map<String, String> nativeGlbById;
   final Map<String, String> videoById;
   final Map<String, String> audioById;
+  final Map<String, Map<String, String>> audiosByLangById; // id -> {lang: url}
   final Map<String, String> chromaById;
   final bool territorySupported; // false = outside MITRA's approved area
   const ArCatalog({
@@ -360,6 +362,7 @@ class ArCatalog {
     this.nativeGlbById = const {},
     this.videoById = const {},
     this.audioById = const {},
+    this.audiosByLangById = const {},
     this.chromaById = const {},
     this.territorySupported = true,
   });
@@ -398,6 +401,7 @@ ArCatalog? _catalogFromManifest(dynamic data) {
   final nativeGlbById = <String, String>{};
   final videoById = <String, String>{};
   final audioById = <String, String>{};
+  final audiosByLangById = <String, Map<String, String>>{};
   final chromaById = <String, String>{};
   for (final c in classes) {
     if (c is! Map) continue;
@@ -436,6 +440,16 @@ ArCatalog? _catalogFromManifest(dynamic data) {
           if (vid.isNotEmpty) videoById[id] = vid;
           final aud = _absMedia((l['audio_url'] ?? '').toString());
           if (aud.isNotEmpty) audioById[id] = aud;
+          // Multi-language narration: { lang: url }. Absolutise each URL.
+          final rawAudios = l['audios'];
+          if (rawAudios is Map && rawAudios.isNotEmpty) {
+            final m = <String, String>{};
+            rawAudios.forEach((k, v) {
+              final u = _absMedia((v ?? '').toString());
+              if (u.isNotEmpty) m[k.toString().toLowerCase()] = u;
+            });
+            if (m.isNotEmpty) audiosByLangById[id] = m;
+          }
           if (l['chroma_enabled'] == true) {
             chromaById[id] = (l['chroma_color'] ?? '#00ff00').toString();
           }
@@ -450,6 +464,7 @@ ArCatalog? _catalogFromManifest(dynamic data) {
     nativeGlbById: nativeGlbById,
     videoById: videoById,
     audioById: audioById,
+    audiosByLangById: audiosByLangById,
     chromaById: chromaById,
     territorySupported: true,
   );
@@ -1041,6 +1056,11 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
                                   }
                                   if (aud != null && aud.isNotEmpty) {
                                     qp.add('audio=${Uri.encodeComponent(aud)}');
+                                  }
+                                  final auds = arCatalog?.audiosByLangById[id];
+                                  if (auds != null && auds.isNotEmpty) {
+                                    qp.add(
+                                        'audios=${Uri.encodeComponent(jsonEncode(auds))}');
                                   }
                                   if (chroma != null && chroma.isNotEmpty) {
                                     qp.add(

@@ -4,6 +4,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:convert';
 import 'package:go_router/go_router.dart';
 import 'package:mitra_student/screens/student/achievements_screen.dart';
 
@@ -51,6 +52,16 @@ final _teacherKey = GlobalKey<NavigatorState>();
 class _AuthRefresh extends ChangeNotifier {
   _AuthRefresh(Ref ref) {
     ref.listen(authProvider, (_, __) => notifyListeners());
+  }
+}
+
+Map<String, String>? _parseAudios(String? raw) {
+  if (raw == null || raw.isEmpty) return null;
+  try {
+    return (jsonDecode(raw) as Map)
+        .map((k, v) => MapEntry('$k'.toLowerCase(), '$v'));
+  } catch (_) {
+    return null;
   }
 }
 
@@ -265,6 +276,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           // Non-Draco GLB for native Filament AR (Draco glb can't render there).
           nativeModelUrl: state.uri.queryParameters['nglb'],
           audioUrl: state.uri.queryParameters['audio'],
+          audios: _parseAudios(state.uri.queryParameters['audios']),
           targetsUrl: state.uri.queryParameters['mind'],
           videoUrl: state.uri.queryParameters['video'],
           chromaColor: state.uri.queryParameters['chroma'],
