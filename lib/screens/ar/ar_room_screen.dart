@@ -156,7 +156,17 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
       'pa': 'ਪੰਜਾਬੀ',
       'or': 'ଓଡ଼ିଆ',
       'as': 'অসমীয়া',
-      'ur': 'اردو'
+      'ur': 'اردو',
+      'sa': 'संस्कृत',
+      'ne': 'नेपाली',
+      'kok': 'कोंकणी',
+      'mni': 'ꯃꯤꯇꯩ',
+      'brx': 'बड़ो',
+      'sat': 'ᱥᱟᱱᱛᱟᱲᱤ',
+      'doi': 'डोगरी',
+      'ks': 'کٲشُر',
+      'mai': 'मैथिली',
+      'sd': 'سنڌي',
     };
     return m[code] ?? code.toUpperCase();
   }
