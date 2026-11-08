@@ -22,6 +22,19 @@ class ApiService {
 
   late final Dio _dio;
 
+  // Origin header derived from the API base URL (or overridden via env),
+  // so changing the dashboard URL never needs a code change.
+  static String get _origin {
+    final override = dotenv.env['API_ORIGIN'];
+    if (override != null && override.isNotEmpty) return override;
+    final base = dotenv.env['API_BASE_URL'] ?? '';
+    try {
+      final u = Uri.parse(base);
+      if (u.hasScheme && u.host.isNotEmpty) return '${u.scheme}://${u.host}';
+    } catch (_) {}
+    return base;
+  }
+
   void init() {
     final baseUrl = dotenv.env['API_BASE_URL'] ?? '';
     _dio = Dio(BaseOptions(
@@ -32,7 +45,7 @@ class ApiService {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
         // 🚨 FIX 1: The CORS Disguise to bypass the 403 Forbidden error
-        'Origin': 'https://watchaugs-mitra.web.app',
+        'Origin': _origin,
       },
     ));
 
@@ -93,7 +106,7 @@ class ApiService {
             // 🚨 FIX 2: Added the CORS Disguise to the refresh mechanism as well
             final refreshDio = Dio(BaseOptions(headers: {
               'Content-Type': 'application/json',
-              'Origin': 'https://watchaugs-mitra.web.app',
+              'Origin': _origin,
             }));
 
             final res = await refreshDio.post(
