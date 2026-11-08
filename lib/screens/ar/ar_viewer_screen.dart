@@ -41,6 +41,7 @@ class ArViewerScreen extends ConsumerStatefulWidget {
   final String? targetsUrl; // ?mind=  (kept for route compatibility; unused)
   final String? audioUrl; // ?audio=
   final Map<String, String>? audios; // multi-language narration {lang: url}
+  final Map<String, String>? audiosAac; // AAC fallback {lang: url}
   final String? videoUrl; // ?video=
   final String? chromaColor; // ?chroma=
 
@@ -52,6 +53,7 @@ class ArViewerScreen extends ConsumerStatefulWidget {
     this.targetsUrl,
     this.audioUrl,
     this.audios,
+    this.audiosAac,
     this.videoUrl,
     this.chromaColor,
   });
@@ -70,6 +72,7 @@ class _ArViewerScreenState extends ConsumerState<ArViewerScreen> {
 
   // Multi-language narration.
   Map<String, String> _audios = const {};
+  Map<String, String> _audiosAac = const {};
   List<String> _availableLangs = const [];
   String? _activeLang;
 
@@ -104,7 +107,17 @@ class _ArViewerScreenState extends ConsumerState<ArViewerScreen> {
       'pa': 'ਪੰਜਾਬੀ',
       'or': 'ଓଡ଼ିଆ',
       'as': 'অসমীয়া',
-      'ur': 'اردو'
+      'ur': 'اردو',
+      'sa': 'संस्कृत',
+      'ne': 'नेपाली',
+      'kok': 'कोंकणी',
+      'mni': 'ꯃꯤꯇꯩ',
+      'brx': 'बड़ो',
+      'sat': 'ᱥᱟᱱᱛᱟᱲᱤ',
+      'doi': 'डोगरी',
+      'ks': 'کٲشُر',
+      'mai': 'मैथिली',
+      'sd': 'سنڌي',
     };
     return m[code] ?? code.toUpperCase();
   }
@@ -191,6 +204,7 @@ class _ArViewerScreenState extends ConsumerState<ArViewerScreen> {
           .recordArProgress(widget.topicId, pct);
     });
     _audios = widget.audios ?? const {};
+    _audiosAac = widget.audiosAac ?? const {};
     _resolveLanguages();
     _startNarration();
   }
@@ -201,10 +215,20 @@ class _ArViewerScreenState extends ConsumerState<ArViewerScreen> {
     final url = (chosen ?? widget.audioUrl)?.trim();
     if (url == null || url.isEmpty) return;
     if (_activeLang != null) _logLanguageChoice(_activeLang!, switched: false);
+    final fallback =
+        _activeLang != null ? _audiosAac[_activeLang]?.trim() : null;
     try {
       await _audio.stop();
       await _audio.play(UrlSource(url));
-    } catch (_) {/* narration is best-effort; never block the model */}
+    } catch (_) {
+      // Opus unsupported on this device → try the AAC fallback.
+      if (fallback != null && fallback.isNotEmpty) {
+        try {
+          await _audio.stop();
+          await _audio.play(UrlSource(fallback));
+        } catch (_) {/* best-effort; never block the model */}
+      }
+    }
   }
 
   @override

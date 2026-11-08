@@ -26,6 +26,7 @@ class ArEntryScreen extends ConsumerStatefulWidget {
   final String? nativeModelUrl; // non-Draco _native.glb (native Filament AR)
   final String? audioUrl;
   final Map<String, String>? audios; // multi-language narration {lang: url}
+  final Map<String, String>? audiosAac; // AAC fallback {lang: url}
   final String? targetsUrl;
   final String? videoUrl;
   final String? chromaColor;
@@ -37,6 +38,7 @@ class ArEntryScreen extends ConsumerStatefulWidget {
     this.nativeModelUrl,
     this.audioUrl,
     this.audios,
+    this.audiosAac,
     this.targetsUrl,
     this.videoUrl,
     this.chromaColor,
@@ -123,6 +125,7 @@ class _ArEntryScreenState extends ConsumerState<ArEntryScreen> {
                 : widget.modelUrl,
         audioUrl: widget.audioUrl,
         audios: widget.audios,
+        audiosAac: widget.audiosAac,
         // If native AR can't load the model, drop to the on-screen 3D viewer.
         onNativeLoadFailed: () {
           if (mounted) setState(() => _chosen = _ViewMode.viewer);
@@ -138,6 +141,7 @@ class _ArEntryScreenState extends ConsumerState<ArEntryScreen> {
       targetsUrl: widget.targetsUrl,
       audioUrl: widget.audioUrl,
       audios: widget.audios,
+      audiosAac: widget.audiosAac,
       videoUrl: widget.videoUrl,
       chromaColor: widget.chromaColor,
     );

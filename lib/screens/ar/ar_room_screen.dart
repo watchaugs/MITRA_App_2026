@@ -47,6 +47,7 @@ class ArRoomScreen extends ConsumerStatefulWidget {
   final String? modelUrl; // https GLB from the catalog/backend (preferred)
   final String? audioUrl; // https narration audio (synced on placement)
   final Map<String, String>? audios; // multi-language narration {lang: url}
+  final Map<String, String>? audiosAac; // AAC fallback {lang: url}
   final VoidCallback? onNativeLoadFailed;
 
   const ArRoomScreen({
@@ -55,6 +56,7 @@ class ArRoomScreen extends ConsumerStatefulWidget {
     this.modelUrl,
     this.audioUrl,
     this.audios,
+    this.audiosAac,
     this.onNativeLoadFailed,
   });
 
@@ -93,6 +95,7 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
 
   // Multi-language narration.
   Map<String, String> _audios = const {}; // lang -> url
+  Map<String, String> _audiosAac = const {}; // lang -> url AAC fallback
   List<String> _availableLangs = const []; // allowed ∩ uploaded
   String? _activeLang;
 
@@ -114,6 +117,7 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
     });
     _audio.onDurationChanged.listen((d) => _audioDuration = d);
     _audios = widget.audios ?? const {};
+    _audiosAac = widget.audiosAac ?? const {};
     _resolveLanguages();
   }
 
@@ -556,6 +560,7 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
     final url =
         (_activeLang != null ? _audios[_activeLang] : null) ?? widget.audioUrl;
     if (url == null || url.isEmpty) return;
+    final fallback = _activeLang != null ? _audiosAac[_activeLang] : null;
     // Log the initial language choice once narration actually starts.
     if (_activeLang != null) _logLanguageChoice(_activeLang!, switched: false);
     try {
@@ -565,7 +570,15 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
       } else {
         await _audio.play(AssetSource(url)); // e.g. 'ar/audio/xxx.mp3'
       }
-    } catch (_) {/* narration is best-effort; never block the model */}
+    } catch (_) {
+      // Opus unsupported on this device → try the AAC fallback.
+      if (fallback != null && fallback.isNotEmpty) {
+        try {
+          await _audio.stop();
+          await _audio.play(UrlSource(fallback));
+        } catch (_) {/* best-effort; never block the model */}
+      }
+    }
   }
 
   void _replay() {

@@ -277,6 +277,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           nativeModelUrl: state.uri.queryParameters['nglb'],
           audioUrl: state.uri.queryParameters['audio'],
           audios: _parseAudios(state.uri.queryParameters['audios']),
+          audiosAac: _parseAudios(state.uri.queryParameters['audios_aac']),
           targetsUrl: state.uri.queryParameters['mind'],
           videoUrl: state.uri.queryParameters['video'],
           chromaColor: state.uri.queryParameters['chroma'],

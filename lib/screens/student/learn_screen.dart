@@ -354,6 +354,8 @@ class ArCatalog {
   final Map<String, String> videoById;
   final Map<String, String> audioById;
   final Map<String, Map<String, String>> audiosByLangById; // id -> {lang: url}
+  final Map<String, Map<String, String>>
+      audiosAacByLangById; // id -> {lang: url} AAC fallback
   final Map<String, String> chromaById;
   final bool territorySupported; // false = outside MITRA's approved area
   const ArCatalog({
@@ -363,6 +365,7 @@ class ArCatalog {
     this.videoById = const {},
     this.audioById = const {},
     this.audiosByLangById = const {},
+    this.audiosAacByLangById = const {},
     this.chromaById = const {},
     this.territorySupported = true,
   });
@@ -402,6 +405,7 @@ ArCatalog? _catalogFromManifest(dynamic data) {
   final videoById = <String, String>{};
   final audioById = <String, String>{};
   final audiosByLangById = <String, Map<String, String>>{};
+  final audiosAacByLangById = <String, Map<String, String>>{};
   final chromaById = <String, String>{};
   for (final c in classes) {
     if (c is! Map) continue;
@@ -450,6 +454,16 @@ ArCatalog? _catalogFromManifest(dynamic data) {
             });
             if (m.isNotEmpty) audiosByLangById[id] = m;
           }
+          // AAC fallback map { lang: url } for devices that can't decode Opus.
+          final rawAudiosAac = l['audios_aac'];
+          if (rawAudiosAac is Map && rawAudiosAac.isNotEmpty) {
+            final m = <String, String>{};
+            rawAudiosAac.forEach((k, v) {
+              final u = _absMedia((v ?? '').toString());
+              if (u.isNotEmpty) m[k.toString().toLowerCase()] = u;
+            });
+            if (m.isNotEmpty) audiosAacByLangById[id] = m;
+          }
           if (l['chroma_enabled'] == true) {
             chromaById[id] = (l['chroma_color'] ?? '#00ff00').toString();
           }
@@ -465,6 +479,7 @@ ArCatalog? _catalogFromManifest(dynamic data) {
     videoById: videoById,
     audioById: audioById,
     audiosByLangById: audiosByLangById,
+    audiosAacByLangById: audiosAacByLangById,
     chromaById: chromaById,
     territorySupported: true,
   );
@@ -1061,6 +1076,12 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
                                   if (auds != null && auds.isNotEmpty) {
                                     qp.add(
                                         'audios=${Uri.encodeComponent(jsonEncode(auds))}');
+                                  }
+                                  final audsAac =
+                                      arCatalog?.audiosAacByLangById[id];
+                                  if (audsAac != null && audsAac.isNotEmpty) {
+                                    qp.add(
+                                        'audios_aac=${Uri.encodeComponent(jsonEncode(audsAac))}');
                                   }
                                   if (chroma != null && chroma.isNotEmpty) {
                                     qp.add(
