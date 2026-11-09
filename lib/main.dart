@@ -22,6 +22,7 @@ import 'services/api_service.dart';
 import 'services/quiz_offline_service.dart';
 import 'services/telemetry_batch_buffer.dart';
 import 'services/telemetry_service.dart';
+import 'services/telemetry_enums.dart' show ConnectivityType;
 import 'providers/telemetry_provider.dart';
 import 'back_button_dispatcher.dart';
 import 'firebase_options.dart';
@@ -161,11 +162,22 @@ class _MitraAppState extends ConsumerState<MitraApp>
     with WidgetsBindingObserver {
   MitraBackButtonHandler? _backHandler;
 
+  DateTime? _sessionStart; // for session-duration telemetry
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _setupFCM();
+    // Session start — logged once the telemetry service is ready (post-auth).
+    WidgetsBinding.instance.addPostFrameCallback((_) => _beginSession());
+  }
+
+  void _beginSession() {
+    _sessionStart = DateTime.now();
+    TelemetryService.current?.logSessionStart(
+      connectivityType: ConnectivityType.unknown,
+    );
   }
 
   @override
@@ -182,7 +194,19 @@ class _MitraAppState extends ConsumerState<MitraApp>
     // (AR/screen views) stay on the 10-day + month-end cadence.
     if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.detached) {
+      // Close the session with its duration before flushing.
+      if (_sessionStart != null) {
+        final secs = DateTime.now().difference(_sessionStart!).inSeconds;
+        TelemetryService.current?.logSessionEnd(
+          durationSeconds: secs,
+          wasOffline: false,
+          connectivityType: ConnectivityType.unknown,
+        );
+        _sessionStart = null;
+      }
       TelemetryBatchBuffer.instance.flushCriticalNow();
+    } else if (state == AppLifecycleState.resumed && _sessionStart == null) {
+      _beginSession(); // returning to foreground starts a fresh session
     }
     super.didChangeAppLifecycleState(state);
   }

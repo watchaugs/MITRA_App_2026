@@ -31,6 +31,7 @@ import '../../stores/module_progress_store.dart';
 import '../../services/language_options_service.dart';
 import '../../services/geo_state_service.dart';
 import '../../services/telemetry_batch_buffer.dart';
+import '../../providers/telemetry_provider.dart';
 import '../auth/state_language_map.dart';
 import '../../stores/auth_store.dart';
 
@@ -186,9 +187,20 @@ class _ArViewerScreenState extends ConsumerState<ArViewerScreen> {
     );
   }
 
+  DateTime? _arStart; // AR view duration telemetry
+  dynamic _telemetry; // captured in initState; safe to use in dispose
+
   @override
   void initState() {
     super.initState();
+    _arStart = DateTime.now();
+    _telemetry = ref.read(telemetryServiceProvider);
+    _telemetry?.logArStart(
+      arId: widget.topicId,
+      topicId: widget.topicId,
+      moduleTitle: widget.topicId,
+      preModuleScore: 0,
+    );
     debugPrint('🟣 ArViewerScreen OPENED — topicId=${widget.topicId} '
         'nativeUrl=${widget.nativeModelUrl} modelUrl=${widget.modelUrl}');
     // Track narration progress → credit the AR module toward the ≥80% quiz gate,
@@ -233,6 +245,18 @@ class _ArViewerScreenState extends ConsumerState<ArViewerScreen> {
 
   @override
   void dispose() {
+    final secs =
+        _arStart == null ? 0 : DateTime.now().difference(_arStart!).inSeconds;
+    ref.read(telemetryServiceProvider)?.logArEnd(
+          arId: widget.topicId,
+          topicId: widget.topicId,
+          moduleTitle: widget.topicId,
+          durationSeconds: secs,
+          completed: secs >= 10, // viewed for a meaningful duration
+          isReplay: false,
+          preModuleScore: 0,
+          postModuleScore: 0,
+        );
     _audio.dispose();
     super.dispose();
   }

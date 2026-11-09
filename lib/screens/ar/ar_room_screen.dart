@@ -34,6 +34,7 @@ import 'package:ar_flutter_plugin_2/datatypes/hittest_result_types.dart';
 import '../../constants/colors.dart';
 import '../../services/achievement_engine.dart';
 import '../../services/ar_model_cache.dart';
+import '../../providers/telemetry_provider.dart';
 import '../../stores/module_progress_store.dart';
 import '../../theme/theme_provider.dart'; // getActiveHighlight + sharedPreferencesProvider
 import '../../services/language_options_service.dart';
@@ -103,9 +104,20 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
   static const String _coachSeenKey = 'ar_room_coach_seen_v1';
   bool _showCoach = false;
 
+  DateTime? _arStart; // AR view duration telemetry
+  dynamic _telemetry; // captured in initState; safe to use in dispose
+
   @override
   void initState() {
     super.initState();
+    _arStart = DateTime.now();
+    _telemetry = ref.read(telemetryServiceProvider);
+    _telemetry?.logArStart(
+      arId: widget.topicId,
+      topicId: widget.topicId,
+      moduleTitle: widget.topicId,
+      preModuleScore: 0,
+    );
     // Track narration progress → unlock the quiz once ≥80% is heard.
     _audio.onPositionChanged.listen((pos) {
       final dur = _audioDuration;
@@ -239,6 +251,18 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
 
   @override
   void dispose() {
+    final secs =
+        _arStart == null ? 0 : DateTime.now().difference(_arStart!).inSeconds;
+    _telemetry?.logArEnd(
+      arId: widget.topicId,
+      topicId: widget.topicId,
+      moduleTitle: widget.topicId,
+      durationSeconds: secs,
+      completed: _placed, // reached placement = meaningfully engaged
+      isReplay: false,
+      preModuleScore: 0,
+      postModuleScore: 0,
+    );
     _spinTimer?.cancel();
     _sessionManager.dispose();
     _audio.dispose();

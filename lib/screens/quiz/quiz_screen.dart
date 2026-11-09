@@ -18,7 +18,7 @@ import '../../stores/quiz_pack_store.dart';
 import '../../models/quiz_model.dart';
 import '../../demo/demo_data.dart';
 import '../../theme/theme_provider.dart';
-//import '../../providers/telemetry_provider.dart';
+import '../../providers/telemetry_provider.dart';
 import '../../stores/auth_store.dart';
 import '../../services/geo_state_service.dart';
 import '../../services/achievement_engine.dart'; // ✨ Added Engine Import
@@ -219,6 +219,20 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
       // the raw attempt above already syncs to the cloud via the batch service.
       final mps = ref.read(moduleProgressStoreProvider);
       unawaited(mps.recordQuiz(widget.quizId, _score, _questions.length));
+
+      // Analytics-grade telemetry → quiz_attempts + sessions (Excel + PPT).
+      final telemetry = ref.read(telemetryServiceProvider);
+      unawaited(telemetry?.logQuizSubmit(
+            quizId: widget.quizId,
+            quizTitle:
+                widget.quizId, // title not held on screen; id is the stable key
+            correctAnswers: _score,
+            totalQuestions: _questions.length,
+            durationSeconds: durationSeconds,
+            completed: true,
+            mcqResponses: _mcqResponses,
+          ) ??
+          Future.value());
       // Persist the attempt so a passed quiz re-opens in review (no re-answering).
       unawaited(mps.saveQuizAttempt(
         id: widget.quizId,
