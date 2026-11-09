@@ -135,6 +135,14 @@ class AchievementsScreen extends ConsumerWidget {
               _ThemedAchievementHeader(
                 profile: profile,
                 currentTier: _galacticTiers[currentTierIndex],
+                studentName: (ref
+                            .watch(currentUserProvider)
+                            ?.fullName
+                            .trim()
+                            .isNotEmpty ??
+                        false)
+                    ? ref.watch(currentUserProvider)!.fullName
+                    : 'Cosmic Explorer',
               ),
               Expanded(
                 child: SingleChildScrollView(
@@ -201,9 +209,12 @@ class AchievementsScreen extends ConsumerWidget {
 class _ThemedAchievementHeader extends StatelessWidget {
   final StudentProfile profile;
   final AchievementTier currentTier;
+  final String studentName;
 
   const _ThemedAchievementHeader(
-      {required this.profile, required this.currentTier});
+      {required this.profile,
+      required this.currentTier,
+      required this.studentName});
 
   @override
   Widget build(BuildContext context) {
@@ -238,8 +249,7 @@ class _ThemedAchievementHeader extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    // TODO: replace with profile.name when that field is added
-                    'Cosmic Explorer',
+                    studentName,
                     style: TextStyle(
                       fontFamily: 'Baloo2',
                       fontWeight: FontWeight.w700,

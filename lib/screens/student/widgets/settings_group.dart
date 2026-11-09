@@ -79,7 +79,7 @@ class SettingsGroup extends ConsumerWidget {
           ),
           tile(
             emoji: '📉',
-            label: 'Data saver',
+            label: 'Reduce video autoplay',
             trailing: Switch(
               value: prefs.dataSaver,
               onChanged: (v) =>
