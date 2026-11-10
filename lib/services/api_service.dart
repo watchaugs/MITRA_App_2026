@@ -291,8 +291,9 @@ class ConsentAPI {
   /// Grant DPDPA consents. student_id + version are REQUIRED by the backend.
   static Future<Response> grant(
     String studentId,
-    List<String> consents,
-  ) async {
+    List<String> consents, {
+    bool verifiedParental = false,
+  }) async {
     final token = await FirebaseAuth.instance.currentUser?.getIdToken();
     return api.post(
       '/api/consent/grant',
@@ -300,6 +301,7 @@ class ConsentAPI {
         'student_id': studentId,
         'consents': consents,
         'version': consentVersion,
+        'verified_parental': verifiedParental,
       },
       options: Options(headers: {
         if (token != null) 'Authorization': 'Bearer $token',

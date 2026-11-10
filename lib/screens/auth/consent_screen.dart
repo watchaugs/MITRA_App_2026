@@ -109,11 +109,20 @@ class _ConsentPersistence {
       // 2. Register with backend dashboard (best-effort)
       try {
         if (uid != null) {
-          await ConsentAPI.grant(uid, [
-            'data_collection', // mandatory
-            'analytics', // optional
-            'communications', // optional
-          ]);
+          // Verifiable parental consent (DPDPA): the registered phone was
+          // OTP-verified at login. If that phone belongs to a parent/guardian,
+          // this grant is a *verified* guardian consent, not just a declared one.
+          final u = FirebaseAuth.instance.currentUser;
+          final phoneVerified = (u?.phoneNumber ?? '').isNotEmpty;
+          await ConsentAPI.grant(
+            uid,
+            [
+              'data_collection', // mandatory
+              'analytics', // optional
+              'communications', // optional
+            ],
+            verifiedParental: phoneVerified,
+          );
         }
       } catch (e) {
         debugPrint(
