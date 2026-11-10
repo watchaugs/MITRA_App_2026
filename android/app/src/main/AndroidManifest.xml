@@ -74,7 +74,7 @@
         <!-- flutter_local_notifications channel -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"
-            android:value="mitra_notifications" />
+            android:value="mitra_content" />
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"
             android:resource="@drawable/ic_notification" />
