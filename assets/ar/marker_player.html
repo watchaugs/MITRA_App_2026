@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>MITRA Marker AR</title>
+  <style>
+    html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #000; }
+    #msg {
+      position: fixed; left: 0; right: 0; bottom: 24px; text-align: center;
+      color: #fff; font-family: sans-serif; font-size: 14px; padding: 10px 16px;
+      background: rgba(0,0,0,0.55); z-index: 10;
+    }
+    #err {
+      position: fixed; inset: 0; display: none; align-items: center; justify-content: center;
+      color: #fff; font-family: sans-serif; font-size: 15px; text-align: center;
+      padding: 32px; background: #07090f; z-index: 20;
+    }
+  </style>
+  <script src="lib/aframe.min.js"></script>
+  <script src="lib/mindar-image-aframe.prod.js"></script>
+</head>
+<body>
+  <div id="msg">Point your camera at the textbook page…</div>
+  <div id="err">Could not start the camera. Make sure the lesson has a page image and camera access is allowed.</div>
+
+  <script>
+    function qp(k) { return new URLSearchParams(location.search).get(k); }
+    var mindUrl  = qp('mind');
+    var modelUrl = qp('model');
+
+    if (!mindUrl || !modelUrl) {
+      document.getElementById('err').style.display = 'flex';
+      document.getElementById('err').textContent = 'This lesson has no page target to scan.';
+    } else {
+      buildScene(mindUrl, modelUrl);
+    }
+
+    function buildScene(mind, model) {
+      var scene = document.createElement('a-scene');
+      scene.setAttribute('mindar-image', 'imageTargetSrc: ' + mind + '; autoStart: true; uiScanning: no; uiLoading: no;');
+      scene.setAttribute('color-space', 'sRGB');
+      scene.setAttribute('renderer', 'colorManagement: true, physicallyCorrectLights');
+      scene.setAttribute('vr-mode-ui', 'enabled: false');
+      scene.setAttribute('device-orientation-permission-ui', 'enabled: false');
+
+      var assets = document.createElement('a-assets');
+      var gltf = document.createElement('a-asset-item');
+      gltf.setAttribute('id', 'mdl');
+      gltf.setAttribute('src', model);
+      assets.appendChild(gltf);
+      scene.appendChild(assets);
+
+      var cam = document.createElement('a-camera');
+      cam.setAttribute('position', '0 0 0');
+      cam.setAttribute('look-controls', 'enabled: false');
+      scene.appendChild(cam);
+
+      var anchor = document.createElement('a-entity');
+      anchor.setAttribute('mindar-image-target', 'targetIndex: 0');
+      var entity = document.createElement('a-gltf-model');
+      entity.setAttribute('src', '#mdl');
+      entity.setAttribute('position', '0 0 0.1');
+      entity.setAttribute('scale', '0.5 0.5 0.5');
+      entity.setAttribute('rotation', '0 0 0');
+      anchor.appendChild(entity);
+      scene.appendChild(anchor);
+
+      document.body.appendChild(scene);
+
+      anchor.addEventListener('targetFound', function () {
+        document.getElementById('msg').textContent = 'Model locked to the page.';
+      });
+      anchor.addEventListener('targetLost', function () {
+        document.getElementById('msg').textContent = 'Point your camera at the textbook page…';
+      });
+      scene.addEventListener('arError', function () {
+        document.getElementById('err').style.display = 'flex';
+      });
+    }
+  </script>
+</body>
+</html>

@@ -17,6 +17,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../constants/colors.dart';
 import 'ar_room_screen.dart';
 import 'ar_viewer_screen.dart';
+import 'ar_marker_screen.dart';
 import 'package:lottie/lottie.dart';
 import '../../theme/theme_provider.dart';
 
@@ -48,7 +49,7 @@ class ArEntryScreen extends ConsumerStatefulWidget {
   ConsumerState<ArEntryScreen> createState() => _ArEntryScreenState();
 }
 
-enum _ViewMode { ar, viewer }
+enum _ViewMode { ar, viewer, marker }
 
 class _ArEntryScreenState extends ConsumerState<ArEntryScreen> {
   static const _ch = MethodChannel('mitra/device');
@@ -107,12 +108,29 @@ class _ArEntryScreenState extends ConsumerState<ArEntryScreen> {
       );
     }
 
-    // Capable phone + no choice made yet → show the chooser.
-    if (_arCapable && _chosen == null) {
+    // A textbook-page marker is available for this lesson?
+    final hasMarker = (widget.targetsUrl ?? '').isNotEmpty &&
+        (widget.modelUrl ?? '').isNotEmpty;
+
+    // Marker AR chosen → the WebView player (works on any camera phone).
+    if (_chosen == _ViewMode.marker) {
+      return ArMarkerScreen(
+        topicId: widget.topicId,
+        targetsUrl: widget.targetsUrl,
+        modelUrl: widget.modelUrl,
+      );
+    }
+
+    // Show the chooser when the phone can do room-AR OR the lesson has a marker
+    // (so even non-ARCore phones get the chooser if "Scan page" is possible).
+    if ((_arCapable || hasMarker) && _chosen == null) {
       return _ViewChooser(
         topicId: widget.topicId,
+        arCapable: _arCapable,
+        hasMarker: hasMarker,
         onPickAr: () => setState(() => _chosen = _ViewMode.ar),
         onPick3d: () => setState(() => _chosen = _ViewMode.viewer),
+        onPickMarker: () => setState(() => _chosen = _ViewMode.marker),
       );
     }
 
@@ -151,12 +169,18 @@ class _ArEntryScreenState extends ConsumerState<ArEntryScreen> {
 // Chooser shown to AR-capable phones — fully theme-linked (bg, accent, cards).
 class _ViewChooser extends ConsumerWidget {
   final String topicId;
+  final bool arCapable;
+  final bool hasMarker;
   final VoidCallback onPickAr;
   final VoidCallback onPick3d;
+  final VoidCallback onPickMarker;
   const _ViewChooser({
     required this.topicId,
+    required this.arCapable,
+    required this.hasMarker,
     required this.onPickAr,
     required this.onPick3d,
+    required this.onPickMarker,
   });
 
   @override
@@ -202,17 +226,20 @@ class _ViewChooser extends ConsumerWidget {
                         fontWeight: FontWeight.w700),
                   ),
                   const SizedBox(height: 28),
-                  _choiceCard(
-                    icon: Icons.view_in_ar,
-                    title: 'View in your room (AR)',
-                    subtitle:
-                        'Place the model on the floor and walk around it.',
-                    onTap: onPickAr,
-                    accent: accent,
-                    textPrimary: textPrimary,
-                    textSecondary: textSecondary,
-                  ),
-                  const SizedBox(height: 14),
+                  // Room AR only on ARCore-capable phones.
+                  if (arCapable) ...[
+                    _choiceCard(
+                      icon: Icons.view_in_ar,
+                      title: 'View in your room (AR)',
+                      subtitle:
+                          'Place the model on the floor and walk around it.',
+                      onTap: onPickAr,
+                      accent: accent,
+                      textPrimary: textPrimary,
+                      textSecondary: textSecondary,
+                    ),
+                    const SizedBox(height: 14),
+                  ],
                   _choiceCard(
                     icon: Icons.threed_rotation,
                     title: 'View on screen (3D)',
@@ -222,6 +249,20 @@ class _ViewChooser extends ConsumerWidget {
                     textPrimary: textPrimary,
                     textSecondary: textSecondary,
                   ),
+                  // Marker AR only when this lesson has a compiled page target.
+                  if (hasMarker) ...[
+                    const SizedBox(height: 14),
+                    _choiceCard(
+                      icon: Icons.menu_book,
+                      title: 'Scan textbook page',
+                      subtitle:
+                          'Point your camera at the page to see the model on it.',
+                      onTap: onPickMarker,
+                      accent: accent,
+                      textPrimary: textPrimary,
+                      textSecondary: textSecondary,
+                    ),
+                  ],
                 ],
               ),
             ),
