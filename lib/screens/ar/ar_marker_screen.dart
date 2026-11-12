@@ -4,6 +4,7 @@ import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_flutter_android/webview_flutter_android.dart';
 
 import '../../constants/colors.dart';
+import '../../services/telemetry_service.dart';
 
 class ArMarkerScreen extends StatefulWidget {
   final String topicId;
@@ -24,6 +25,8 @@ class ArMarkerScreen extends StatefulWidget {
 class _ArMarkerScreenState extends State<ArMarkerScreen> {
   WebViewController? _controller;
   String? _error;
+  DateTime? _arStart; // for marker-AR duration telemetry
+  bool _arStarted = false; // did we log an ar_start (so dispose logs an end)?
 
   @override
   void initState() {
@@ -32,7 +35,39 @@ class _ArMarkerScreenState extends State<ArMarkerScreen> {
       _error = 'This lesson has no textbook-page target to scan.';
       return;
     }
+    // Marker-AR session telemetry → feeds the report's MARKER_* tokens.
+    _arStart = DateTime.now();
+    _arStarted = true;
+    TelemetryService.current?.logArStart(
+      arId: widget.topicId,
+      topicId: widget.topicId,
+      moduleTitle: widget.topicId,
+      preModuleScore: 0,
+    );
     _initWebView();
+  }
+
+  @override
+  void dispose() {
+    // Log the marker-AR end with render_mode 'marker' so the dashboard can
+    // break AR engagement down by render mode. completed = the WebView loaded
+    // without an init error and the student stayed a meaningful duration.
+    if (_arStarted) {
+      final secs =
+          _arStart == null ? 0 : DateTime.now().difference(_arStart!).inSeconds;
+      TelemetryService.current?.logArEnd(
+        arId: widget.topicId,
+        topicId: widget.topicId,
+        moduleTitle: widget.topicId,
+        durationSeconds: secs,
+        completed: _error == null && secs >= 10,
+        isReplay: false,
+        preModuleScore: 0,
+        postModuleScore: 0,
+        renderMode: 'marker',
+      );
+    }
+    super.dispose();
   }
 
   void _initWebView() {
