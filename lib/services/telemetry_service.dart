@@ -109,6 +109,7 @@ class TelemetryService {
       studentId: uid,
       doc: profileDoc,
       deviceModel: probe.deviceModel,
+      deviceTier: probe.tier.name,
       osVersion: probe.osVersion,
       isArCapable: probe.isArCapable,
     );
@@ -253,6 +254,7 @@ class TelemetryService {
     int? rotateCount,
     int? zoomCount,
     double? batteryDrainPercent,
+    String? renderMode, // 'marker' | 'markerless' | 'basic3d' | 'interactive3d'
   }) async {
     await _write('ar_views', {
       ..._context.toBaseEventJson(),
@@ -270,6 +272,7 @@ class TelemetryService {
       'rotate_count': rotateCount,
       'zoom_count': zoomCount,
       'battery_drain_pct': batteryDrainPercent,
+      'render_mode': renderMode,
     });
   }
 
@@ -355,6 +358,8 @@ class TelemetryService {
     required String notificationType,
     required String action,
     String? deepLinkTarget,
+    String?
+        campaignId, // the dashboard notification doc id (from FCM data_payload)
   }) async {
     await _write('notification_events', {
       ..._context.toBaseEventJson(),
@@ -362,6 +367,7 @@ class TelemetryService {
       'notification_type': notificationType,
       'action': action,
       'deep_link_target': deepLinkTarget,
+      'campaign_id': campaignId,
     });
   }
 

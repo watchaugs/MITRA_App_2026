@@ -36,6 +36,7 @@ class StudentContext {
   final MinorityStatus minorityStatus;
   final bool? isFirstGenerationLearner;
   final MobileOwnership mobileOwnership;
+  final String? deviceTier; // 'low' | 'medium' | 'high' — from DeviceProbe
 
   // Consent & Data Governance (DPDPA 2023)
   final ConsentStatus parentalConsentStatus;
@@ -84,6 +85,7 @@ class StudentContext {
     this.arTier = ArTier.unknown,
     this.riskLevel = RiskLevel.unknown,
     this.deviceModel,
+    this.deviceTier,
     this.osVersion,
     this.isArCapable,
     this.connectivityType = ConnectivityType.unknown,
@@ -138,6 +140,7 @@ class StudentContext {
         'ar_tier': arTier.wireValue,
         'risk_level': riskLevel.wireValue,
         'device_model': deviceModel,
+        'device_tier': deviceTier,
         'os_version': osVersion,
         'ar_capable': isArCapable,
         'connectivity_type': connectivityType.wireValue,
@@ -150,6 +153,7 @@ class StudentContext {
     required String studentId,
     required Map<String, dynamic> doc,
     String? deviceModel,
+    String? deviceTier,
     String? osVersion,
     bool? isArCapable,
   }) {
@@ -197,6 +201,7 @@ class StudentContext {
       arTier: ArTier.fromWire(doc['ar_tier'] as String?),
       riskLevel: RiskLevel.fromWire(doc['risk_level'] as String?),
       deviceModel: deviceModel,
+      deviceTier: deviceTier,
       osVersion: osVersion,
       isArCapable: isArCapable,
     );
