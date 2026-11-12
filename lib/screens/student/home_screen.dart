@@ -639,7 +639,9 @@ class _SubjectCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => GestureDetector(
-        onTap: () => context.go('/student/learn'),
+        // Pass the tapped subject so Learn opens on its filter, not 'All'.
+        onTap: () => context
+            .go('/student/learn?subject=${Uri.encodeComponent(subject.name)}'),
         child: Container(
           padding: const EdgeInsets.all(MitraSpacing.md),
           decoration: BoxDecoration(

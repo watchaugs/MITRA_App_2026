@@ -34,6 +34,7 @@
 import 'dart:convert';
 import 'dart:developer' as developer;
 
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -295,16 +296,28 @@ class ApiQuizRepository implements QuizRepository {
       rethrow;
     } on FormatException {
       throw const ParsingFailure();
-    } catch (e, st) {
+    } on DioException catch (e, st) {
       developer.log(
-        'Quiz fetch failed',
+        'Quiz fetch failed (${e.type})',
         name: 'LearnScreen',
         error: e,
         stackTrace: st,
       );
-      // TODO: Differentiate NetworkFailure vs ServerFailure
-      //       once ApiService exposes typed HTTP exceptions.
-      throw const NetworkFailure();
+      // Reached the server but it errored (5xx) → ServerFailure.
+      // Couldn't reach it at all (timeout / connection / cancel) → NetworkFailure.
+      final status = e.response?.statusCode ?? 0;
+      final serverSide =
+          e.type == DioExceptionType.badResponse && status >= 500;
+      throw serverSide ? const ServerFailure() : const NetworkFailure();
+    } catch (e, st) {
+      developer.log(
+        'Quiz fetch failed (unexpected)',
+        name: 'LearnScreen',
+        error: e,
+        stackTrace: st,
+      );
+      // Anything non-Dio and unclassified → treat as a server-side problem.
+      throw const ServerFailure();
     }
   }
 }
@@ -312,6 +325,45 @@ class ApiQuizRepository implements QuizRepository {
 // ═══════════════════════════════════════════════════════════
 // PROVIDERS
 // ═══════════════════════════════════════════════════════════
+
+/// AR-watch threshold (%) required to unlock a module's quiz. Set on the
+/// dashboard (learning-settings). Defaults to 80 if the fetch fails.
+final arWatchThresholdProvider = FutureProvider<int>((ref) async {
+  try {
+    final res = await CurriculumAPI.learningSettings();
+    final v = res.data['ar_watch_threshold'];
+    final n = v is num ? v.toInt() : int.tryParse('$v');
+    if (n != null && n >= 1 && n <= 100) return n;
+  } catch (_) {/* fall back */}
+  return 80;
+});
+
+/// Rule 1 dialog: tapping a quiz before the AR is watched enough opens this.
+/// Offers an "Open AR module" action that jumps straight to the AR content.
+Future<void> _showWatchArFirstDialog(
+    BuildContext context, int threshold, VoidCallback openAr) {
+  return showDialog<void>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: const Text('Finish the AR module first'),
+      content: Text(
+          'Watch at least $threshold% of the AR module before taking its quiz.'),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(ctx).pop(),
+          child: const Text('Not now'),
+        ),
+        FilledButton(
+          onPressed: () {
+            Navigator.of(ctx).pop();
+            openAr();
+          },
+          child: const Text('Open AR module'),
+        ),
+      ],
+    ),
+  );
+}
 
 /// Repository instance — override in tests with a mock.
 final quizRepositoryProvider = Provider<QuizRepository>((ref) {
@@ -343,6 +395,7 @@ typedef ArLessonRec = ({
   String topic,
   String languageTag,
   String classTag,
+  bool locked, // Rule 3: a "coming soon" scheduled teaser — greyed, not openable
 });
 
 /// The AR lessons to show (grouped by subject) plus a side map of each
@@ -433,6 +486,7 @@ ArCatalog? _catalogFromManifest(dynamic data) {
             languageTag:
                 (l['language_tag'] ?? l['language'] ?? 'all').toString(),
             classTag: (l['class_name'] ?? className).toString(),
+            locked: false,
           ));
           // flutter_url = Draco _lite.glb (for the on-screen 3D viewer).
           // native_url  = non-Draco _native.glb (for floor AR / Filament).
@@ -539,6 +593,7 @@ final arCatalogProvider = FutureProvider<ArCatalog>((ref) async {
         topic: (m['topic'] ?? subject).toString(),
         languageTag: (m['language_tag'] ?? m['language'] ?? 'all').toString(),
         classTag: (m['class_name'] ?? m['class'] ?? '').toString(),
+        locked: m['locked'] == true || m['status'] == 'scheduled',
       ));
       final glb = _absMedia(
         (m['flutter_url'] ?? m['glb_url'] ?? m['model_url'] ?? '').toString(),
@@ -610,7 +665,10 @@ class QuizFeedNotifier
 // ═══════════════════════════════════════════════════════════
 
 class LearnScreen extends ConsumerStatefulWidget {
-  const LearnScreen({super.key});
+  // When a Home subject tile is tapped, the subject name is passed here so the
+  // Learn screen opens on that subject's filter instead of defaulting to 'All'.
+  final String? initialSubject;
+  const LearnScreen({super.key, this.initialSubject});
 
   // ✨ Hardcoded mapping of AR Lessons to their respective subjects
   static const _arLessonsBySubject = <String,
@@ -621,6 +679,7 @@ class LearnScreen extends ConsumerStatefulWidget {
             String topic,
             String languageTag,
             String classTag,
+            bool locked,
           })>>{
     'Science': [
       (
@@ -629,6 +688,7 @@ class LearnScreen extends ConsumerStatefulWidget {
         topic: 'Biology',
         languageTag: 'all',
         classTag: '',
+        locked: false,
       ),
       (
         id: 'atom-structure-en',
@@ -636,6 +696,7 @@ class LearnScreen extends ConsumerStatefulWidget {
         topic: 'Chemistry',
         languageTag: 'en',
         classTag: '',
+        locked: false,
       ),
       (
         id: 'atom-structure-hi',
@@ -643,6 +704,7 @@ class LearnScreen extends ConsumerStatefulWidget {
         topic: 'Chemistry',
         languageTag: 'hi',
         classTag: '',
+        locked: false,
       ),
     ],
     'Geography': [
@@ -652,6 +714,7 @@ class LearnScreen extends ConsumerStatefulWidget {
         topic: 'Space',
         languageTag: 'all',
         classTag: '',
+        locked: false,
       ),
       (
         id: 'ocean-layers',
@@ -659,6 +722,7 @@ class LearnScreen extends ConsumerStatefulWidget {
         topic: 'Earth',
         languageTag: 'all',
         classTag: '',
+        locked: false,
       ),
     ],
     'History': [
@@ -668,6 +732,7 @@ class LearnScreen extends ConsumerStatefulWidget {
         topic: 'World History',
         languageTag: 'all',
         classTag: '',
+        locked: false,
       ),
     ],
   };
@@ -733,6 +798,15 @@ class LearnScreen extends ConsumerStatefulWidget {
 class _LearnScreenState extends ConsumerState<LearnScreen> {
   // ✨ State to track which subject tile is tapped!
   String _selectedSubject = 'All';
+
+  @override
+  void initState() {
+    super.initState();
+    // Open on the subject passed from the Home tile (if any). If that subject
+    // isn't in the loaded list, the build() guard falls back to 'All'.
+    final s = widget.initialSubject;
+    if (s != null && s.trim().isNotEmpty) _selectedSubject = s;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1278,6 +1352,13 @@ class _SubjectSection extends ConsumerWidget {
     ref.watch(moduleProgressTickProvider);
     final progress = ref.watch(moduleProgressStoreProvider);
 
+    // AR-watch % needed to unlock a quiz. Dashboard-configurable; 80 until the
+    // setting loads or if the fetch fails.
+    final arWatchThreshold = ref.watch(arWatchThresholdProvider).maybeWhen(
+          data: (v) => v,
+          orElse: () => 80,
+        );
+
     // Match each AR module to its quiz by shared id → gives us the question
     // count to show as subtext, and the quiz list item once AR is watched.
     final quizById = {for (final q in quizzes) q.id: q};
@@ -1348,10 +1429,28 @@ class _SubjectSection extends ConsumerWidget {
             bool prevMastered = true; // first module in the subject is open
             for (int i = 0; i < arLessons.length; i++) {
               final ar = arLessons[i];
+
+              // Rule 3: a "coming soon" scheduled teaser — show it greyed and
+              // non-openable (name + lock only), and do NOT let it affect the
+              // mastery chain or the first-module-open rule.
+              if (ar.locked) {
+                widgets.add(_ArTile(
+                  lesson: ar,
+                  onTap: (_) {},
+                  unlocked: false,
+                  bestPct: 0,
+                  questionCount: 0,
+                  completed: false,
+                  comingSoon: true,
+                ));
+                continue;
+              }
+
               final unlocked = (i == 0) || prevMastered;
               final best = progress.bestPct(ar.id);
-              // Quiz unlocks only after ≥80% of the AR narration is heard.
-              final watched = progress.arWatchedPct(ar.id) >= 80;
+              // Quiz unlocks only after the AR narration is heard past the
+              // dashboard-configured threshold (default 80%).
+              final watched = progress.arWatchedPct(ar.id) >= arWatchThreshold;
               final matchedQuiz = quizById[ar.id];
               final qCount = matchedQuiz?.questionCount ?? 0;
 
@@ -1362,16 +1461,24 @@ class _SubjectSection extends ConsumerWidget {
                   unlocked: unlocked,
                   bestPct: best,
                   questionCount: qCount,
-                  completed: watched, // ≥80% watched → Completed stamp
+                  completed: watched, // watched enough → Completed stamp
                 ),
               );
 
-              // The quiz becomes its own list item only after the AR is watched
-              // once AND the module is unlocked.
-              if (unlocked && watched && matchedQuiz != null) {
+              // Once the module is unlocked, its quiz is ALWAYS shown. If the AR
+              // hasn't been watched enough yet, the quiz appears greyed and
+              // tapping it opens the "finish the AR first" dialog (Rule 1).
+              if (unlocked && matchedQuiz != null) {
                 shownQuizIds.add(matchedQuiz.id);
                 widgets.add(
-                  _QuizTile(quiz: matchedQuiz, onTap: onQuizTap, bestPct: best),
+                  _QuizTile(
+                    quiz: matchedQuiz,
+                    onTap: onQuizTap,
+                    bestPct: best,
+                    locked: !watched,
+                    onLockedTap: () => _showWatchArFirstDialog(
+                        context, arWatchThreshold, () => onArTap(ar.id)),
+                  ),
                 );
               }
 
@@ -1405,8 +1512,18 @@ class _QuizTile extends StatelessWidget {
   final QuizSummary quiz;
   final ValueChanged<String> onTap;
   final int bestPct; // 0..100 — this student's best score on this module
+  // Rule 1: when the AR hasn't been watched enough, the quiz shows greyed and
+  // tapping it fires onLockedTap (the "watch the AR first" dialog) instead.
+  final bool locked;
+  final VoidCallback? onLockedTap;
 
-  const _QuizTile({required this.quiz, required this.onTap, this.bestPct = 0});
+  const _QuizTile({
+    required this.quiz,
+    required this.onTap,
+    this.bestPct = 0,
+    this.locked = false,
+    this.onLockedTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1417,48 +1534,52 @@ class _QuizTile extends StatelessWidget {
       button: true,
       label: '${quiz.title}. '
           '${quiz.questionCount} questions. '
+          '${locked ? 'Locked. Finish the AR module first. ' : ''}'
           '${quiz.topic.isNotEmpty ? 'Topic: ${quiz.topic}.' : ''}'
           '${quiz.avgScore > 0 ? ' Average score ${quiz.avgScore.toStringAsFixed(0)} percent.' : ''}',
       child: ExcludeSemantics(
-        child: GestureDetector(
-          onTap: () => onTap(quiz.id),
-          child: Container(
-            margin: const EdgeInsets.only(bottom: MitraSpacing.sm),
-            padding: const EdgeInsets.all(MitraSpacing.lg),
-            decoration: BoxDecoration(
-              // ✨ Global Glass Theme Applied
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  onSurface.withValues(alpha: 0.08),
-                  onSurface.withValues(alpha: 0.02),
+        child: Opacity(
+          opacity: locked ? 0.5 : 1.0,
+          child: GestureDetector(
+            onTap: () => locked ? (onLockedTap?.call()) : onTap(quiz.id),
+            child: Container(
+              margin: const EdgeInsets.only(bottom: MitraSpacing.sm),
+              padding: const EdgeInsets.all(MitraSpacing.lg),
+              decoration: BoxDecoration(
+                // ✨ Global Glass Theme Applied
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    onSurface.withValues(alpha: 0.08),
+                    onSurface.withValues(alpha: 0.02),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(MitraRadius.md),
+                border: Border.all(color: onSurface.withValues(alpha: 0.15)),
+              ),
+              child: Row(
+                children: [
+                  _QuestionCountBadge(count: quiz.questionCount),
+                  const SizedBox(width: MitraSpacing.md),
+                  Expanded(
+                    child: _QuizInfo(title: quiz.title, topic: quiz.topic),
+                  ),
+                  if (bestPct > 0) ...[
+                    const SizedBox(width: 8),
+                    _ScoreBadge(pct: bestPct),
+                  ] else if (quiz.avgScore > 0) ...[
+                    const SizedBox(width: 8),
+                    _AvgScoreChip(score: quiz.avgScore),
+                  ],
+                  const SizedBox(width: 8),
+                  Icon(
+                    locked ? Icons.lock_outline : Icons.arrow_forward_ios,
+                    size: locked ? 16 : 14,
+                    color: onSurface.withValues(alpha: 0.4),
+                  ),
                 ],
               ),
-              borderRadius: BorderRadius.circular(MitraRadius.md),
-              border: Border.all(color: onSurface.withValues(alpha: 0.15)),
-            ),
-            child: Row(
-              children: [
-                _QuestionCountBadge(count: quiz.questionCount),
-                const SizedBox(width: MitraSpacing.md),
-                Expanded(
-                  child: _QuizInfo(title: quiz.title, topic: quiz.topic),
-                ),
-                if (bestPct > 0) ...[
-                  const SizedBox(width: 8),
-                  _ScoreBadge(pct: bestPct),
-                ] else if (quiz.avgScore > 0) ...[
-                  const SizedBox(width: 8),
-                  _AvgScoreChip(score: quiz.avgScore),
-                ],
-                const SizedBox(width: 8),
-                Icon(
-                  Icons.arrow_forward_ios,
-                  size: 14,
-                  color: onSurface.withValues(alpha: 0.4),
-                ),
-              ],
             ),
           ),
         ),
@@ -1476,6 +1597,8 @@ class _ArTile extends StatelessWidget {
   final int bestPct; // 0..100 best score on this module
   final int questionCount; // shown as "N questions" subtext
   final bool completed; // ≥80% AR narration watched → Completed stamp
+  final bool
+      comingSoon; // Rule 3: scheduled teaser — "Coming soon", not openable
 
   const _ArTile({
     required this.lesson,
@@ -1484,6 +1607,7 @@ class _ArTile extends StatelessWidget {
     this.bestPct = 0,
     this.questionCount = 0,
     this.completed = false,
+    this.comingSoon = false,
   });
 
   @override
@@ -1532,9 +1656,11 @@ class _ArTile extends StatelessWidget {
           Expanded(
             child: _QuizInfo(
               title: lesson.title,
-              topic: unlocked
-                  ? subtext
-                  : 'Score 100% on the previous module to unlock',
+              topic: comingSoon
+                  ? 'Coming soon'
+                  : unlocked
+                      ? subtext
+                      : 'Score 100% on the previous module to unlock',
             ),
           ),
           const SizedBox(width: 8),
@@ -1599,9 +1725,11 @@ class _ArTile extends StatelessWidget {
 
     return Semantics(
       button: true,
-      label: unlocked
-          ? '3D Lesson: ${lesson.title}'
-          : 'Locked: ${lesson.title}. Score 100% on the previous module to unlock.',
+      label: comingSoon
+          ? 'Coming soon: ${lesson.title}. Not yet available.'
+          : unlocked
+              ? '3D Lesson: ${lesson.title}'
+              : 'Locked: ${lesson.title}. Score 100% on the previous module to unlock.',
       child: ExcludeSemantics(
         child: GestureDetector(
           // Locked tiles do nothing on tap (the hint is already visible).

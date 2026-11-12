@@ -217,6 +217,11 @@ class CurriculumAPI {
   // Real subject tiles for Home, derived from published AR assets, state-scoped.
   static Future<Response> subjects(String state) => api.get(
       '/api/curriculum/subjects/${Uri.encodeComponent(state.isEmpty ? "ALL" : state)}');
+
+  // Learning rules set on the dashboard (e.g. ar_watch_threshold). Cheap read;
+  // the app falls back to safe defaults if this fails.
+  static Future<Response> learningSettings() =>
+      api.get('/api/curriculum/learning-settings');
 }
 
 class ArAPI {

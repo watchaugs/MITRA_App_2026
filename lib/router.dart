@@ -176,7 +176,9 @@ final routerProvider = Provider<GoRouter>((ref) {
         routes: [
           GoRoute(path: '/student/home', builder: (c, s) => const HomeScreen()),
           GoRoute(
-              path: '/student/learn', builder: (c, s) => const LearnScreen()),
+              path: '/student/learn',
+              builder: (c, s) => LearnScreen(
+                  initialSubject: s.uri.queryParameters['subject'])),
           // ✨ Deleted the dead AR tab route
           GoRoute(
               path: '/student/achievements',
