@@ -121,6 +121,7 @@ class StudentContext {
         'state': state,
         'district': district,
         'school_id': schoolId,
+        'subject': subject,
         'class': classGrade,
         'board': board.wireValue,
         'language': language,
