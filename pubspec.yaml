@@ -136,6 +136,7 @@ flutter:
     - family: Courgette
       fonts:
         - asset: assets/fonts/Courgette-Regular.ttf 
+        
 
   assets:
     - assets/data/quotes.json
@@ -149,6 +150,8 @@ flutter:
     - assets/ar/models/
     - assets/ar/
     - assets/ar/models/
+    - assets/ar/lib/aframe.min.js
+    - assets/ar/lib/mindar-image-aframe.prod.js
     - .env
 
 flutter_launcher_icons:
