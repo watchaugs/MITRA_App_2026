@@ -20,6 +20,7 @@ import 'constants/colors.dart';
 import 'router.dart';
 import 'services/api_service.dart';
 import 'services/quiz_offline_service.dart';
+import 'stores/ar_pack_store.dart';
 import 'services/telemetry_batch_buffer.dart';
 import 'services/telemetry_service.dart';
 import 'services/telemetry_enums.dart' show ConnectivityType;
@@ -122,6 +123,13 @@ Future<void> main() async {
       await QuotesService.instance.init();
     } catch (e) {
       debugPrint('⚠️ QuotesService: $e');
+    }
+    try {
+      // Rebuild the offline AR-pack index from whatever is cached on disk, so
+      // downloaded models/audio survive an app restart.
+      await ArPackStore.instance.loadIndex();
+    } catch (e) {
+      debugPrint('⚠️ ArPackStore.loadIndex: $e');
     }
     try {
       await BrainSparkService.instance.init();

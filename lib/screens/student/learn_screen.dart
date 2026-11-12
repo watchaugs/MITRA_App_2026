@@ -47,6 +47,7 @@ import '../../providers/translation_provider.dart'; // ✨ Added for language fi
 import '../../providers/tr_ext.dart';
 import '../../widgets/orbit_explorer.dart';
 import '../../stores/module_progress_store.dart';
+import '../../stores/ar_pack_store.dart';
 import '../../services/achievement_engine.dart';
 import '../../models/quiz_model.dart';
 
@@ -994,6 +995,46 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Download-for-offline: caches this state's AR models +
+                      // audio over Wi-Fi so lessons open without a live
+                      // connection. No-op (with a hint) if not on Wi-Fi.
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(MitraSpacing.lg,
+                            MitraSpacing.sm, MitraSpacing.lg, 0),
+                        child: Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton.icon(
+                            icon: const Icon(
+                                Icons.download_for_offline_outlined,
+                                size: 18),
+                            label: const Text('Save lessons offline'),
+                            onPressed: () async {
+                              final messenger = ScaffoldMessenger.of(context);
+                              final models = arCatalog?.glbById ??
+                                  const <String, String>{};
+                              final audio = arCatalog?.audioById ??
+                                  const <String, String>{};
+                              if (models.isEmpty && audio.isEmpty) {
+                                messenger.showSnackBar(const SnackBar(
+                                    content: Text(
+                                        'No downloadable lessons for your state yet.')));
+                                return;
+                              }
+                              messenger.showSnackBar(const SnackBar(
+                                  content: Text('Downloading over Wi-Fi…')));
+                              final n = await ArPackStore.instance.downloadPack(
+                                models: models,
+                                audios: audio,
+                                wifiOnly: true,
+                              );
+                              messenger.showSnackBar(SnackBar(
+                                  content: Text(n > 0
+                                      ? '✅ Saved $n files for offline use'
+                                      : 'Connect to Wi-Fi to download lessons.')));
+                            },
+                          ),
+                        ),
+                      ),
                       // ════════════════════════════════════════════════
                       // ✨ TOP SECTION: Square Subject Filter Tiles
                       // ════════════════════════════════════════════════
@@ -1147,11 +1188,19 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
                                   // Fixes the old '/ar/$id' route (no such
                                   // route existed) and carries the real model
                                   // URL when the dashboard supplied one.
-                                  final glb = arGlbById[id];
+                                  // Offline-first: prefer a cached on-device
+                                  // file (downloaded over Wi-Fi) over the
+                                  // network URL. Falls back to the URL.
+                                  final localGlb =
+                                      ArPackStore.instance.localModel(id);
+                                  final localAud =
+                                      ArPackStore.instance.localAudio(id);
+                                  final glb = localGlb ?? arGlbById[id];
                                   final nativeGlb =
                                       arCatalog?.nativeGlbById[id];
                                   final vid = arCatalog?.videoById[id];
-                                  final aud = arCatalog?.audioById[id];
+                                  final aud =
+                                      localAud ?? arCatalog?.audioById[id];
                                   final chroma = arCatalog?.chromaById[id];
                                   final qp = <String>[];
                                   if (glb != null && glb.isNotEmpty) {

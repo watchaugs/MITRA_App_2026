@@ -97,7 +97,7 @@ const _kReasonItems = [
 class _ConsentPersistence {
   const _ConsentPersistence();
 
-  Future<bool> saveConsent({String? uid}) async {
+  Future<bool> saveConsent({String? uid, String? mobileOwner}) async {
     try {
       // 1. Save locally first — no network dependency
       final prefs = await SharedPreferences.getInstance();
@@ -110,11 +110,15 @@ class _ConsentPersistence {
       // 2. Register with backend dashboard (best-effort)
       try {
         if (uid != null) {
-          // Verifiable parental consent (DPDPA): the registered phone was
-          // OTP-verified at login. If that phone belongs to a parent/guardian,
-          // this grant is a *verified* guardian consent, not just a declared one.
+          // Verifiable parental consent (DPDPA). Two signals must BOTH hold:
+          //  (a) the registered phone was OTP-verified at login, and
+          //  (b) that phone belongs to a parent/guardian — i.e. the student's
+          //      declared mobile owner is Mother/Father/Other, not "Self".
           final u = FirebaseAuth.instance.currentUser;
           final phoneVerified = (u?.phoneNumber ?? '').isNotEmpty;
+          final owner = (mobileOwner ?? '').trim().toLowerCase();
+          final isGuardianPhone = owner.isNotEmpty && owner != 'self';
+          final verifiedParental = phoneVerified && isGuardianPhone;
           await ConsentAPI.grant(
             uid,
             [
@@ -122,7 +126,7 @@ class _ConsentPersistence {
               'analytics', // optional
               'communications', // optional
             ],
-            verifiedParental: phoneVerified,
+            verifiedParental: verifiedParental,
           );
         }
       } catch (e) {
@@ -247,8 +251,11 @@ class _ConsentScreenState extends ConsumerState<ConsentScreen> {
       _errorMessage = null;
     });
 
-    final success =
-        await _persistence.saveConsent(uid: ref.read(currentUserProvider)?.id);
+    final user = ref.read(currentUserProvider);
+    final success = await _persistence.saveConsent(
+      uid: user?.id,
+      mobileOwner: user?.mobileBelongsTo, // Mother/Father/Self/Other → VPC gate
+    );
 
     if (!mounted) return;
 
