@@ -37,6 +37,48 @@ import 'screens/student/edit_profile_screen.dart';
 import 'screens/legal/policy_screen.dart';
 import 'config/legal_config.dart';
 import 'screens/legal/grievance_screen.dart';
+import 'package:mitra_student/services/telemetry_service.dart';
+
+/// Fires a screen_view telemetry event on every route push/replace, so the
+/// dashboard's screen_views analytics populate. Uses the TelemetryService
+/// singleton (same one main.dart uses); no-ops safely until it's ready.
+class _ScreenViewObserver extends NavigatorObserver {
+  final Map<Route<dynamic>, DateTime> _enteredAt = {};
+
+  void _track(Route<dynamic>? route) {
+    final name = route?.settings.name;
+    if (name == null || name.isEmpty) return;
+    _enteredAt[route!] = DateTime.now();
+  }
+
+  void _flush(Route<dynamic>? route) {
+    if (route == null) return;
+    final name = route.settings.name;
+    final started = _enteredAt.remove(route);
+    if (name == null || name.isEmpty) return;
+    final secs =
+        started == null ? 0 : DateTime.now().difference(started).inSeconds;
+    TelemetryService.current?.logScreenView(
+      screenName: name,
+      durationSeconds: secs,
+    );
+  }
+
+  @override
+  void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) =>
+      _track(route);
+  @override
+  void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    _flush(route);
+    _track(previousRoute);
+  }
+
+  @override
+  void didReplace({Route<dynamic>? newRoute, Route<dynamic>? oldRoute}) {
+    _flush(oldRoute);
+    _track(newRoute);
+  }
+}
 
 // ── Shell navigator keys ───────────────────────────────
 // ✅ Exposed as public so main.dart can use rootNavigatorKey.currentContext
@@ -69,6 +111,7 @@ final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     navigatorKey: rootNavigatorKey,
     initialLocation: '/',
+    observers: [_ScreenViewObserver()],
     refreshListenable: _AuthRefresh(ref),
     redirect: (context, state) {
       final authState = ref.read(authProvider);
