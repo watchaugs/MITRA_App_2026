@@ -383,6 +383,14 @@ class _MitraAppState extends ConsumerState<MitraApp>
   }
 
   void _handleDeepLink(RemoteMessage msg) {
+    // Opened/tapped a push → log an 'open' tied to the campaign id the
+    // dashboard put in the payload, so the report's NT1-4 opens populate.
+    TelemetryService.current?.logNotificationEvent(
+      notificationType: 'push',
+      action: 'open',
+      campaignId: msg.data['campaign_id'] as String?,
+      deepLinkTarget: msg.data['deep_link_id'] as String?,
+    );
     final type = msg.data['deep_link_type'] as String?;
     final id = msg.data['deep_link_id'] as String?;
     if (type == null || id == null || id.isEmpty) return;

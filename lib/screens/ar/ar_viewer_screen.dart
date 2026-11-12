@@ -256,6 +256,7 @@ class _ArViewerScreenState extends ConsumerState<ArViewerScreen> {
           isReplay: false,
           preModuleScore: 0,
           postModuleScore: 0,
+          renderMode: 'interactive3d',
         );
     _audio.dispose();
     super.dispose();

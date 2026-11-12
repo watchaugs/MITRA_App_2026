@@ -262,6 +262,7 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
       isReplay: false,
       preModuleScore: 0,
       postModuleScore: 0,
+      renderMode: 'markerless',
     );
     _spinTimer?.cancel();
     _sessionManager.dispose();

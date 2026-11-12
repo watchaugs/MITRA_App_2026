@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../services/api_service.dart';
 import '../../../stores/auth_store.dart';
 import '../../../providers/app_prefs.dart';
+import '../../../services/telemetry_service.dart';
 
 /// Geofenced sponsor ads from the dashboard, scoped to the student's state.
 /// Empty on error or when there are none (interstitial then just won't show).
@@ -177,7 +178,13 @@ class _SponsorInterstitialState extends State<_SponsorInterstitial> {
     // Fire-and-forget impression telemetry.
     final id = (widget.ad['id'] ?? widget.ad['ad_id'] ?? '').toString();
     if (id.isNotEmpty) {
-      unawaited(AdsAPI.impression({'ad_id': id}).then((_) {}, onError: (_) {}));
+      final ctx = TelemetryService.current?.context;
+      unawaited(AdsAPI.impression({
+        'ad_id': id,
+        if (ctx?.gender != null) 'gender': ctx!.gender,
+        if (ctx?.state != null) 'state': ctx!.state,
+        if (ctx?.district != null) 'district': ctx!.district,
+      }).then((_) {}, onError: (_) {}));
     }
   }
 
