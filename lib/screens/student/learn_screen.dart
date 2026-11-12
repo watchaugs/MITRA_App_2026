@@ -60,9 +60,14 @@ import '../../models/quiz_model.dart';
 sealed class LearnFailure {
   const LearnFailure();
 
-  /// Human-readable message safe to show in the UI.
-  /// TODO: Localise via ARB files in a real app.
+  /// English fallback, safe to show if a translation is missing.
   String get displayMessage;
+
+  /// Translation-pack key for this message. The UI resolves it through the
+  /// app's i18n (context.tr) with [displayMessage] as the fallback, so these
+  /// errors localise like the rest of the app. Add these keys to the ARB /
+  /// translation packs: error_network, error_server, error_parsing.
+  String get messageKey;
 }
 
 class NetworkFailure extends LearnFailure {
@@ -70,6 +75,8 @@ class NetworkFailure extends LearnFailure {
   @override
   String get displayMessage =>
       'Could not reach the server. Please check your connection.';
+  @override
+  String get messageKey => 'error_network';
 }
 
 class ServerFailure extends LearnFailure {
@@ -77,12 +84,16 @@ class ServerFailure extends LearnFailure {
   @override
   String get displayMessage =>
       'Something went wrong on our end. Please try again later.';
+  @override
+  String get messageKey => 'error_server';
 }
 
 class ParsingFailure extends LearnFailure {
   const ParsingFailure();
   @override
   String get displayMessage => 'Received unexpected data. Please try again.';
+  @override
+  String get messageKey => 'error_parsing';
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -266,15 +277,16 @@ abstract class QuizRepository {
 }
 
 class ApiQuizRepository implements QuizRepository {
-  // TODO: Once QuizAPI is refactored to an injectable instance
-  //       rather than static methods, accept it as a constructor
-  //       parameter for full DI support.
-  const ApiQuizRepository();
+  // Full DI: the quiz API client is injected, so tests pass a mock
+  // QuizApiClient and no live backend is needed. Production wires the real
+  // client through quizApiClientProvider (see below).
+  final QuizApiClient _api;
+  const ApiQuizRepository(this._api);
 
   @override
   Future<List<QuizSummary>> fetchLiveQuizzes(QuizFilterParams params) async {
     try {
-      final res = await QuizAPI.list(params.toQueryParams());
+      final res = await _api.list(params.toQueryParams());
       final raw = res.data['data'];
 
       // Guard against unexpected response shapes (e.g. the
@@ -365,11 +377,18 @@ Future<void> _showWatchArFirstDialog(
   );
 }
 
+/// The injectable quiz API client. Production uses the app's shared Dio
+/// instance; a test can override this provider with a mock QuizApiClient so the
+/// repository never touches a real backend.
+final quizApiClientProvider = Provider<QuizApiClient>((ref) {
+  return QuizApiClient(ApiService.instance.dio);
+});
+
 /// Repository instance — override in tests with a mock.
 final quizRepositoryProvider = Provider<QuizRepository>((ref) {
   return kPresentationMode
       ? const DemoQuizRepository()
-      : const ApiQuizRepository();
+      : ApiQuizRepository(ref.watch(quizApiClientProvider));
 });
 
 /// Derives quiz filter params from the current user profile.
@@ -916,9 +935,13 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
                 loading: () =>
                     const OrbitLoader(message: 'Loading your lessons…'),
                 error: (error, _) => _ErrorState(
+                  // Localised via the app's i18n, falling back to the failure's
+                  // English displayMessage if the translation pack lacks the key.
                   message: switch (error) {
-                    LearnFailure f => f.displayMessage,
-                    _ => 'Something went wrong. Please try again.',
+                    LearnFailure f =>
+                      context.tr(ref, f.messageKey, f.displayMessage),
+                    _ => context.tr(ref, 'error_generic',
+                        'Something went wrong. Please try again.'),
                   },
                   onRetry: () =>
                       ref.read(quizFeedProvider(params).notifier).refresh(),

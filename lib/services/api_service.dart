@@ -241,38 +241,64 @@ class GeofenceAPI {
           queryParameters: {'lat': lat, 'lng': lng});
 }
 
-class QuizAPI {
-  static Future<Response> list(Map<String, String> params) =>
-      api.get('/api/quiz', queryParameters: params);
+/// Quiz data access. This is now an INJECTABLE INSTANCE class (it takes its Dio
+/// client in the constructor) so it can be mocked in tests and swapped via
+/// Riverpod — while the original `QuizAPI.list(...)` static calls keep working
+/// through a shared default instance, so existing deep callers don't change.
+class QuizApiClient {
+  final Dio _dio;
+  const QuizApiClient(this._dio);
 
-  static Future<Response> questions(String id) =>
-      api.get('/api/quiz/$id/questions');
+  Future<Response> list(Map<String, String> params) =>
+      _dio.get('/api/quiz', queryParameters: params);
+
+  Future<Response> questions(String id) => _dio.get('/api/quiz/$id/questions');
 
   // Download the per-state quiz pack ONCE (questions are fixed for the year).
   // The app caches it on the device and reads quizzes locally thereafter.
-  static Future<Response> pack(String state) => api.get(
+  Future<Response> pack(String state) => _dio.get(
       '/api/quiz/pack/${Uri.encodeComponent(state.isEmpty ? 'ALL' : state)}');
 
-  static Future<Response> submit(Map<String, dynamic> payload) =>
-      api.post('/api/quiz/attempts', data: payload);
+  Future<Response> submit(Map<String, dynamic> payload) =>
+      _dio.post('/api/quiz/attempts', data: payload);
 
   // Batched version — sends many attempts in one request instead of
   // one request per quiz. Needs a matching backend endpoint (see below).
-  static Future<Response> submitBatch(List<Map<String, dynamic>> attempts) =>
-      api.post('/api/quiz/attempts/batch', data: {'attempts': attempts});
+  Future<Response> submitBatch(List<Map<String, dynamic>> attempts) =>
+      _dio.post('/api/quiz/attempts/batch', data: {'attempts': attempts});
 
   // Student's own attempt history — used in profile + ranks screens
-  static Future<Response> attempts(String studentId,
-          {int page = 1, int limit = 20}) =>
-      api.get('/api/quiz/attempts', queryParameters: {
+  Future<Response> attempts(String studentId, {int page = 1, int limit = 20}) =>
+      _dio.get('/api/quiz/attempts', queryParameters: {
         'student_id': studentId,
         'page': '$page',
         'limit': '$limit',
       });
 
   // Quiz-level analytics — used in ranks screen for class leaderboard
+  Future<Response> analytics(Map<String, String> params) =>
+      _dio.get('/api/quiz/analytics', queryParameters: params);
+}
+
+/// Backwards-compatible static facade over a shared default instance, so the
+/// existing `QuizAPI.list(...)` call sites in the stores/services keep working
+/// unchanged. New code should inject a [QuizApiClient] instead (see
+/// quizApiClientProvider in learn_screen.dart).
+class QuizAPI {
+  static final QuizApiClient _default = QuizApiClient(api);
+  static Future<Response> list(Map<String, String> params) =>
+      _default.list(params);
+  static Future<Response> questions(String id) => _default.questions(id);
+  static Future<Response> pack(String state) => _default.pack(state);
+  static Future<Response> submit(Map<String, dynamic> payload) =>
+      _default.submit(payload);
+  static Future<Response> submitBatch(List<Map<String, dynamic>> attempts) =>
+      _default.submitBatch(attempts);
+  static Future<Response> attempts(String studentId,
+          {int page = 1, int limit = 20}) =>
+      _default.attempts(studentId, page: page, limit: limit);
   static Future<Response> analytics(Map<String, String> params) =>
-      api.get('/api/quiz/analytics', queryParameters: params);
+      _default.analytics(params);
 }
 
 class ConsentAPI {
