@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../providers/tr_ext.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -91,7 +92,7 @@ class _DataRightsSectionState extends ConsumerState<DataRightsSection> {
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancel')),
+              child: Text(context.tr(ref, 'btn_cancel', 'Cancel'))),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
             child: Text(confirmLabel,
@@ -142,7 +143,7 @@ class _DataRightsSectionState extends ConsumerState<DataRightsSection> {
       children: [
         Padding(
           padding: const EdgeInsets.only(left: 4, bottom: 6, top: 8),
-          child: Text('ACCOUNT & DATA',
+          child: Text(context.tr(ref, 'student_account_data', 'ACCOUNT & DATA'),
               style: TextStyle(
                   fontFamily: 'SpaceMono',
                   fontSize: 11,

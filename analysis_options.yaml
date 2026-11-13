@@ -34,6 +34,10 @@ linter:
   rules:
     # avoid_print: false  # Uncomment to disable the `avoid_print` rule
     # prefer_single_quotes: true  # Uncomment to enable the `prefer_single_quotes` rule
+    # Style-only perf hint; we intentionally leave some non-const ctors (e.g.
+    # Text widgets near i18n/runtime values). Disabled so Problems shows only
+    # real issues, matching the vendored-exclude philosophy above.
+    prefer_const_constructors: false
 
 # Additional information about this file can be found at
 # https://dart.dev/guides/language/analysis-options

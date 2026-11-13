@@ -4,6 +4,8 @@
 // ═══════════════════════════════════════════════════════
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../providers/tr_ext.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart'; // 🚨 NEW IMPORT ADDED
 import '../../widgets/mitra_scaffold.dart';
@@ -52,14 +54,14 @@ const _slides = [
   ),
 ];
 
-class OnboardingScreen extends StatefulWidget {
+class OnboardingScreen extends ConsumerStatefulWidget {
   const OnboardingScreen({super.key});
 
   @override
-  State<OnboardingScreen> createState() => _OnboardingScreenState();
+  ConsumerState<OnboardingScreen> createState() => _OnboardingScreenState();
 }
 
-class _OnboardingScreenState extends State<OnboardingScreen> {
+class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   final _ctrl = PageController();
   int _currentIdx = 0;
 
@@ -99,7 +101,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             child: TextButton(
               onPressed: () => context.go('/login'),
               // 🚨 FIX: Replaced standard TextStyle with GoogleFonts
-              child: Text('Skip',
+              child: Text(context.tr(ref, 'auth_skip', 'Skip'),
                   style: GoogleFonts.mukta(color: MitraColors.textMuted)),
             ),
           ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../providers/tr_ext.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../constants/colors.dart';
 import '../../../services/api_service.dart';
@@ -62,7 +63,7 @@ class _ConsentManagerState extends ConsumerState<ConsentManager> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: MitraColors.bgCard,
-        title: const Text('Withdraw consent?'),
+        title: Text(context.tr(ref, 'student_withdraw_consent', 'Withdraw consent?')),
         content: const Text(
           'You can withdraw your consent to data collection. Some features '
           'that need your data (progress tracking, leaderboards) may stop '
@@ -71,11 +72,11 @@ class _ConsentManagerState extends ConsumerState<ConsentManager> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(context.tr(ref, 'btn_cancel', 'Cancel')),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Withdraw',
+            child: Text(context.tr(ref, 'student_withdraw', 'Withdraw'),
                 style: TextStyle(color: MitraColors.crimson)),
           ),
         ],
@@ -88,13 +89,13 @@ class _ConsentManagerState extends ConsumerState<ConsentManager> {
       await _load();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Consent withdrawn.')),
+          SnackBar(content: Text(context.tr(ref, 'student_consent_withdrawn', 'Consent withdrawn.'))),
         );
       }
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not withdraw. Try again.')),
+          SnackBar(content: Text(context.tr(ref, 'student_could_not_withdraw_try_again', 'Could not withdraw. Try again.'))),
         );
       }
     }
@@ -108,13 +109,13 @@ class _ConsentManagerState extends ConsumerState<ConsentManager> {
       await _load();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Consent granted.')),
+          SnackBar(content: Text(context.tr(ref, 'student_consent_granted', 'Consent granted.'))),
         );
       }
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not save consent. Try again.')),
+          SnackBar(content: Text(context.tr(ref, 'student_could_not_save_consent_try_a', 'Could not save consent. Try again.'))),
         );
       }
     }
@@ -138,7 +139,7 @@ class _ConsentManagerState extends ConsumerState<ConsentManager> {
             children: [
               const Text('🛡️', style: TextStyle(fontSize: 20)),
               const SizedBox(width: 8),
-              Text('Data Consent',
+              Text(context.tr(ref, 'student_data_consent', 'Data Consent'),
                   style: TextStyle(
                       fontFamily: 'Baloo2',
                       fontWeight: FontWeight.w700,

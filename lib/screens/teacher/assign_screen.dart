@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../providers/tr_ext.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../constants/colors.dart';
 
@@ -48,17 +49,17 @@ class AssignScreen extends ConsumerWidget {
           Container(
             color: MitraColors.bgCard,
             padding: const EdgeInsets.all(MitraSpacing.lg),
-            child: const Row(children: [
+            child: Row(children: [
               Text('📚', style: TextStyle(fontSize: 24)),
               SizedBox(width: 10),
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('Assign Content',
+                Text(context.tr(ref, 'teacher_assign_content', 'Assign Content'),
                     style: TextStyle(
                         fontFamily: 'Baloo2',
                         fontWeight: FontWeight.w800,
                         fontSize: 20,
                         color: MitraColors.textPrimary)),
-                Text('Push lessons & quizzes to your class',
+                Text(context.tr(ref, 'teacher_push_lessons_quizzes_to_your', 'Push lessons & quizzes to your class'),
                     style: TextStyle(
                         fontFamily: 'Mukta',
                         fontSize: 12,
@@ -114,7 +115,7 @@ class AssignScreen extends ConsumerWidget {
                             fontSize: 12),
                       ),
                       onPressed: () {},
-                      child: const Text('Assign'),
+                      child: Text(context.tr(ref, 'teacher_assign', 'Assign')),
                     ),
                   ]),
                 );

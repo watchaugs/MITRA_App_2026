@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../providers/tr_ext.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -6,13 +8,13 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../constants/colors.dart';
 import '../../widgets/orbit_explorer.dart';
 
-class GrievanceScreen extends StatefulWidget {
+class GrievanceScreen extends ConsumerStatefulWidget {
   const GrievanceScreen({super.key});
   @override
-  State<GrievanceScreen> createState() => _GrievanceScreenState();
+  ConsumerState<GrievanceScreen> createState() => _GrievanceScreenState();
 }
 
-class _GrievanceScreenState extends State<GrievanceScreen> {
+class _GrievanceScreenState extends ConsumerState<GrievanceScreen> {
   bool _loading = true;
   Map<String, dynamic>? _data;
 
@@ -71,7 +73,7 @@ class _GrievanceScreenState extends State<GrievanceScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         iconTheme: IconThemeData(color: onSurface),
-        title: Text('Grievance & Data Protection',
+        title: Text(context.tr(ref, 'legal_grievance_data_protection', 'Grievance & Data Protection'),
             style: TextStyle(
                 fontFamily: 'Baloo2',
                 fontWeight: FontWeight.w800,
@@ -141,7 +143,7 @@ class _GrievanceScreenState extends State<GrievanceScreen> {
                   color: onSurface)),
           const SizedBox(height: 8),
           if (!hasData)
-            Text('Details are being updated.',
+            Text(context.tr(ref, 'legal_details_are_being_updated', 'Details are being updated.'),
                 style: TextStyle(
                     fontFamily: 'Mukta',
                     fontSize: 13,

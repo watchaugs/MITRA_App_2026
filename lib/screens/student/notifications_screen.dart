@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../providers/tr_ext.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../constants/colors.dart';
 import '../../services/api_service.dart';
@@ -59,7 +60,7 @@ class NotificationsScreen extends ConsumerWidget {
               child: Row(children: [
                 const Text('🔔', style: TextStyle(fontSize: 24)),
                 const SizedBox(width: 10),
-                Text('Notifications',
+                Text(context.tr(ref, 'notif_title', 'Notifications'),
                     style: TextStyle(
                         fontFamily: 'Baloo2',
                         fontWeight: FontWeight.w800,

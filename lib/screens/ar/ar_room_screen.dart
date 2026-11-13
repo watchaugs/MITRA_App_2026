@@ -10,6 +10,7 @@
 // Audio:  audioplayers.
 // ═══════════════════════════════════════════════════════════════════════════
 import 'dart:io';
+import '../../providers/tr_ext.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
@@ -914,14 +915,14 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text('How to control the model',
+                Text(context.tr(ref, 'ar_how_to_control_the_model', 'How to control the model'),
                     style: TextStyle(
                         fontFamily: 'Baloo2',
                         color: Colors.white,
                         fontWeight: FontWeight.w800,
                         fontSize: 17)),
                 const SizedBox(height: 4),
-                const Text('Use the buttons at the bottom',
+                Text(context.tr(ref, 'ar_use_the_buttons_at_the_botto', 'Use the buttons at the bottom'),
                     style: TextStyle(
                         fontFamily: 'Mukta',
                         color: Colors.white54,
@@ -936,7 +937,7 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
                 tip(Icons.unfold_more, 'Depth',
                     'Bring it nearer to you or push it farther away.'),
                 const SizedBox(height: 8),
-                Text('Tip: tap the model to replay the narration.',
+                Text(context.tr(ref, 'ar_tip_tap_the_model_to_replay_', 'Tip: tap the model to replay the narration.'),
                     textAlign: TextAlign.center,
                     style: TextStyle(
                         fontFamily: 'Mukta', color: accent, fontSize: 12)),
@@ -951,7 +952,7 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
                       color: accent,
                       borderRadius: BorderRadius.circular(14),
                     ),
-                    child: const Text('Got it',
+                    child: Text(context.tr(ref, 'ar_got_it', 'Got it'),
                         style: TextStyle(
                             fontFamily: 'Baloo2',
                             color: Colors.white,

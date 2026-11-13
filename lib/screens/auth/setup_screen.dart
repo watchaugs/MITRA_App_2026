@@ -548,7 +548,7 @@ class _ProfileStep extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Choose Your Avatar',
+        Text('Choose Your Avatar',
             style: TextStyle(
               fontFamily: 'Baloo2',
               fontWeight: FontWeight.w700,
@@ -568,7 +568,7 @@ class _ProfileStep extends StatelessWidget {
               .toList(),
         ),
         const SizedBox(height: MitraSpacing.lg),
-        const Text('Your Name',
+        Text('Your Name',
             style: TextStyle(
               fontFamily: 'Mukta',
               fontWeight: FontWeight.w600,
@@ -769,7 +769,7 @@ class _ClassHeader extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Select your Class',
+          Text('Select your Class',
               style: TextStyle(
                 fontFamily: 'Baloo2',
                 fontWeight: FontWeight.w900,

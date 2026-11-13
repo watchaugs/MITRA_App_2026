@@ -267,7 +267,7 @@ class _SponsorInterstitialState extends State<_SponsorInterstitial> {
                     color: Colors.black.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: const Text('📢 Notice',
+                  child: Text('📢 Notice',
                       style: TextStyle(color: Colors.white70, fontSize: 11)),
                 ),
               ),

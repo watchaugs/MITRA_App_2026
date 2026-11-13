@@ -55,7 +55,7 @@ class _FeedbackDialogState extends State<_FeedbackDialog> {
     if (!mounted) return;
     Navigator.of(context).maybePop();
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Thank you for your feedback!')),
+      SnackBar(content: Text('Thank you for your feedback!')),
     );
   }
 
@@ -141,7 +141,7 @@ class _FeedbackDialogState extends State<_FeedbackDialog> {
       actions: [
         TextButton(
             onPressed: _sending ? null : () => Navigator.of(context).maybePop(),
-            child: const Text('Cancel')),
+            child: Text('Cancel')),
         TextButton(
           onPressed: (_score == null || _sending) ? null : _send,
           child: _sending
@@ -149,7 +149,7 @@ class _FeedbackDialogState extends State<_FeedbackDialog> {
                   width: 16,
                   height: 16,
                   child: CircularProgressIndicator(strokeWidth: 2))
-              : const Text('Send',
+              : Text('Send',
                   style: TextStyle(
                       color: MitraColors.saffron, fontWeight: FontWeight.w700)),
         ),

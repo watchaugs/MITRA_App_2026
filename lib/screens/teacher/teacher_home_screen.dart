@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../providers/tr_ext.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../constants/colors.dart';
 import '../../stores/auth_store.dart';
@@ -28,7 +29,7 @@ class TeacherHomeScreen extends ConsumerWidget {
                     Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('Teacher Dashboard',
+                          Text(context.tr(ref, 'teacher_teacher_dashboard', 'Teacher Dashboard'),
                               style: TextStyle(
                                   fontFamily: 'Mukta',
                                   fontSize: 12,

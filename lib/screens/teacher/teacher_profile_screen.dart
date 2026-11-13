@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../providers/tr_ext.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../constants/colors.dart';
 import '../../stores/auth_store.dart';
@@ -57,7 +58,7 @@ class TeacherProfileScreen extends ConsumerWidget {
                       padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
                     onPressed: () => ref.read(authProvider.notifier).logout(),
-                    child: const Text('Sign Out',
+                    child: Text(context.tr(ref, 'profile_sign_out', 'Sign Out'),
                         style: TextStyle(
                             fontFamily: 'Baloo2',
                             fontWeight: FontWeight.w700,

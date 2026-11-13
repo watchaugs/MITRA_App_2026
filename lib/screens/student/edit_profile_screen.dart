@@ -1,4 +1,5 @@
 import 'dart:async';
+import '../../providers/tr_ext.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -212,7 +213,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         context: context,
         builder: (ctx) => AlertDialog(
           backgroundColor: MitraColors.bgCard,
-          title: const Text('Class locked'),
+          title: Text(context.tr(ref, 'student_class_locked', 'Class locked')),
           content: Text(
             'You changed your class recently. To keep your learning path '
             'stable, class can only be changed once every $kClassLockDays days.\n\n'
@@ -221,7 +222,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('OK'),
+              child: Text(context.tr(ref, 'common_ok', 'OK')),
             ),
           ],
         ),
@@ -234,7 +235,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: MitraColors.bgCard,
-        title: const Text('Change class?'),
+        title: Text(context.tr(ref, 'student_change_class', 'Change class?')),
         content: const Text(
           'Changing your class updates the subjects, topics and quizzes shown '
           'to you. Your XP and badges are kept, but your learning path will '
@@ -244,11 +245,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(context.tr(ref, 'btn_cancel', 'Cancel')),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Continue'),
+            child: Text(context.tr(ref, 'student_continue', 'Continue')),
           ),
         ],
       ),
@@ -285,7 +286,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: Text('Edit Profile',
+        title: Text(context.tr(ref, 'profile_edit', 'Edit Profile'),
             style: TextStyle(
                 fontFamily: 'Baloo2',
                 fontWeight: FontWeight.w800,
@@ -425,7 +426,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                               height: 20,
                               width: 20,
                               child: CircularProgressIndicator(strokeWidth: 2))
-                          : const Text('Save',
+                          : Text(context.tr(ref, 'btn_save', 'Save'),
                               style: TextStyle(
                                   fontFamily: 'Baloo2',
                                   fontWeight: FontWeight.w800)),

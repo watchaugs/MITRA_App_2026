@@ -5,6 +5,7 @@
 
 import 'dart:async'; // 🛠️ Added for Timer
 import 'package:flutter/material.dart';
+import '../../providers/tr_ext.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -313,7 +314,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('OK',
+              child: Text(context.tr(ref, 'common_ok', 'OK'),
                   style: TextStyle(color: MitraColors.saffron))),
         ],
       ),
@@ -488,7 +489,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   List<Widget> _buildPhoneStep(Color activeHighlight) => [
-        const Text('MOBILE NUMBER',
+        Text(context.tr(ref, 'auth_mobile_number', 'MOBILE NUMBER'),
             style: TextStyle(
                 fontFamily: 'Mukta',
                 fontWeight: FontWeight.w600,
@@ -689,7 +690,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       }
                     });
                   },
-                  child: const Text('← Change Number / Resend OTP',
+                  child: Text(context.tr(ref, 'auth_change_number_resend_otp', '← Change Number / Resend OTP'),
                       style: TextStyle(
                           fontFamily: 'Mukta',
                           fontSize: 13,

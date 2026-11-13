@@ -358,20 +358,20 @@ Future<void> _showWatchArFirstDialog(
   return showDialog<void>(
     context: context,
     builder: (ctx) => AlertDialog(
-      title: const Text('Finish the AR module first'),
+      title: Text('Finish the AR module first'),
       content: Text(
           'Watch at least $threshold% of the AR module before taking its quiz.'),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(ctx).pop(),
-          child: const Text('Not now'),
+          child: Text('Not now'),
         ),
         FilledButton(
           onPressed: () {
             Navigator.of(ctx).pop();
             openAr();
           },
-          child: const Text('Open AR module'),
+          child: Text('Open AR module'),
         ),
       ],
     ),
@@ -1007,7 +1007,7 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
                             icon: const Icon(
                                 Icons.download_for_offline_outlined,
                                 size: 18),
-                            label: const Text('Save lessons offline'),
+                            label: Text(context.tr(ref, 'student_save_lessons_offline', 'Save lessons offline')),
                             onPressed: () async {
                               final messenger = ScaffoldMessenger.of(context);
                               final models = arCatalog?.glbById ??
@@ -1020,8 +1020,8 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
                                         'No downloadable lessons for your state yet.')));
                                 return;
                               }
-                              messenger.showSnackBar(const SnackBar(
-                                  content: Text('Downloading over Wi-Fi…')));
+                              messenger.showSnackBar(SnackBar(
+                                  content: Text(context.tr(ref, 'student_downloading_over_wi_fi', 'Downloading over Wi-Fi…'))));
                               final n = await ArPackStore.instance.downloadPack(
                                 models: models,
                                 audios: audio,
@@ -1160,6 +1160,8 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
                                 subject: entry.key,
                                 quizzes: entry.value,
                                 arLessons: filteredArLessons,
+                                audiosByLangById:
+                                    arCatalog?.audiosByLangById ?? const {},
                                 hideHeader: _selectedSubject !=
                                     'All', // ✨ Hides redundant headings when filtered!
                                 onQuizTap: (id) => LearnScreen._navigateToQuiz(
@@ -1408,6 +1410,7 @@ class _SubjectSection extends ConsumerWidget {
   final bool hideHeader; // ✨ New parameter to control header visibility
   final ValueChanged<String> onQuizTap;
   final ValueChanged<String> onArTap;
+  final Map<String, Map<String, String>> audiosByLangById; // #8b
 
   const _SubjectSection({
     required this.subject,
@@ -1416,12 +1419,15 @@ class _SubjectSection extends ConsumerWidget {
     this.hideHeader = false,
     required this.onQuizTap,
     required this.onArTap,
+    this.audiosByLangById = const {},
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // Rebuild locks/badges whenever progress changes.
     ref.watch(moduleProgressTickProvider);
+    // #8b: the student's chosen UI/narration language (for availability badge).
+    final myLang = ref.watch(translationProvider).langCode.toLowerCase();
     final progress = ref.watch(moduleProgressStoreProvider);
 
     // AR-watch % needed to unlock a quiz. Dashboard-configurable; 80 until the
@@ -1534,6 +1540,18 @@ class _SubjectSection extends ConsumerWidget {
                   bestPct: best,
                   questionCount: qCount,
                   completed: watched, // watched enough → Completed stamp
+                  audioLabel: () {
+                    final langs =
+                        (audiosByLangById[ar.id] ?? const {}).keys.toSet();
+                    if (langs.isEmpty) return '';
+                    if (myLang.isNotEmpty && langs.contains(myLang)) {
+                      return 'Your language';
+                    }
+                    if (langs.contains('hi') || langs.contains('en')) {
+                      return 'Hindi/English';
+                    }
+                    return '';
+                  }(),
                 ),
               );
 
@@ -1671,6 +1689,7 @@ class _ArTile extends StatelessWidget {
   final bool completed; // ≥80% AR narration watched → Completed stamp
   final bool
       comingSoon; // Rule 3: scheduled teaser — "Coming soon", not openable
+  final String audioLabel; // #8b: '' | 'Your language' | 'Hindi/English'
 
   const _ArTile({
     required this.lesson,
@@ -1680,6 +1699,7 @@ class _ArTile extends StatelessWidget {
     this.questionCount = 0,
     this.completed = false,
     this.comingSoon = false,
+    this.audioLabel = '',
   });
 
   @override
@@ -1690,6 +1710,7 @@ class _ArTile extends StatelessWidget {
     final subtext = questionCount > 0
         ? '${lesson.topic.isNotEmpty ? '${lesson.topic} · ' : ''}$questionCount question${questionCount == 1 ? '' : 's'}'
         : lesson.topic;
+    final audioNote = audioLabel.isEmpty ? '' : ' · 🔊 $audioLabel';
 
     final card = Container(
       margin: const EdgeInsets.only(bottom: MitraSpacing.sm),
@@ -1731,7 +1752,7 @@ class _ArTile extends StatelessWidget {
               topic: comingSoon
                   ? 'Coming soon'
                   : unlocked
-                      ? subtext
+                      ? subtext + audioNote
                       : 'Score 100% on the previous module to unlock',
             ),
           ),

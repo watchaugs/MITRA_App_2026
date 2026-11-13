@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../providers/tr_ext.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../constants/colors.dart';
 
@@ -15,17 +16,17 @@ class AnalyticsScreen extends ConsumerWidget {
           Container(
             color: MitraColors.bgCard,
             padding: const EdgeInsets.all(MitraSpacing.lg),
-            child: const Row(children: [
+            child: Row(children: [
               Text('📊', style: TextStyle(fontSize: 24)),
               SizedBox(width: 10),
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('Analytics',
+                Text(context.tr(ref, 'teacher_analytics', 'Analytics'),
                     style: TextStyle(
                         fontFamily: 'Baloo2',
                         fontWeight: FontWeight.w800,
                         fontSize: 20,
                         color: MitraColors.textPrimary)),
-                Text('Classroom performance insights',
+                Text(context.tr(ref, 'teacher_classroom_performance_insigh', 'Classroom performance insights'),
                     style: TextStyle(
                         fontFamily: 'Mukta',
                         fontSize: 12,
