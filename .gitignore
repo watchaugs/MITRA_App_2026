@@ -54,3 +54,8 @@ packages/*/android/.gradle/
 packages/*/.gradle/
 packages/*/build/
 packages/*/android/build/
+node_modules/
+package.json
+translate_gaps.js
+bhashini.js
+logger.js
