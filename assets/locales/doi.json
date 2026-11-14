@@ -39,9 +39,7 @@
   "learn_no_content": "अजें तक्कर कोई सामग्री उपलब्ध नेईं ऐ।",
   "learn_no_quiz": "अजें तक्कर कोई प्रश्नोत्तरी नेईं ऐ",
   "learn_location_needed": "लाजमी थाह्र",
-  "learn_location_needed_body": "मिगी तुंʼदे राज्य आस्तै ठीक सामग्री दस्सने आस्तै तुंʼदे तकरीबन थाह्र दी लोड़ ऐ।",
   "learn_not_available_here": "अजें तक्कर इत्थै उपलब्ध नेईं ऐ",
-  "learn_not_available_body": "तुंʼदे खेतर आस्तै सामग्री तौले गै औने आह्ली ऐ।",
   "learn_start_quiz": "क्विज़ शुरू करो",
   "learn_view_ar": "ए. आर. च दिक्खो",
   "learn_watch_video": "वीडियो दस्सो",
@@ -51,7 +49,6 @@
   "quiz_submit": "पेश करो",
   "quiz_next": "अगला",
   "quiz_finish": "खत्म करो",
-  "quiz_no_quiz_body": "इस विशे पर हून तक्कर कोई प्रश्नोत्तरी नेईं ऐ। फौरन बापस जांच करो।",
   "quiz_result_title": "तुंʼदा नतीजा",
   "quiz_result_score": "{score}/{total}",
   "quiz_back_home": "घर पर बापस जाओ",
@@ -133,5 +130,10 @@
   "ar_how_to_control_the_model": "माडल गी किʼयां नियंत्रत करना ऐ",
   "ar_use_the_buttons_at_the_botto": "खʼलके बटनें दा इस्तेमाल करो",
   "ar_tip_tap_the_model_to_replay_": "टिपः कथन गी परतियै चलाने आस्तै माडल पर टैप करो।",
-  "ar_got_it": "समझी लैता"
+  "ar_got_it": "समझी लैता",
+  "txt_home": "घर",
+  "txt_students": "विद्यार्थी",
+  "txt_analytics": "विश्लेषिकी",
+  "txt_profile": "प्रोफ़ाइल",
+  "txt_move_your_phone_slowly_to_find_the_floor": "फर्श तुप्पने आस्तै अपने फोन गी हौले-हौले घुमाओ"
 }

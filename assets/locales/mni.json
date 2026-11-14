@@ -39,9 +39,7 @@
   "learn_no_content": "ꯍꯧꯖꯤꯛ ꯐꯥꯎꯕ ꯀꯟꯇꯦꯟꯠ ꯑꯃꯠꯇ ꯐꯪꯗ ꯭ ꯔꯤ ꯫",
   "learn_no_quiz": "ꯍꯧꯖꯤꯛ ꯐꯥꯎꯕ ꯀ ꯭ ꯋꯤꯖ ꯑꯃꯠꯇ ꯂꯩꯇꯦ",
   "learn_location_needed": "ꯃꯐꯝ ꯃꯊꯧ ꯇꯥꯏ",
-  "learn_location_needed_body": "ꯅꯍꯥꯛꯀꯤ ꯔꯥꯖ ꯭ ꯌ ꯑꯁꯤꯒꯤꯗꯃꯛ ꯑꯆꯨꯝꯕ ꯃꯆꯥꯛ ꯑꯗꯨ ꯎꯠꯅꯕ ꯑꯩꯈꯣꯏꯅ ꯅꯍꯥꯛꯀꯤ ꯆꯥꯎꯔꯥꯛꯅ ꯃꯐꯝ ꯑꯗꯨ ꯃꯊꯧ ꯇꯥꯏ ꯫",
   "learn_not_available_here": "ꯃꯐꯝ ꯑꯁꯤꯗ ꯍꯧꯖꯤꯛ ꯐꯥꯎꯕ ꯐꯪꯗ ꯭ ꯔꯤ",
-  "learn_not_available_body": "ꯅꯍꯥꯛꯀꯤ ꯃꯐꯝ ꯑꯗꯨꯒꯤ ꯃꯆꯥꯛ ꯑꯗꯨ ꯑꯊꯨꯕ ꯃꯇꯝꯗ ꯂꯥꯛꯀꯗꯧꯔꯤ ꯫",
   "learn_start_quiz": "ꯀ ꯭ ꯋꯤꯖ ꯍꯧꯕꯤꯌꯨ",
   "learn_view_ar": "ꯑꯦ. ꯑꯥꯔ. ꯗ ꯌꯦꯡꯕ",
   "learn_watch_video": "ꯚꯤꯗꯤꯑꯣ ꯌꯦꯡꯕꯤꯌꯨ",
@@ -51,7 +49,6 @@
   "quiz_submit": "ꯊꯥꯖꯤꯟꯕꯤꯌꯨ",
   "quiz_next": "ꯃꯊꯪꯗ",
   "quiz_finish": "ꯂꯣꯏꯁꯤꯟꯂꯨ",
-  "quiz_no_quiz_body": "ꯃꯁꯤꯒꯤ ꯍꯤꯔꯝ ꯑꯁꯤꯗ ꯍꯧꯖꯤꯛ ꯐꯥꯎꯕ ꯀ ꯭ ꯋꯤꯖ ꯑꯃꯠꯇ ꯂꯩꯇꯦ ꯫ ꯑꯊꯨꯕ ꯃꯇꯝꯗ ꯑꯃꯨꯛ ꯍꯟꯅ ꯌꯦꯡꯁꯤꯟꯕꯤꯌꯨ ꯫",
   "quiz_result_title": "ꯅꯍꯥꯛꯀꯤ ꯐꯜ ꯑꯗꯨ",
   "quiz_result_score": "{score}/{total}",
   "quiz_back_home": "ꯌꯨꯝꯗ ꯍꯜꯂꯛꯄ",
@@ -133,5 +130,10 @@
   "ar_how_to_control_the_model": "ꯃꯣꯗꯦꯜ ꯑꯗꯨ ꯀꯔꯝꯅ ꯂꯥꯛꯁꯤꯟꯕꯒꯦ",
   "ar_use_the_buttons_at_the_botto": "ꯃꯈꯥꯗ ꯂꯩꯕ ꯕꯇꯟꯁꯤꯡ ꯑꯗꯨ ꯁꯤꯖꯤꯟꯅꯧ",
   "ar_tip_tap_the_model_to_replay_": "ꯄꯥꯎꯇꯥꯛ: ꯋꯥꯔꯤ ꯂꯤꯕ ꯑꯗꯨ ꯑꯃꯨꯛ ꯍꯟꯅ ꯎꯠꯅꯕ ꯃꯣꯗꯦꯜ ꯑꯗꯨꯗ ꯅꯝꯃꯨ ꯫",
-  "ar_got_it": "ꯐꯪꯂꯦ ꯫"
+  "ar_got_it": "ꯐꯪꯂꯦ ꯫",
+  "txt_home": "ꯌꯨꯝ",
+  "txt_students": "ꯃꯍꯩꯔꯣꯏꯁꯤꯡ",
+  "txt_analytics": "ꯑꯦꯅꯥꯂꯥꯏꯇꯤꯛꯁ",
+  "txt_profile": "ꯄ ꯭ ꯔꯣꯐꯥꯏꯜ",
+  "txt_move_your_phone_slowly_to_find_the_floor": "ꯐ ꯭ ꯂꯣꯔ ꯑꯗꯨ ꯊꯤꯅꯕ ꯅꯍꯥꯛꯀꯤ ꯐꯣꯟ ꯑꯗꯨ ꯇꯞꯅ-ꯇꯞꯅ ꯊꯥꯎ ꯫"
 }

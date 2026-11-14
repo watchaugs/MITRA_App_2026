@@ -72,7 +72,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final phone = _phoneCtrl.text.trim();
     if (phone.length != 10 || !RegExp(r'^[0-9]{10}$').hasMatch(phone)) {
       _showError(
-          'Invalid Number', 'Please enter a valid 10-digit mobile number.');
+          ref.trNow('auth_invalid_number', 'Invalid Number'), ref.trNow('auth_please_enter_a_valid_10_digit', 'Please enter a valid 10-digit mobile number.'));
       return;
     }
 
@@ -91,7 +91,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         },
         verificationFailed: (FirebaseAuthException e) {
           setState(() => _loading = false);
-          _showError('Verification Failed', e.message ?? 'Unknown error');
+          _showError(ref.trNow('auth_verification_failed', 'Verification Failed'), e.message ?? ref.trNow('auth_unknown_error', 'Unknown error'));
         },
         codeSent: (String verificationId, int? resendToken) {
           setState(() {
@@ -109,7 +109,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       );
     } catch (e) {
       setState(() => _loading = false);
-      _showError('Error', 'Failed to trigger SMS. Please try again.');
+      _showError(ref.trNow('auth_error', 'Error'), ref.trNow('auth_failed_to_trigger_sms_please_try', 'Failed to trigger SMS. Please try again.'));
     }
   }
 
@@ -148,15 +148,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     } catch (e) {
       setState(() => _loading = false);
       debugPrint("🚨 GOOGLE SIGN-IN FATAL ERROR: $e");
-      _showError('Google Login Failed',
-          'Could not sign in with Google. Please try again.');
+      _showError(ref.trNow('auth_google_login_failed', 'Google Login Failed'),
+          ref.trNow('auth_could_not_sign_in_with_google', 'Could not sign in with Google. Please try again.'));
     }
   }
 
   Future<void> _verifyOTP() async {
     final code = _otpCtrls.map((c) => c.text).join();
     if (code.length != 6) {
-      _showError('Incomplete OTP', 'Please enter all 6 digits.');
+      _showError(ref.trNow('auth_incomplete_otp', 'Incomplete OTP'), ref.trNow('auth_please_enter_all_6_digits', 'Please enter all 6 digits.'));
       return;
     }
 
@@ -173,7 +173,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       await _saveUserAndNavigate(userCred.user!);
     } catch (e) {
       setState(() => _loading = false);
-      _showError('Wrong OTP', 'The OTP is incorrect or expired.');
+      _showError(ref.trNow('auth_wrong_otp', 'Wrong OTP'), ref.trNow('auth_the_otp_is_incorrect_or_expired', 'The OTP is incorrect or expired.'));
     }
   }
 
@@ -297,7 +297,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       }
     } catch (e) {
       debugPrint("🚨 FIRESTORE ERROR: $e");
-      _showError('Database Error', 'Could not save profile to cloud.');
+      _showError(ref.trNow('auth_database_error', 'Database Error'), ref.trNow('auth_could_not_save_profile_to_cloud', 'Could not save profile to cloud.'));
       setState(() => _loading = false);
     }
   }
@@ -372,7 +372,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     alignment: Alignment.centerLeft,
                   ),
                 ),
-                const SafeArea(
+                SafeArea(
                   bottom: false,
                   child: Align(
                     alignment: Alignment.centerRight,
@@ -383,7 +383,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           Text(
-                            'Welcome to MITRA',
+                            context.tr(ref, 'auth_welcome_to_mitra', 'Welcome to MITRA'),
                             style: TextStyle(
                                 fontFamily: 'Baloo2',
                                 fontWeight: FontWeight.w800,
@@ -391,7 +391,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 color: Colors.white),
                           ),
                           Text(
-                            'Sign in to continue learning',
+                            context.tr(ref, 'auth_sign_in_to_continue_learning', 'Sign in to continue learning'),
                             style: TextStyle(
                                 fontFamily: 'Mukta',
                                 fontSize: 13,
@@ -453,8 +453,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                         const SizedBox(width: 6),
                                         Text(
                                           r == _Role.student
-                                              ? 'Student'
-                                              : 'Teacher',
+                                              ? context.tr(ref, 'common_student', 'Student')
+                                              : context.tr(ref, 'auth_teacher', 'Teacher'),
                                           style: TextStyle(
                                             fontFamily: 'Mukta',
                                             fontWeight: FontWeight.w500,
@@ -532,8 +532,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       fontFamily: 'SpaceMono',
                       fontSize: 16,
                       color: MitraColors.textPrimary),
-                  decoration: const InputDecoration(
-                    hintText: '10-digit number',
+                  decoration: InputDecoration(
+                    hintText: context.tr(ref, 'auth_10_digit_number', '10-digit number'),
                     hintStyle: TextStyle(color: MitraColors.textMuted),
                     border: InputBorder.none,
                     counterText: '',
@@ -546,7 +546,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         ),
         const SizedBox(height: MitraSpacing.lg),
         _GradientButton(
-          label: 'Send OTP →', // Generalized for future SMS integration
+          label: context.tr(ref, 'auth_send_otp', 'Send OTP →'), // Generalized for future SMS integration
           loading: _loading,
           color: activeHighlight,
           onTap: _sendOTP,
@@ -583,8 +583,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             'https://img.icons8.com/color/48/000000/google-logo.png',
             height: 24,
           ),
-          label: const Text(
-            'Continue with Google',
+          label: Text(
+            context.tr(ref, 'auth_continue_with_google', 'Continue with Google'),
             style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
@@ -610,7 +610,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 Border.all(color: MitraColors.emerald.withValues(alpha: 0.3)),
           ),
           child: Text(
-            '💬  OTP sent to +91 ${_phoneCtrl.text.substring(0, 3)}XXXXXXX',
+            context.trp(ref, 'auth_otp_sent_to_91_v1_xxxxxxx', '💬  OTP sent to +91 {v1}XXXXXXX', {'v1': '${_phoneCtrl.text.substring(0, 3)}'}),
             style: const TextStyle(
                 fontFamily: 'Mukta', fontSize: 13, color: MitraColors.emerald),
           ),
@@ -671,12 +671,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         const SizedBox(height: MitraSpacing.lg),
 
         _GradientButton(
-            label: 'Verify & Login →', loading: _loading, onTap: _verifyOTP),
+            label: context.tr(ref, 'auth_verify_login', 'Verify & Login →'), loading: _loading, onTap: _verifyOTP),
         const SizedBox(height: MitraSpacing.sm),
 
         Center(
           child: _resendTimer > 0
-              ? Text('Resend in ${_resendTimer}s',
+              ? Text(context.trp(ref, 'auth_resend_in_resendtimer_s', 'Resend in {resendTimer}s', {'resendTimer': '${_resendTimer}'}),
                   style: const TextStyle(
                       fontFamily: 'Mukta',
                       fontSize: 12,

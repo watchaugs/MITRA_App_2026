@@ -16,6 +16,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../theme/theme_provider.dart';
 
+import '../providers/tr_ext.dart';
 /// Displays a themed "Exit App?" confirmation dialog.
 ///
 /// Returns `true` if the user tapped **Exit**, `false` if they
@@ -37,7 +38,7 @@ Future<bool> showExitAppDialog(BuildContext context, WidgetRef ref) async {
   return result ?? false;
 }
 
-class _ExitAppDialogContent extends StatelessWidget {
+class _ExitAppDialogContent extends ConsumerWidget {
   final List<Color> bgColors;
   final Color highlight;
 
@@ -51,7 +52,7 @@ class _ExitAppDialogContent extends StatelessWidget {
       highlight.computeLuminance() > 0.55 ? Colors.black87 : Colors.white;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Dialog(
       backgroundColor: Colors.transparent,
       elevation: 0,
@@ -108,8 +109,8 @@ class _ExitAppDialogContent extends StatelessWidget {
               const SizedBox(height: 18),
 
               // ── Title ──────────────────────────────────
-              const Text(
-                'Exit App?',
+              Text(
+                context.tr(ref, 'common_exit_app', 'Exit App?'),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontFamily: 'Baloo2',
@@ -123,7 +124,7 @@ class _ExitAppDialogContent extends StatelessWidget {
 
               // ── Body ───────────────────────────────────
               Text(
-                'Are you sure you want to close MITRA?',
+                context.tr(ref, 'common_are_you_sure_you_want_to', 'Are you sure you want to close MITRA?'),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontFamily: 'Mukta',
@@ -152,7 +153,7 @@ class _ExitAppDialogContent extends StatelessWidget {
                         ),
                       ),
                       child: Text(
-                        'Cancel',
+                        context.tr(ref, 'btn_cancel', 'Cancel'),
                         style: TextStyle(
                           fontFamily: 'Mukta',
                           fontWeight: FontWeight.w600,
@@ -176,7 +177,7 @@ class _ExitAppDialogContent extends StatelessWidget {
                         elevation: 0,
                       ),
                       child: Text(
-                        'Exit',
+                        context.tr(ref, 'common_exit', 'Exit'),
                         style: TextStyle(
                           fontFamily: 'Baloo2',
                           fontWeight: FontWeight.w700,

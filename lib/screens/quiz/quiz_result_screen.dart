@@ -40,7 +40,7 @@ class QuizResultScreen extends ConsumerWidget {
 
     final emoji = isMastered ? '🏆' : '⚠️';
     final message =
-        isMastered ? '100% Mastery Achieved!' : 'Module Not Mastered';
+        isMastered ? context.tr(ref, 'quiz_100_mastery_achieved', '100% Mastery Achieved!') : context.tr(ref, 'quiz_module_not_mastered', 'Module Not Mastered');
 
     // Streak: consecutive correct from start
     int streak = 0;
@@ -126,7 +126,7 @@ class QuizResultScreen extends ConsumerWidget {
                                 color: MitraColors.gold.withValues(alpha: 0.4)),
                           ),
                           child: Text(
-                            '+$xpEarned XP',
+                            context.trp(ref, 'quiz_xpearned_xp', '+{xpEarned} XP', {'xpEarned': '$xpEarned'}),
                             style: const TextStyle(
                                 fontFamily: 'Baloo2',
                                 fontWeight: FontWeight.w700,
@@ -149,7 +149,7 @@ class QuizResultScreen extends ConsumerWidget {
                                       .withValues(alpha: 0.35)),
                             ),
                             child: Text(
-                              '🔥 $streak streak',
+                              context.trp(ref, 'quiz_streak_streak', '🔥 {streak} streak', {'streak': '$streak'}),
                               style: const TextStyle(
                                   fontFamily: 'Baloo2',
                                   fontWeight: FontWeight.w700,
@@ -161,10 +161,10 @@ class QuizResultScreen extends ConsumerWidget {
                       ],
                     )
                   else
-                    const Padding(
+                    Padding(
                       padding: EdgeInsets.symmetric(horizontal: 12.0),
                       child: Text(
-                        'You must score 100% to unlock the next module. Please re-watch the AR lesson and try again.',
+                        context.tr(ref, 'quiz_you_must_score_100_to_unlock', 'You must score 100% to unlock the next module. Please re-watch the AR lesson and try again.'),
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontFamily: 'Mukta',
@@ -253,10 +253,10 @@ class QuizResultScreen extends ConsumerWidget {
                   const SizedBox(height: MitraSpacing.xl),
 
                   // ── Question Review ────────────────────
-                  const Align(
+                  Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
-                      'Review Answers',
+                      context.tr(ref, 'quiz_review_answers', 'Review Answers'),
                       style: TextStyle(
                         fontFamily: 'Baloo2',
                         fontWeight: FontWeight.w800,
@@ -306,7 +306,7 @@ class QuizResultScreen extends ConsumerWidget {
 
 // Collapsed by default; tap to expand. Explanation is shown ONLY when the
 // student answered correctly — wrong answers never reveal the explanation.
-class _ReviewItem extends StatefulWidget {
+class _ReviewItem extends ConsumerStatefulWidget {
   final int index;
   final QuizQuestion question;
   final int? studentAnswer;
@@ -320,10 +320,10 @@ class _ReviewItem extends StatefulWidget {
   });
 
   @override
-  State<_ReviewItem> createState() => _ReviewItemState();
+  ConsumerState<_ReviewItem> createState() => _ReviewItemState();
 }
 
-class _ReviewItemState extends State<_ReviewItem> {
+class _ReviewItemState extends ConsumerState<_ReviewItem> {
   bool _expanded = false;
 
   @override
@@ -380,7 +380,7 @@ class _ReviewItemState extends State<_ReviewItem> {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      isCorrect ? 'Correct' : 'Incorrect',
+                      isCorrect ? context.tr(ref, 'quiz_correct', 'Correct') : context.tr(ref, 'quiz_incorrect', 'Incorrect'),
                       style: TextStyle(
                         fontFamily: 'Mukta',
                         fontSize: 12,
@@ -414,7 +414,7 @@ class _ReviewItemState extends State<_ReviewItem> {
                   if (isCorrect) ...[
                     // Correct answer → reveal the answer AND the explanation.
                     _ReviewAnswerRow(
-                      label: 'Correct',
+                      label: context.tr(ref, 'quiz_correct', 'Correct'),
                       answer: q.options[q.correctAnswerIndex],
                       color: MitraColors.emerald,
                     ),
@@ -445,18 +445,18 @@ class _ReviewItemState extends State<_ReviewItem> {
                     // correct answer, never the explanation. Encourage a retry.
                     if (widget.studentAnswer != null)
                       _ReviewAnswerRow(
-                        label: 'Your answer',
+                        label: context.tr(ref, 'quiz_your_answer', 'Your answer'),
                         answer: q.options[widget.studentAnswer!],
                         color: MitraColors.crimson,
                       ),
                     const SizedBox(height: 8),
-                    const Row(
+                    Row(
                       children: [
                         Icon(Icons.thumb_up_alt_outlined,
                             color: MitraColors.saffron, size: 15),
                         SizedBox(width: 6),
                         Text(
-                          'Try again',
+                          context.tr(ref, 'btn_try_again', 'Try again'),
                           style: TextStyle(
                             fontFamily: 'Baloo2',
                             fontWeight: FontWeight.w700,

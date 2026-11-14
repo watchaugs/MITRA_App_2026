@@ -11,6 +11,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../constants/colors.dart';
 import '../stores/offline_store.dart';
 
+import '../providers/tr_ext.dart';
 class SyncStatusBanner extends ConsumerWidget {
   const SyncStatusBanner({super.key});
 
@@ -34,23 +35,27 @@ class SyncStatusBanner extends ConsumerWidget {
       color = MitraColors.crimson;
       icon = Icons.cloud_off_rounded;
       label = offline.queue.isEmpty
-          ? "You're offline"
-          : "You're offline · ${offline.queue.length} waiting to sync";
+          ? context.tr(ref, 'common_youre_offline', "You're offline")
+          : context.trp(ref, 'common_youre_offline_queue_length_waiting_t', "You're offline · {queue_length} waiting to sync", {'queue_length': "${offline.queue.length}"});
     } else if (offline.syncStatus == SyncStatus.syncing) {
       color = MitraColors.sky;
       icon = Icons.sync_rounded;
       label =
-          'Syncing ${offline.queue.length} item${offline.queue.length == 1 ? '' : 's'}…';
+          offline.queue.length == 1
+              ? context.tr(ref, 'common_syncing_1_item', 'Syncing 1 item…')
+              : context.trp(ref, 'common_syncing_n_items', 'Syncing {count} items…', {'count': '${offline.queue.length}'});
     } else if (offline.queue.isNotEmpty) {
       color = MitraColors.gold;
       icon = Icons.cloud_upload_rounded;
       label =
-          '${offline.queue.length} item${offline.queue.length == 1 ? '' : 's'} pending sync';
+          offline.queue.length == 1
+              ? context.tr(ref, 'common_1_item_pending_sync', '1 item pending sync')
+              : context.trp(ref, 'common_n_items_pending_sync', '{count} items pending sync', {'count': '${offline.queue.length}'});
       showRetry = true;
     } else {
       color = MitraColors.crimson;
       icon = Icons.error_outline_rounded;
-      label = 'Sync error — will retry automatically';
+      label = context.tr(ref, 'common_sync_error_will_retry_automatically', 'Sync error — will retry automatically');
     }
 
     return SafeArea(
@@ -81,7 +86,7 @@ class SyncStatusBanner extends ConsumerWidget {
               GestureDetector(
                 onTap: () => ref.read(offlineProvider.notifier).retryNow(),
                 child: Text(
-                  'Retry',
+                  context.tr(ref, 'btn_retry', 'Retry'),
                   style: TextStyle(
                       fontFamily: 'Mukta',
                       fontSize: 12,

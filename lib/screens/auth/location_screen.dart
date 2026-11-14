@@ -28,6 +28,7 @@ import '../../constants/colors.dart';
 import '../../stores/auth_store.dart';
 import '../../widgets/mitra_scaffold.dart';
 
+import '../../providers/tr_ext.dart';
 // ── Constants ────────────────────────────────────────────────
 
 abstract class _LocKeys {
@@ -373,13 +374,13 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
       }
     } on TimeoutException {
       if (opId != _saveOpId || !mounted) return;
-      setState(() => _error = 'Server is taking too long. Please try again.');
+      setState(() => _error = ref.trNow('auth_server_is_taking_too_long_please', 'Server is taking too long. Please try again.'));
     } on _LocException catch (e) {
       if (opId != _saveOpId || !mounted) return;
       setState(() => _error = _safeErrorMessage(e.message));
     } catch (_) {
       if (opId != _saveOpId || !mounted) return;
-      setState(() => _error = 'Could not save location. Please try again.');
+      setState(() => _error = ref.trNow('auth_could_not_save_location_please_try', 'Could not save location. Please try again.'));
     } finally {
       if (opId == _saveOpId && mounted) {
         setState(() => _saving = false);
@@ -418,7 +419,7 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
                       ],
                       if (_error != null) ...[
                         const SizedBox(height: 20),
-                        _ErrorBanner(message: _error!),
+                        _ErrorBanner(message: context.trText(ref, _error!)),
                       ],
                     ],
                   ),
@@ -441,14 +442,14 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
 // Sub-widgets
 // ════════════════════════════════════════════════════════════
 
-class _LocationHeader extends StatelessWidget {
+class _LocationHeader extends ConsumerWidget {
   const _LocationHeader();
 
   static const _bgColor = Color(0x14FFFFFF);
   static const _borderColor = Color(0x26FFFFFF);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Container(
       width: double.infinity,
       decoration: const BoxDecoration(
@@ -479,11 +480,11 @@ class _LocationHeader extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 14),
-              const Column(
+              Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Step 4 of 4',
+                    context.tr(ref, 'auth_step_4_of_4', 'Step 4 of 4'),
                     style: TextStyle(
                       fontFamily: 'Mukta',
                       fontSize: 12,
@@ -492,7 +493,7 @@ class _LocationHeader extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    'Confirm Location',
+                    context.tr(ref, 'auth_confirm_location', 'Confirm Location'),
                     style: TextStyle(
                       fontFamily: 'Baloo2',
                       fontWeight: FontWeight.w900,
@@ -506,9 +507,9 @@ class _LocationHeader extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 14),
-          const Text(
-            'We use your location to personalise your learning content. '
-            'Your GPS coordinates are never stored — only your district and state.',
+          Text(
+            context.tr(ref, 'auth_we_use_your_location_to_personalise', 'We use your location to personalise your learning content. '
+            'Your GPS coordinates are never stored — only your district and state.'),
             style: TextStyle(
               fontFamily: 'Mukta',
               fontSize: 13,
@@ -522,7 +523,7 @@ class _LocationHeader extends StatelessWidget {
   }
 }
 
-class _DetectButton extends StatelessWidget {
+class _DetectButton extends ConsumerWidget {
   final bool detecting;
   final bool detected;
   final bool cooldownActive;
@@ -538,10 +539,10 @@ class _DetectButton extends StatelessWidget {
   bool get _interactable => !detecting && !cooldownActive;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Semantics(
       button: true,
-      label: detected ? 'Detect location again' : 'Detect my location',
+      label: detected ? context.tr(ref, 'auth_detect_location_again', 'Detect location again') : context.tr(ref, 'auth_detect_my_location', 'Detect my location'),
       enabled: _interactable,
       child: Material(
         color: Colors.transparent,
@@ -585,10 +586,10 @@ class _DetectButton extends StatelessWidget {
                 const SizedBox(width: 12),
                 Text(
                   detecting
-                      ? 'Detecting location…'
+                      ? context.tr(ref, 'auth_detecting_location', 'Detecting location…')
                       : detected
-                          ? 'Detect Again'
-                          : 'Detect My Location',
+                          ? context.tr(ref, 'auth_detect_again', 'Detect Again')
+                          : context.tr(ref, 'auth_detect_my_location_2', 'Detect My Location'),
                   style: TextStyle(
                     fontFamily: 'Baloo2',
                     fontWeight: FontWeight.w700,
@@ -605,14 +606,14 @@ class _DetectButton extends StatelessWidget {
   }
 }
 
-class _LocationResult extends StatelessWidget {
+class _LocationResult extends ConsumerWidget {
   final String district;
   final String state;
 
   const _LocationResult({required this.district, required this.state});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(MitraSpacing.lg),
@@ -649,8 +650,8 @@ class _LocationResult extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          const Text(
-            'Is this correct? You can detect again if needed.',
+          Text(
+            context.tr(ref, 'auth_is_this_correct_you_can_detect', 'Is this correct? You can detect again if needed.'),
             textAlign: TextAlign.center,
             style: TextStyle(
               fontFamily: 'Mukta',
@@ -699,7 +700,7 @@ class _ErrorBanner extends StatelessWidget {
   }
 }
 
-class _ConfirmButton extends StatelessWidget {
+class _ConfirmButton extends ConsumerWidget {
   final bool enabled;
   final bool loading;
   final VoidCallback onPressed;
@@ -711,7 +712,7 @@ class _ConfirmButton extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Padding(
       padding: const EdgeInsets.all(MitraSpacing.lg),
       child: SizedBox(
@@ -737,8 +738,8 @@ class _ConfirmButton extends StatelessWidget {
                     strokeWidth: 2.5,
                   ),
                 )
-              : const Text(
-                  'Confirm & Continue →',
+              : Text(
+                  context.tr(ref, 'auth_confirm_continue', 'Confirm & Continue →'),
                   style: TextStyle(
                     fontFamily: 'Baloo2',
                     fontWeight: FontWeight.w700,

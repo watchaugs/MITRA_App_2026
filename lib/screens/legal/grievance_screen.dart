@@ -80,15 +80,15 @@ class _GrievanceScreenState extends ConsumerState<GrievanceScreen> {
                 color: onSurface)),
       ),
       body: _loading
-          ? const OrbitLoader(message: 'Loading…')
+          ? OrbitLoader(message: context.tr(ref, 'learn_loading', 'Loading…'))
           : SafeArea(
               child: ListView(
                 padding: const EdgeInsets.all(MitraSpacing.lg),
                 children: [
                   Text(
-                    'Under the Digital Personal Data Protection Act, 2023, you '
+                    context.tr(ref, 'legal_under_the_digital_personal_data_prot', 'Under the Digital Personal Data Protection Act, 2023, you '
                     'may contact the officers below with any concern about your '
-                    'personal data.',
+                    'personal data.'),
                     style: TextStyle(
                         fontFamily: 'Mukta',
                         fontSize: 13,

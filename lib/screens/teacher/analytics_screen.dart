@@ -37,29 +37,29 @@ class AnalyticsScreen extends ConsumerWidget {
           Expanded(
             child: ListView(
               padding: const EdgeInsets.all(MitraSpacing.lg),
-              children: const [
+              children: [
                 _AnalyticsCard(
-                    title: 'Class Average',
+                    title: context.tr(ref, 'teacher_class_average', 'Class Average'),
                     value: '74%',
-                    subtitle: '+3% from last week',
+                    subtitle: context.tr(ref, 'teacher_3_from_last_week', '+3% from last week'),
                     positive: true),
                 SizedBox(height: 12),
                 _AnalyticsCard(
-                    title: 'Quiz Completion Rate',
+                    title: context.tr(ref, 'teacher_quiz_completion_rate', 'Quiz Completion Rate'),
                     value: '63%',
-                    subtitle: 'Target: 80%',
+                    subtitle: context.tr(ref, 'teacher_target_80', 'Target: 80%'),
                     positive: false),
                 SizedBox(height: 12),
                 _AnalyticsCard(
-                    title: 'AR Sessions This Week',
+                    title: context.tr(ref, 'teacher_ar_sessions_this_week', 'AR Sessions This Week'),
                     value: '128',
-                    subtitle: '+22% from last week',
+                    subtitle: context.tr(ref, 'teacher_22_from_last_week', '+22% from last week'),
                     positive: true),
                 SizedBox(height: 12),
                 _AnalyticsCard(
-                    title: 'Students Active Today',
+                    title: context.tr(ref, 'teacher_students_active_today', 'Students Active Today'),
                     value: '31/42',
-                    subtitle: '74% attendance',
+                    subtitle: context.tr(ref, 'teacher_74_attendance', '74% attendance'),
                     positive: true),
               ],
             ),

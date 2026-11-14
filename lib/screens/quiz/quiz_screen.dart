@@ -654,7 +654,7 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
                                               .withValues(alpha: 0.30),
                                           width: 2),
                                     ),
-                                    child: const FittedBox(
+                                    child: FittedBox(
                                       fit: BoxFit.scaleDown,
                                       alignment: Alignment.center,
                                       child: Column(
@@ -666,7 +666,7 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
                                               style: TextStyle(fontSize: 80)),
                                           SizedBox(height: 16),
                                           Text(
-                                            'WRONG ANSWER!',
+                                            context.tr(ref, 'quiz_wrong_answer', 'WRONG ANSWER!'),
                                             style: TextStyle(
                                               fontFamily: 'Baloo2',
                                               fontSize: 42,
@@ -705,9 +705,9 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
                       child: Text(
                         _canAdvance
                             ? (_current < _questions.length - 1
-                                ? 'Next Question →'
-                                : 'See Results →')
-                            : 'Read explanation to continue...',
+                                ? context.tr(ref, 'quiz_next_question', 'Next Question →')
+                                : context.tr(ref, 'quiz_see_results', 'See Results →'))
+                            : context.tr(ref, 'quiz_read_explanation_to_continue', 'Read explanation to continue...'),
                         style: TextStyle(
                             fontFamily: 'Baloo2',
                             fontWeight: FontWeight.w700,
@@ -732,7 +732,7 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
                     ),
                     alignment: Alignment.center,
                     child: Text(
-                      'Select an answer',
+                      context.tr(ref, 'quiz_select_an_answer', 'Select an answer'),
                       style: TextStyle(
                           fontFamily: 'Baloo2',
                           fontWeight: FontWeight.w600,

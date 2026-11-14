@@ -7,6 +7,7 @@ import '../widgets/mitra_glass_card.dart';
 import '../widgets/mitra_scaffold.dart';
 import '../../constants/colors.dart';
 
+import '../providers/tr_ext.dart';
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
@@ -19,7 +20,7 @@ class SettingsScreen extends ConsumerWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         title: Text(
-          'App Settings',
+          context.tr(ref, 'settings_app_settings', 'App Settings'),
           style: TextStyle(
               fontFamily: 'Baloo2',
               color: ThemeHelper.textPrimary(activeTheme),
@@ -33,8 +34,8 @@ class SettingsScreen extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // ── Appearance ────────────────────────────
-            const Text(
-              'Appearance',
+            Text(
+              context.tr(ref, 'settings_appearance', 'Appearance'),
               style: TextStyle(
                 fontFamily: 'Baloo2',
                 fontSize: 24,
@@ -43,8 +44,8 @@ class SettingsScreen extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 8),
-            const Text(
-              'Choose your preferred visual theme. This will apply to all screens instantly.',
+            Text(
+              context.tr(ref, 'settings_choose_your_preferred_visual_theme_t', 'Choose your preferred visual theme. This will apply to all screens instantly.'),
               style: TextStyle(fontFamily: 'Mukta', color: Colors.white70),
             ),
             const SizedBox(height: 16),
@@ -69,8 +70,8 @@ class SettingsScreen extends ConsumerWidget {
             const SizedBox(height: 24),
 
             // ── Class ─────────────────────────────────
-            const Text(
-              'Class',
+            Text(
+              context.tr(ref, 'step_class', 'Class'),
               style: TextStyle(
                 fontFamily: 'Baloo2',
                 fontSize: 24,
@@ -79,8 +80,8 @@ class SettingsScreen extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 8),
-            const Text(
-              'Your class is locked for 90 days after selection.',
+            Text(
+              context.tr(ref, 'settings_your_class_is_locked_for_90', 'Your class is locked for 90 days after selection.'),
               style: TextStyle(fontFamily: 'Mukta', color: Colors.white70),
             ),
             const SizedBox(height: 12),
@@ -97,14 +98,14 @@ class SettingsScreen extends ConsumerWidget {
 // Class Change Tile
 // ════════════════════════════════════════════════════════════
 
-class _ClassChangeTile extends StatefulWidget {
+class _ClassChangeTile extends ConsumerStatefulWidget {
   const _ClassChangeTile();
 
   @override
-  State<_ClassChangeTile> createState() => _ClassChangeTileState();
+  ConsumerState<_ClassChangeTile> createState() => _ClassChangeTileState();
 }
 
-class _ClassChangeTileState extends State<_ClassChangeTile> {
+class _ClassChangeTileState extends ConsumerState<_ClassChangeTile> {
   bool _locked = true;
   bool _loading = true;
   String _daysLeft = '';
@@ -151,7 +152,7 @@ class _ClassChangeTileState extends State<_ClassChangeTile> {
       setState(() {
         _locked = true;
         _loading = false;
-        _daysLeft = '$remaining days remaining';
+        _daysLeft = ref.trpNow('settings_remaining_days_remaining', '{remaining} days remaining', {'remaining': '$remaining'});
       });
     }
   }
@@ -209,7 +210,7 @@ class _ClassChangeTileState extends State<_ClassChangeTile> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Change Class',
+                    context.tr(ref, 'settings_change_class', 'Change Class'),
                     style: TextStyle(
                       fontFamily: 'Baloo2',
                       fontWeight: FontWeight.w700,
@@ -219,8 +220,8 @@ class _ClassChangeTileState extends State<_ClassChangeTile> {
                   ),
                   Text(
                     _locked
-                        ? '🔒  Locked · $_daysLeft'
-                        : 'Tap to select a new class',
+                        ? context.trp(ref, 'settings_locked_daysleft', '🔒  Locked · {daysLeft}', {'daysLeft': '$_daysLeft'})
+                        : context.tr(ref, 'settings_tap_to_select_a_new_class', 'Tap to select a new class'),
                     style: TextStyle(
                       fontFamily: 'Mukta',
                       fontSize: 12,

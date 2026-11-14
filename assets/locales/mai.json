@@ -39,9 +39,7 @@
   "learn_no_content": "एखन धरि कोनो सामग्री उपलब्ध नहि अछि।",
   "learn_no_quiz": "एखन धरि कोनो प्रश्नोत्तरी नहि भेल अछि",
   "learn_location_needed": "स्थानक आवश्यकता अछि",
-  "learn_location_needed_body": "अहाँक राज्यक लेल सही सामग्री देखाबय लेल हमरा सभकेँ अहाँक अनुमानित स्थानक आवश्यकता अछि।",
   "learn_not_available_here": "एतऽ एखन धरि उपलब्ध नहि अछि",
-  "learn_not_available_body": "अहाँक क्षेत्रक सामग्री शीघ्रहि आबि रहल अछि।",
   "learn_start_quiz": "प्रश्नोत्तरी शुरू करू",
   "learn_view_ar": "एआर मे देखू",
   "learn_watch_video": "वीडियो देखू",
@@ -51,7 +49,6 @@
   "quiz_submit": "जमा करू",
   "quiz_next": "अगिला",
   "quiz_finish": "समाप्त करू",
-  "quiz_no_quiz_body": "एहि विषय पर एखन धरि कोनो प्रश्नोत्तरी नहि भेल अछि। शीघ्र फेरसँ जाँच करू।",
   "quiz_result_title": "अहाँक परिणाम",
   "quiz_result_score": "{score}/{total}",
   "quiz_back_home": "घर वापसी",
@@ -133,5 +130,10 @@
   "ar_how_to_control_the_model": "मॉडलकेँ कोना नियंत्रित करब",
   "ar_use_the_buttons_at_the_botto": "नीचाँ स्थित बटनक प्रयोग करू",
   "ar_tip_tap_the_model_to_replay_": "टिपः कथनकेँ पुनः बजाबऽ लेल मॉडलकेँ दबाउ।",
-  "ar_got_it": "भेटल"
+  "ar_got_it": "भेटल",
+  "txt_home": "घर",
+  "txt_students": "छात्रसभ",
+  "txt_analytics": "विश्लेषण",
+  "txt_profile": "प्रोफाइल",
+  "txt_move_your_phone_slowly_to_find_the_floor": "जमीन तकबाक लेल अपन फोनकेँ धीरे-धीरे घुमाउ"
 }

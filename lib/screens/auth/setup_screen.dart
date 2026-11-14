@@ -31,6 +31,7 @@ import '../../widgets/mitra_scaffold.dart';
 import '../../stores/auth_store.dart';
 import '../../providers/telemetry_provider.dart';
 import '../../services/telemetry_enums.dart';
+import '../../providers/tr_ext.dart';
 import '../../providers/translation_provider.dart'; // ✨ OTA TRANSLATION ENGINE
 
 // ── Constants ────────────────────────────────────────────────
@@ -219,7 +220,7 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
     final demographicsOk = widget.classOnly ||
         (_isValidGender(_gender) && _isValidMobileOwner(_mobileBelongsTo));
     if (sanitisedName.isEmpty || !_isValidClass(_cls) || !demographicsOk) {
-      setState(() => _error = 'Please fill all fields correctly.');
+      setState(() => _error = ref.trNow('auth_please_fill_all_fields_correctly', 'Please fill all fields correctly.'));
       return;
     }
 
@@ -306,10 +307,10 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
       }
     } on TimeoutException {
       if (opId != _saveOpId || !mounted) return;
-      setState(() => _error = 'Server is taking too long. Please try again.');
+      setState(() => _error = ref.trNow('auth_server_is_taking_too_long_please', 'Server is taking too long. Please try again.'));
     } catch (_) {
       if (opId != _saveOpId || !mounted) return;
-      setState(() => _error = 'Could not save profile. Please try again.');
+      setState(() => _error = ref.trNow('auth_could_not_save_profile_please_try', 'Could not save profile. Please try again.'));
     } finally {
       if (opId == _saveOpId && mounted) setState(() => _saving = false);
     }
@@ -524,7 +525,7 @@ class _StepIndicator extends StatelessWidget {
 // Step 1: Profile
 // ════════════════════════════════════════════════════════════
 
-class _ProfileStep extends StatelessWidget {
+class _ProfileStep extends ConsumerWidget {
   final TextEditingController nameController;
   final String selectedAvatar;
   final ValueChanged<String> onAvatarTap;
@@ -544,11 +545,11 @@ class _ProfileStep extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Choose Your Avatar',
+        Text(context.tr(ref, 'auth_choose_your_avatar', 'Choose Your Avatar'),
             style: TextStyle(
               fontFamily: 'Baloo2',
               fontWeight: FontWeight.w700,
@@ -568,7 +569,7 @@ class _ProfileStep extends StatelessWidget {
               .toList(),
         ),
         const SizedBox(height: MitraSpacing.lg),
-        Text('Your Name',
+        Text(context.tr(ref, 'auth_your_name', 'Your Name'),
             style: TextStyle(
               fontFamily: 'Mukta',
               fontWeight: FontWeight.w600,
@@ -582,7 +583,7 @@ class _ProfileStep extends StatelessWidget {
           maxLength: _kMaxNameLength,
           style: const TextStyle(fontFamily: 'Mukta', color: Colors.white),
           decoration: InputDecoration(
-            hintText: 'Full name',
+            hintText: context.tr(ref, 'auth_full_name', 'Full name'),
             hintStyle: const TextStyle(color: Colors.white54),
             counterStyle: const TextStyle(color: Colors.white38, fontSize: 11),
             filled: true,
@@ -606,16 +607,16 @@ class _ProfileStep extends StatelessWidget {
         ),
         const SizedBox(height: MitraSpacing.lg),
         _LabeledDropdown(
-          label: 'Gender',
-          hint: 'Select gender',
+          label: context.tr(ref, 'auth_gender', 'Gender'),
+          hint: context.tr(ref, 'auth_select_gender', 'Select gender'),
           value: selectedGender,
           options: _kGenders,
           onChanged: onGenderSelect,
         ),
         const SizedBox(height: MitraSpacing.lg),
         _LabeledDropdown(
-          label: 'Mobile belongs to',
-          hint: 'Select relation',
+          label: context.tr(ref, 'auth_mobile_belongs_to', 'Mobile belongs to'),
+          hint: context.tr(ref, 'auth_select_relation', 'Select relation'),
           value: selectedMobileOwner,
           options: _kMobileOwners,
           onChanged: onMobileOwnerSelect,
@@ -629,7 +630,7 @@ class _ProfileStep extends StatelessWidget {
 // Labeled Dropdown (Gender / Mobile-belongs-to)
 // ════════════════════════════════════════════════════════════
 
-class _LabeledDropdown extends StatelessWidget {
+class _LabeledDropdown extends ConsumerWidget {
   final String label;
   final String hint;
   final String value;
@@ -645,7 +646,7 @@ class _LabeledDropdown extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -691,7 +692,7 @@ class _LabeledDropdown extends StatelessWidget {
           items: options
               .map((opt) => DropdownMenuItem<String>(
                     value: opt,
-                    child: Text(opt),
+                    child: Text(context.trText(ref, opt)),
                   ))
               .toList(),
           onChanged: (val) {
@@ -703,7 +704,7 @@ class _LabeledDropdown extends StatelessWidget {
   }
 }
 
-class _AvatarTile extends StatelessWidget {
+class _AvatarTile extends ConsumerWidget {
   final String emoji;
   final bool isSelected;
   final VoidCallback onTap;
@@ -712,10 +713,10 @@ class _AvatarTile extends StatelessWidget {
       {required this.emoji, required this.isSelected, required this.onTap});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Semantics(
       button: true,
-      label: 'Avatar $emoji${isSelected ? ", selected" : ""}',
+      label: context.trp(ref, 'auth_avatar_emoji', 'Avatar {emoji}', {'emoji': emoji}) + (isSelected ? context.tr(ref, 'auth_selected_suffix', ', selected') : ''),
       selected: isSelected,
       child: Material(
         color: Colors.transparent,
@@ -751,11 +752,11 @@ class _AvatarTile extends StatelessWidget {
 // Step 3: Class
 // ════════════════════════════════════════════════════════════
 
-class _ClassHeader extends StatelessWidget {
+class _ClassHeader extends ConsumerWidget {
   const _ClassHeader();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -769,7 +770,7 @@ class _ClassHeader extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Select your Class',
+          Text(context.tr(ref, 'auth_select_your_class', 'Select your Class'),
               style: TextStyle(
                 fontFamily: 'Baloo2',
                 fontWeight: FontWeight.w900,
@@ -786,14 +787,14 @@ class _ClassHeader extends StatelessWidget {
               border: Border.all(
                   color: MitraColors.saffron.withValues(alpha: 0.35)),
             ),
-            child: const Row(
+            child: Row(
               children: [
                 Icon(Icons.lock_clock_outlined,
                     color: MitraColors.saffron, size: 18),
                 SizedBox(width: 10),
                 Expanded(
                     child: Text(
-                  'Once selected, your class will be locked for 90 days. Choose carefully.',
+                  context.tr(ref, 'auth_once_selected_your_class_will_be', 'Once selected, your class will be locked for 90 days. Choose carefully.'),
                   style: TextStyle(
                     fontFamily: 'Mukta',
                     fontSize: 13,
@@ -835,7 +836,7 @@ class _ClassGrid extends StatelessWidget {
   }
 }
 
-class _ClassTile extends StatelessWidget {
+class _ClassTile extends ConsumerWidget {
   final String number;
   final bool isSelected;
   final VoidCallback onTap;
@@ -844,10 +845,10 @@ class _ClassTile extends StatelessWidget {
       {required this.number, required this.isSelected, required this.onTap});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Semantics(
       button: true,
-      label: 'Class $number${isSelected ? ", selected" : ""}',
+      label: context.trp(ref, 'auth_class_number', 'Class {number}', {'number': '$number'}) + (isSelected ? context.tr(ref, 'auth_selected_suffix', ', selected') : ''),
       selected: isSelected,
       child: Material(
         color: Colors.transparent,

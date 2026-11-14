@@ -34,7 +34,7 @@ class TeacherHomeScreen extends ConsumerWidget {
                                   fontFamily: 'Mukta',
                                   fontSize: 12,
                                   color: MitraColors.textMuted)),
-                          Text(user?.fullName ?? 'Teacher',
+                          Text(user?.fullName ?? context.tr(ref, 'auth_teacher', 'Teacher'),
                               style: const TextStyle(
                                   fontFamily: 'Baloo2',
                                   fontWeight: FontWeight.w800,
@@ -52,27 +52,27 @@ class TeacherHomeScreen extends ConsumerWidget {
                   ],
                 ),
               ),
-              const Padding(
+              Padding(
                 padding: EdgeInsets.all(MitraSpacing.lg),
                 child: Column(children: [
                   Row(children: [
                     Expanded(
                         child: _MetricCard(
-                            emoji: '👥', label: 'Students', value: '42')),
+                            emoji: '👥', label: context.tr(ref, 'teacher_students', 'Students'), value: '42')),
                     SizedBox(width: 12),
                     Expanded(
                         child: _MetricCard(
-                            emoji: '📊', label: 'Avg Score', value: '74%')),
+                            emoji: '📊', label: context.tr(ref, 'teacher_avg_score', 'Avg Score'), value: '74%')),
                   ]),
                   SizedBox(height: 12),
                   Row(children: [
                     Expanded(
                         child: _MetricCard(
-                            emoji: '📝', label: 'Quizzes', value: '8')),
+                            emoji: '📝', label: context.tr(ref, 'home_quizzes', 'Quizzes'), value: '8')),
                     SizedBox(width: 12),
                     Expanded(
                         child: _MetricCard(
-                            emoji: '🏆', label: 'Completion', value: '63%')),
+                            emoji: '🏆', label: context.tr(ref, 'teacher_completion', 'Completion'), value: '63%')),
                   ]),
                 ]),
               ),

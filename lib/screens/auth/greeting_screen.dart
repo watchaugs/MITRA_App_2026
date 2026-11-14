@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../stores/auth_store.dart';
 import '../../widgets/mitra_scaffold.dart';
 import '../../constants/colors.dart';
+import '../../providers/tr_ext.dart';
 import 'package:lottie/lottie.dart'; // ✨ Added Lottie Engine
 
 class GreetingScreen extends ConsumerStatefulWidget {
@@ -38,7 +39,7 @@ class _GreetingScreenState extends ConsumerState<GreetingScreen>
     final user = ref.read(currentUserProvider);
     _displayName = (user?.fullName.trim().isNotEmpty ?? false)
         ? user!.fullName.trim()
-        : 'Student';
+        : ref.trNow('common_student', 'Student');
 
     // 3-second explicit animation timeline
     _controller = AnimationController(
@@ -137,7 +138,7 @@ class _GreetingScreenState extends ConsumerState<GreetingScreen>
                               child: ScaleTransition(
                                 scale: _namasteScale,
                                 child: Text(
-                                  'NAMASTE 🙏🏽',
+                                  context.tr(ref, 'auth_namaste', 'NAMASTE 🙏🏽'),
                                   textAlign: TextAlign.center,
                                   style: TextStyle(
                                     fontFamily: 'Mukta',

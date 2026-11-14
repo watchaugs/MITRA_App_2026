@@ -9,6 +9,7 @@ import '../../../stores/auth_store.dart';
 import '../../../providers/app_prefs.dart';
 import '../../../services/telemetry_service.dart';
 
+import '../../../providers/tr_ext.dart';
 /// Geofenced sponsor ads from the dashboard, scoped to the student's state.
 /// Empty on error or when there are none (interstitial then just won't show).
 final sponsorAdsProvider =
@@ -102,16 +103,16 @@ bool _looksLikeVideo(String url) {
       u.endsWith('.m4v');
 }
 
-class _SponsorInterstitial extends StatefulWidget {
+class _SponsorInterstitial extends ConsumerStatefulWidget {
   final Map<String, dynamic> ad;
   final bool dataSaver;
   const _SponsorInterstitial({required this.ad, this.dataSaver = false});
 
   @override
-  State<_SponsorInterstitial> createState() => _SponsorInterstitialState();
+  ConsumerState<_SponsorInterstitial> createState() => _SponsorInterstitialState();
 }
 
-class _SponsorInterstitialState extends State<_SponsorInterstitial> {
+class _SponsorInterstitialState extends ConsumerState<_SponsorInterstitial> {
   // Dashboard-controlled popup behaviour (per campaign), with safe defaults.
   late final int _closeAfter = _intFrom(widget.ad['close_after_seconds'], 10);
   late final int _autoDismiss = _intFrom(widget.ad['auto_dismiss_seconds'], 0);
@@ -140,7 +141,7 @@ class _SponsorInterstitialState extends State<_SponsorInterstitial> {
       .toString();
 
   String get _title =>
-      (widget.ad['title'] ?? widget.ad['name'] ?? 'Announcement').toString();
+      (widget.ad['title'] ?? widget.ad['name'] ?? ref.trNow('student_announcement', 'Announcement')).toString();
 
   bool get _canClose => _secondsLeft <= 0;
 
@@ -267,7 +268,7 @@ class _SponsorInterstitialState extends State<_SponsorInterstitial> {
                     color: Colors.black.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: Text('📢 Notice',
+                  child: Text(context.tr(ref, 'student_notice', '📢 Notice'),
                       style: TextStyle(color: Colors.white70, fontSize: 11)),
                 ),
               ),

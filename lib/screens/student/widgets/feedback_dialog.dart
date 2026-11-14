@@ -4,6 +4,7 @@ import '../../../constants/colors.dart';
 import '../../../services/api_service.dart';
 import '../../../stores/auth_store.dart';
 
+import '../../../providers/tr_ext.dart';
 /// Shows the MITRA feedback / NPS sheet. Call from any button:
 ///   showFeedbackDialog(context, ref, screen: 'settings');
 Future<void> showFeedbackDialog(
@@ -17,15 +18,15 @@ Future<void> showFeedbackDialog(
   );
 }
 
-class _FeedbackDialog extends StatefulWidget {
+class _FeedbackDialog extends ConsumerStatefulWidget {
   final WidgetRef parentRef;
   final String screen;
   const _FeedbackDialog({required this.parentRef, required this.screen});
   @override
-  State<_FeedbackDialog> createState() => _FeedbackDialogState();
+  ConsumerState<_FeedbackDialog> createState() => _FeedbackDialogState();
 }
 
-class _FeedbackDialogState extends State<_FeedbackDialog> {
+class _FeedbackDialogState extends ConsumerState<_FeedbackDialog> {
   int? _score;
   final _comment = TextEditingController();
   bool _sending = false;
@@ -55,7 +56,7 @@ class _FeedbackDialogState extends State<_FeedbackDialog> {
     if (!mounted) return;
     Navigator.of(context).maybePop();
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Thank you for your feedback!')),
+      SnackBar(content: Text(ref.trNow('student_thank_you_for_your_feedback', 'Thank you for your feedback!'))),
     );
   }
 
@@ -66,7 +67,7 @@ class _FeedbackDialogState extends State<_FeedbackDialog> {
 
     return AlertDialog(
       backgroundColor: cs.surface,
-      title: Text('Share your feedback',
+      title: Text(context.tr(ref, 'student_share_your_feedback', 'Share your feedback'),
           style: TextStyle(
               fontFamily: 'Mukta',
               fontWeight: FontWeight.w700,
@@ -76,7 +77,7 @@ class _FeedbackDialogState extends State<_FeedbackDialog> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('How likely are you to recommend MITRA to a friend?',
+            Text(context.tr(ref, 'student_how_likely_are_you_to_recomm', 'How likely are you to recommend MITRA to a friend?'),
                 style: TextStyle(
                     fontFamily: 'Mukta',
                     fontSize: 14,
@@ -115,10 +116,10 @@ class _FeedbackDialogState extends State<_FeedbackDialog> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Not likely',
+                Text(context.tr(ref, 'student_not_likely', 'Not likely'),
                     style: TextStyle(
                         fontSize: 11, color: onSurface.withValues(alpha: 0.5))),
-                Text('Very likely',
+                Text(context.tr(ref, 'student_very_likely', 'Very likely'),
                     style: TextStyle(
                         fontSize: 11, color: onSurface.withValues(alpha: 0.5))),
               ],
@@ -130,7 +131,7 @@ class _FeedbackDialogState extends State<_FeedbackDialog> {
               maxLength: 500,
               style: TextStyle(color: onSurface),
               decoration: InputDecoration(
-                hintText: "Anything you'd like to tell us? (optional)",
+                hintText: context.tr(ref, 'student_anything_youd_like_to_tell_us', "Anything you'd like to tell us? (optional)"),
                 hintStyle: TextStyle(color: onSurface.withValues(alpha: 0.4)),
                 border: const OutlineInputBorder(),
               ),
@@ -141,7 +142,7 @@ class _FeedbackDialogState extends State<_FeedbackDialog> {
       actions: [
         TextButton(
             onPressed: _sending ? null : () => Navigator.of(context).maybePop(),
-            child: Text('Cancel')),
+            child: Text(context.tr(ref, 'btn_cancel', 'Cancel'))),
         TextButton(
           onPressed: (_score == null || _sending) ? null : _send,
           child: _sending
@@ -149,7 +150,7 @@ class _FeedbackDialogState extends State<_FeedbackDialog> {
                   width: 16,
                   height: 16,
                   child: CircularProgressIndicator(strokeWidth: 2))
-              : Text('Send',
+              : Text(context.tr(ref, 'student_send', 'Send'),
                   style: TextStyle(
                       color: MitraColors.saffron, fontWeight: FontWeight.w700)),
         ),

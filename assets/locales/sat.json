@@ -39,9 +39,7 @@
   "learn_no_content": "ᱱᱤᱛ ᱦᱟᱹᱵᱤᱡ ᱡᱟᱦᱟᱱ ᱛᱟᱹᱞᱤᱠᱟ ᱵᱟᱝ ᱧᱟᱢ ᱟᱠᱟᱱᱟ ᱾",
   "learn_no_quiz": "ᱱᱤᱛᱦᱚᱸ ᱡᱟᱦᱟᱱ ᱠᱩᱭᱡ ᱵᱟᱝ ᱦᱩᱭ ᱟᱠᱟᱱᱟ ᱾",
   "learn_location_needed": "ᱛᱟᱦᱮᱸᱱ ᱴᱷᱟᱶ ᱞᱟᱹᱠᱛᱤ ᱠᱟᱱᱟ ᱾",
-  "learn_location_needed_body": "ᱟᱢᱨᱮᱱ ᱯᱚᱱᱚᱛ ᱞᱟᱹᱜᱤᱫ ᱱᱟᱯᱟᱭ ᱛᱚᱛᱩᱛᱚ ᱩᱫᱩᱜ ᱞᱟᱹᱜᱤᱫ ᱟᱢᱟᱜ ᱟᱭᱢᱟᱜᱟᱱ ᱴᱷᱟᱶ ᱞᱟᱹᱠᱛᱤ ᱠᱟᱱᱟ ᱾",
   "learn_not_available_here": "ᱱᱤᱛ ᱦᱟᱹᱵᱤᱡ ᱱᱚᱶᱟ ᱴᱷᱟᱶ ᱨᱮ ᱵᱟᱝ ᱧᱟᱢᱚᱜᱼᱟ ᱾",
-  "learn_not_available_body": "ᱟᱢᱟᱜ ᱴᱚᱴᱷᱟ ᱞᱟᱹᱜᱤᱫ ᱛᱟᱹᱞᱤᱠᱟ ᱞᱚᱜᱚᱱ ᱦᱮᱡᱚᱜ ᱠᱟᱱᱟ ᱾",
   "learn_start_quiz": "ᱠᱩᱭᱤᱡ ᱮᱦᱚᱵ ᱢᱮ ᱾",
   "learn_view_ar": "ᱮ ᱟᱨ ᱨᱮ ᱧᱮᱞ ᱢᱮ ᱾",
   "learn_watch_video": "ᱵᱷᱤᱰᱤᱣ ᱧᱮᱞ ᱢᱮ ᱾",
@@ -51,7 +49,6 @@
   "quiz_submit": "ᱥᱟᱨᱢᱤᱴ ᱢᱮ ᱾",
   "quiz_next": "ᱛᱟᱭᱚᱢ ᱫᱟᱨᱟᱢ ᱾",
   "quiz_finish": "ᱢᱩᱪᱟᱹᱫ ᱢᱮ ᱾",
-  "quiz_no_quiz_body": "ᱱᱚᱶᱟ ᱛᱟᱹᱞᱤᱠᱟ ᱨᱮ ᱱᱤᱛ ᱦᱟᱹᱵᱤᱡ ᱡᱟᱦᱟᱱ ᱠᱩᱭᱡ ᱵᱟᱝ ᱢᱮᱱᱟᱜᱼᱟ ᱾ ᱟᱹᱰᱤ ᱞᱚᱜᱚᱱ ᱧᱮᱞ ᱢᱮ ᱾",
   "quiz_result_title": "ᱟᱢᱟᱜ ᱯᱚᱨᱤᱢᱟᱱ",
   "quiz_result_score": "{score}/{total}",
   "quiz_back_home": "ᱚᱲᱟᱜ ᱨᱩᱣᱟᱹᱲ ᱢᱮ ᱾",
@@ -133,5 +130,10 @@
   "ar_how_to_control_the_model": "ᱢᱳᱫᱮᱞ ᱫᱚ ᱪᱮᱫ ᱞᱮᱠᱟᱛᱮ ᱥᱟᱢᱲᱟᱣ ᱦᱩᱭᱩᱜᱼᱟ ᱾",
   "ar_use_the_buttons_at_the_botto": "ᱞᱟᱛᱟᱨ ᱨᱮᱭᱟᱜ ᱵᱳᱛᱟᱢ ᱠᱚ ᱵᱮᱣᱦᱟᱨ ᱢᱮ ᱾",
   "ar_tip_tap_the_model_to_replay_": "ᱛᱟᱹᱞᱤᱠᱟ ᱫᱚ ᱦᱩᱭᱩᱜ ᱠᱟᱱᱟ, ᱵᱚᱨᱱᱚᱱ ᱫᱚ ᱟᱨᱦᱚᱸ ᱩᱫᱩᱜ ᱞᱟᱹᱜᱤᱫ ماڈل ᱫᱚ ᱴᱮᱯ ᱢᱮ ᱾",
-  "ar_got_it": "ᱧᱟᱢ ᱟᱠᱟᱫᱟ ᱾"
+  "ar_got_it": "ᱧᱟᱢ ᱟᱠᱟᱫᱟ ᱾",
+  "txt_home": "ᱚᱲᱟᱜ ᱾",
+  "txt_students": "ᱥᱮᱪᱮᱫᱤᱭᱟᱹ ᱠᱚ ᱾",
+  "txt_analytics": "ᱚᱱᱚᱞᱤᱠᱤᱥ ᱾",
+  "txt_profile": "ᱯᱚᱨᱯᱷᱟᱭᱤᱞ",
+  "txt_move_your_phone_slowly_to_find_the_floor": "ᱯᱷᱚᱞᱟᱨ ᱧᱟᱢ ᱞᱟᱹᱜᱤᱫ ᱛᱮ ᱟᱢᱟᱜ ᱯᱷᱚᱱ ᱫᱚ ᱞᱟᱛᱟᱨ ᱥᱮᱫ ᱪᱟᱞᱟᱣ ᱢᱮ ᱾"
 }

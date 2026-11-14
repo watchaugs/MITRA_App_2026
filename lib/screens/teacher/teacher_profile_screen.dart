@@ -32,7 +32,7 @@ class TeacherProfileScreen extends ConsumerWidget {
                         fontWeight: FontWeight.w800,
                         fontSize: 22,
                         color: MitraColors.textPrimary)),
-                Text('Teacher · ${user?.assignedState ?? ''}',
+                Text(context.trp(ref, 'teacher_teacher_v1', 'Teacher · {v1}', {'v1': '${user?.assignedState ?? ''}'}),
                     style: const TextStyle(
                         fontFamily: 'Mukta',
                         fontSize: 13,
@@ -42,9 +42,9 @@ class TeacherProfileScreen extends ConsumerWidget {
             Padding(
               padding: const EdgeInsets.all(MitraSpacing.lg),
               child: Column(children: [
-                _InfoRow(label: 'Phone', value: user?.phone ?? '—'),
+                _InfoRow(label: context.tr(ref, 'teacher_phone', 'Phone'), value: user?.phone ?? '—'),
                 const SizedBox(height: 12),
-                _InfoRow(label: 'State', value: user?.assignedState ?? '—'),
+                _InfoRow(label: context.tr(ref, 'teacher_state', 'State'), value: user?.assignedState ?? '—'),
                 const SizedBox(height: 24),
                 SizedBox(
                   width: double.infinity,

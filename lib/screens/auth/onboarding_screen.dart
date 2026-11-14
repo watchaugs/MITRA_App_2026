@@ -149,8 +149,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                       alignment: Alignment.center,
                       child: Text(
                         _currentIdx < _slides.length - 1
-                            ? 'Next →'
-                            : 'Get Started →',
+                            ? context.tr(ref, 'auth_next', 'Next →')
+                            : context.tr(ref, 'auth_get_started', 'Get Started →'),
                         // 🚨 FIX: Replaced standard TextStyle with GoogleFonts
                         style: GoogleFonts.baloo2(
                           fontWeight: FontWeight.w700,
@@ -170,12 +170,12 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 }
 
-class _SlideWidget extends StatelessWidget {
+class _SlideWidget extends ConsumerWidget {
   final _Slide slide;
   const _SlideWidget({required this.slide});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -216,9 +216,9 @@ class _SlideWidget extends StatelessWidget {
                       fontSize: 28,
                       color: MitraColors.textPrimary),
                   children: [
-                    TextSpan(text: '${slide.title}\n'),
+                    TextSpan(text: '${context.trText(ref, slide.title)}\n'),
                     TextSpan(
-                        text: slide.titleAccent,
+                        text: context.trText(ref, slide.titleAccent),
                         style: const TextStyle(color: MitraColors.saffron)),
                   ],
                 ),
@@ -227,7 +227,7 @@ class _SlideWidget extends StatelessWidget {
 
               // Body
               Text(
-                slide.body,
+                context.trText(ref, slide.body),
                 textAlign: TextAlign.center,
                 // 🚨 FIX: Replaced standard TextStyle with GoogleFonts
                 style: GoogleFonts.mukta(

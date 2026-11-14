@@ -6,7 +6,9 @@ import 'package:webview_flutter_android/webview_flutter_android.dart';
 import '../../constants/colors.dart';
 import '../../services/telemetry_service.dart';
 
-class ArMarkerScreen extends StatefulWidget {
+import '../../providers/tr_ext.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+class ArMarkerScreen extends ConsumerStatefulWidget {
   final String topicId;
   final String? targetsUrl; // the compiled .mind target (?mind=)
   final String? modelUrl; // the model GLB (?glb=)
@@ -19,10 +21,10 @@ class ArMarkerScreen extends StatefulWidget {
   });
 
   @override
-  State<ArMarkerScreen> createState() => _ArMarkerScreenState();
+  ConsumerState<ArMarkerScreen> createState() => _ArMarkerScreenState();
 }
 
-class _ArMarkerScreenState extends State<ArMarkerScreen> {
+class _ArMarkerScreenState extends ConsumerState<ArMarkerScreen> {
   WebViewController? _controller;
   String? _error;
   DateTime? _arStart; // for marker-AR duration telemetry
@@ -32,7 +34,7 @@ class _ArMarkerScreenState extends State<ArMarkerScreen> {
   void initState() {
     super.initState();
     if ((widget.targetsUrl ?? '').isEmpty || (widget.modelUrl ?? '').isEmpty) {
-      _error = 'This lesson has no textbook-page target to scan.';
+      _error = ref.trNow('ar_this_lesson_has_no_textbook_page', 'This lesson has no textbook-page target to scan.');
       return;
     }
     // Marker-AR session telemetry → feeds the report's MARKER_* tokens.
@@ -83,7 +85,7 @@ class _ArMarkerScreenState extends State<ArMarkerScreen> {
       ..setNavigationDelegate(NavigationDelegate(
         onWebResourceError: (err) {
           if (mounted) {
-            setState(() => _error = 'Could not start AR: ${err.description}');
+            setState(() => _error = ref.trpNow('ar_could_not_start_ar_description', 'Could not start AR: {description}', {'description': '${err.description}'}));
           }
         },
       ));
@@ -139,8 +141,8 @@ class _ArMarkerScreenState extends State<ArMarkerScreen> {
                   color: MitraColors.saffron.withValues(alpha: 0.9),
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: const Text(
-                  '📄 Scan textbook page',
+                child: Text(
+                  context.tr(ref, 'ar_scan_textbook_page_2', '📄 Scan textbook page'),
                   style: TextStyle(
                       color: Colors.black87,
                       fontSize: 12,

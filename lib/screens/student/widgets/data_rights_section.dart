@@ -26,7 +26,7 @@ class _DataRightsSectionState extends ConsumerState<DataRightsSection> {
     final user = ref.read(currentUserProvider);
     final uid = user?.id;
     if (uid == null) {
-      _toast('Please sign in again.');
+      _toast(ref.trNow('student_please_sign_in_again', 'Please sign in again.'));
       return;
     }
     setState(() => _submitting = true);
@@ -41,10 +41,10 @@ class _DataRightsSectionState extends ConsumerState<DataRightsSection> {
         'class': user?.classGrade,
       });
       _toast(type == 'deletion'
-          ? 'Deletion request submitted. Our team will process it per DPDPA.'
-          : 'Data copy request submitted. We will prepare your data per DPDPA.');
+          ? ref.trNow('student_deletion_request_submitted_our_team', 'Deletion request submitted. Our team will process it per DPDPA.')
+          : ref.trNow('student_data_copy_request_submitted_we_will', 'Data copy request submitted. We will prepare your data per DPDPA.'));
     } catch (_) {
-      _toast('Could not submit. Please try again.');
+      _toast(ref.trNow('student_could_not_submit_please_try_again', 'Could not submit. Please try again.'));
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -52,12 +52,12 @@ class _DataRightsSectionState extends ConsumerState<DataRightsSection> {
 
   Future<void> _confirmExport() async {
     final ok = await _confirm(
-      title: 'Download my data',
+      title: ref.trNow('student_download_my_data', 'Download my data'),
       message:
-          'We will prepare a copy of your MITRA data (profile and learning '
+          ref.trNow('student_we_will_prepare_a_copy_of', 'We will prepare a copy of your MITRA data (profile and learning '
           'progress) and share it with you. Under the DPDPA you have the right '
-          'to a copy of your personal data.',
-      confirmLabel: 'Request copy',
+          'to a copy of your personal data.'),
+      confirmLabel: ref.trNow('student_request_copy', 'Request copy'),
       danger: false,
     );
     if (ok == true) _submitRequest('export');
@@ -65,13 +65,13 @@ class _DataRightsSectionState extends ConsumerState<DataRightsSection> {
 
   Future<void> _confirmDeletion() async {
     final ok = await _confirm(
-      title: 'Delete my account',
+      title: ref.trNow('student_delete_my_account', 'Delete my account'),
       message:
-          'This requests permanent deletion of your MITRA account and learning '
+          ref.trNow('student_this_requests_permanent_deletion_of', 'This requests permanent deletion of your MITRA account and learning '
           'data (profile, XP, progress, quiz history). This cannot be undone '
           'once processed. Some records may be retained in anonymised form '
-          'where the law requires.',
-      confirmLabel: 'Request deletion',
+          'where the law requires.'),
+      confirmLabel: ref.trNow('student_request_deletion', 'Request deletion'),
       danger: true,
     );
     if (ok == true) _submitRequest('deletion');
@@ -157,10 +157,10 @@ class _DataRightsSectionState extends ConsumerState<DataRightsSection> {
             border: Border.all(color: onSurface.withValues(alpha: 0.12)),
           ),
           child: Column(children: [
-            tile(emoji: '⬇️', label: 'Download my data', onTap: _confirmExport),
+            tile(emoji: '⬇️', label: context.tr(ref, 'student_download_my_data', 'Download my data'), onTap: _confirmExport),
             tile(
                 emoji: '🗑️',
-                label: 'Delete my account',
+                label: context.tr(ref, 'student_delete_my_account', 'Delete my account'),
                 labelColor: MitraColors.crimson,
                 onTap: _confirmDeletion),
           ]),
@@ -169,7 +169,7 @@ class _DataRightsSectionState extends ConsumerState<DataRightsSection> {
         Padding(
           padding: const EdgeInsets.only(left: 4),
           child: Text(
-            'Your rights under the Digital Personal Data Protection Act, 2023.',
+            context.tr(ref, 'student_your_rights_under_the_digital_person', 'Your rights under the Digital Personal Data Protection Act, 2023.'),
             style: TextStyle(
                 fontFamily: 'Mukta',
                 fontSize: 11,

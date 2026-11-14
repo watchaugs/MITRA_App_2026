@@ -16,6 +16,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../theme/theme_provider.dart';
 
+import '../providers/tr_ext.dart';
 // Fixed playful accent colours (kept constant across themes so the buddy always
 // has a splash of fun, on any background).
 const Color _moonGold = Color(0xFFFFB800);
@@ -279,7 +280,7 @@ class OrbitErrorView extends ConsumerWidget {
               const OrbitAnimation(size: 150),
               const SizedBox(height: 18),
               Text(
-                copy.msg,
+                context.trText(ref, copy.msg),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontFamily: 'Mukta',
@@ -290,7 +291,7 @@ class OrbitErrorView extends ConsumerWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                copy.sub,
+                context.trText(ref, copy.sub),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontFamily: 'Mukta',
@@ -307,7 +308,7 @@ class OrbitErrorView extends ConsumerWidget {
                     ElevatedButton.icon(
                       onPressed: onRetry,
                       icon: const Icon(Icons.refresh_rounded, size: 18),
-                      label: const Text('Try again'),
+                      label: Text(context.tr(ref, 'btn_try_again', 'Try again')),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: highlight,
                         foregroundColor: isLight ? Colors.white : Colors.black,
@@ -340,7 +341,7 @@ class OrbitErrorView extends ConsumerWidget {
                             fontWeight: FontWeight.w800,
                             fontSize: 14),
                       ),
-                      child: const Text('Go back'),
+                      child: Text(context.tr(ref, 'common_go_back', 'Go back')),
                     ),
                 ],
               ),
@@ -383,7 +384,7 @@ class OrbitEmptyView extends ConsumerWidget {
             OrbitAnimation(size: size),
             const SizedBox(height: 16),
             Text(
-              copy.msg,
+              context.trText(ref, copy.msg),
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontFamily: 'Mukta',
@@ -394,7 +395,7 @@ class OrbitEmptyView extends ConsumerWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              copy.sub,
+              context.trText(ref, copy.sub),
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontFamily: 'Mukta',

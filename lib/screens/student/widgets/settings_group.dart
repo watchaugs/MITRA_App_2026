@@ -8,6 +8,7 @@ import '../../../constants/colors.dart';
 import '../../../providers/app_prefs.dart';
 import '../../../stores/auth_store.dart';
 
+import '../../../providers/tr_ext.dart';
 class SettingsGroup extends ConsumerWidget {
   const SettingsGroup({super.key});
 
@@ -64,10 +65,10 @@ class SettingsGroup extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // ── App settings ──
-        section('App', [
+        section(context.tr(ref, 'student_app', 'App'), [
           tile(
             emoji: '🔔',
-            label: 'Notifications',
+            label: context.tr(ref, 'profile_notifications', 'Notifications'),
             trailing: Switch(
               value: prefs.notifications,
               onChanged: (v) {
@@ -79,7 +80,7 @@ class SettingsGroup extends ConsumerWidget {
           ),
           tile(
             emoji: '📉',
-            label: 'Reduce video autoplay',
+            label: context.tr(ref, 'student_reduce_video_autoplay', 'Reduce video autoplay'),
             trailing: Switch(
               value: prefs.dataSaver,
               onChanged: (v) =>
@@ -89,36 +90,36 @@ class SettingsGroup extends ConsumerWidget {
         ]),
 
         // ── Progress shortcuts ──
-        section('My Progress', [
+        section(context.tr(ref, 'student_my_progress', 'My Progress'), [
           tile(
               emoji: '🏆',
-              label: 'Achievements',
+              label: context.tr(ref, 'tab_achievements', 'Achievements'),
               onTap: () => context.push('/achievements')),
         ]),
 
         // ── Legal & privacy (Sections 3 + 4) ──
-        section('Legal & Privacy', [
+        section(context.tr(ref, 'student_legal_privacy', 'Legal & Privacy'), [
           tile(
               emoji: '📄',
-              label: 'Privacy Policy',
+              label: context.tr(ref, 'profile_privacy_policy', 'Privacy Policy'),
               onTap: () => context.push('/legal/privacy')),
           tile(
               emoji: '📃',
-              label: 'Terms of Use',
+              label: context.tr(ref, 'profile_terms', 'Terms of Use'),
               onTap: () => context.push('/legal/terms')),
           tile(
               emoji: '⚖️',
-              label: 'Grievance & Data Protection',
+              label: context.tr(ref, 'legal_grievance_data_protection', 'Grievance & Data Protection'),
               onTap: () => context.push('/legal/grievance')),
         ]),
 
         // ── Support ──
-        section('Support', [
+        section(context.tr(ref, 'student_support', 'Support'), [
           tile(
-              emoji: '❓', label: 'Help & FAQ', onTap: () => _showHelp(context)),
+              emoji: '❓', label: context.tr(ref, 'student_help_faq', 'Help & FAQ'), onTap: () => _showHelp(context)),
           tile(
               emoji: '🐞',
-              label: 'Report a problem',
+              label: context.tr(ref, 'student_report_a_problem', 'Report a problem'),
               onTap: () async {
                 final uri = Uri.parse(
                     'mailto:support@mitra.gov.in?subject=MITRA%20App%20Issue');
@@ -126,7 +127,7 @@ class SettingsGroup extends ConsumerWidget {
                   await launchUrl(uri, mode: LaunchMode.externalApplication);
                 }
               }),
-          tile(emoji: 'ℹ️', label: 'About', onTap: () => _showAbout(context)),
+          tile(emoji: 'ℹ️', label: context.tr(ref, 'student_about', 'About'), onTap: () => _showAbout(context)),
         ]),
       ],
     );
@@ -142,20 +143,20 @@ class SettingsGroup extends ConsumerWidget {
         builder: (ctx, scroll) => ListView(
           controller: scroll,
           padding: const EdgeInsets.all(MitraSpacing.lg),
-          children: const [
-            Text('Help & FAQ',
-                style: TextStyle(
+          children: [
+            Text(ctx.trCtx('student_help_faq', 'Help & FAQ'),
+                style: const TextStyle(
                     fontFamily: 'Baloo2',
                     fontWeight: FontWeight.w800,
                     fontSize: 20)),
-            SizedBox(height: 12),
-            _Faq('How do I take a quiz?',
+            const SizedBox(height: 12),
+            const _Faq('How do I take a quiz?',
                 'Open the Learn tab, pick a subject, tap any quiz card, and answer each question. You will see an explanation after every answer.'),
-            _Faq('How do I earn XP?',
+            const _Faq('How do I earn XP?',
                 'You earn XP by completing quizzes and viewing 3D AR lessons. Your total XP shows on your profile.'),
-            _Faq('Why can I change my class only once in 90 days?',
+            const _Faq('Why can I change my class only once in 90 days?',
                 'Your class sets your learning path. To keep it stable, class changes are limited to once every 90 days.'),
-            _Faq('How do I change the app language or theme?',
+            const _Faq('How do I change the app language or theme?',
                 'Go to Profile → Edit Profile for language, and Profile → Themes for appearance.'),
           ],
         ),
@@ -170,36 +171,35 @@ class SettingsGroup extends ConsumerWidget {
       context: context,
       applicationName: 'MITRA',
       applicationVersion: 'v${info.version} (${info.buildNumber})',
-      applicationLegalese:
+      applicationLegalese: context.trCtx('student_about_legalese',
           'An educational initiative. Built for students under the '
-          'MITRA AR-learning program.',
-      children: const [
-        SizedBox(height: 12),
-        Text(
-          'MITRA delivers curriculum-aligned lessons, 3D AR content, and '
-          'quizzes for school students. Your data is handled under the DPDPA, 2023.',
-        ),
+          'MITRA AR-learning program.'),
+      children: [
+        const SizedBox(height: 12),
+        Text(context.trCtx('student_about_body',
+            'MITRA delivers curriculum-aligned lessons, 3D AR content, and '
+            'quizzes for school students. Your data is handled under the DPDPA, 2023.')),
       ],
     );
   }
 }
 
-class _Faq extends StatelessWidget {
+class _Faq extends ConsumerWidget {
   final String q, a;
   const _Faq(this.q, this.a);
   @override
-  Widget build(BuildContext context) => Padding(
+  Widget build(BuildContext context, WidgetRef ref) => Padding(
         padding: const EdgeInsets.only(bottom: 14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(q,
+            Text(context.trText(ref, q),
                 style: const TextStyle(
                     fontFamily: 'Baloo2',
                     fontWeight: FontWeight.w700,
                     fontSize: 15)),
             const SizedBox(height: 4),
-            Text(a, style: const TextStyle(fontFamily: 'Mukta', fontSize: 13)),
+            Text(context.trText(ref, a), style: const TextStyle(fontFamily: 'Mukta', fontSize: 13)),
           ],
         ),
       );

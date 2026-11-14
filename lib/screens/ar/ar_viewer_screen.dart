@@ -35,6 +35,7 @@ import '../../providers/telemetry_provider.dart';
 import '../auth/state_language_map.dart';
 import '../../stores/auth_store.dart';
 
+import '../../providers/tr_ext.dart';
 class ArViewerScreen extends ConsumerStatefulWidget {
   final String topicId;
   final String? modelUrl; // ?glb=  (Draco _lite.glb — needs a WASM decoder)
@@ -412,8 +413,8 @@ class _ArViewerScreenState extends ConsumerState<ArViewerScreen> {
                             children: [
                               Icon(Icons.view_in_ar, color: accent, size: 14),
                               const SizedBox(width: 6),
-                              const Text(
-                                'AR Lesson',
+                              Text(
+                                context.tr(ref, 'ar_ar_lesson', 'AR Lesson'),
                                 style: TextStyle(
                                     fontFamily: 'Baloo2',
                                     fontWeight: FontWeight.w700,

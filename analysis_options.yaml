@@ -38,6 +38,9 @@ linter:
     # Text widgets near i18n/runtime values). Disabled so Problems shows only
     # real issues, matching the vendored-exclude philosophy above.
     prefer_const_constructors: false
+    # Same family: removing an outer const (for translated Text) leaves inner
+    # lists const-eligible; style-only, so it would only add noise.
+    prefer_const_literals_to_create_immutables: false
 
 # Additional information about this file can be found at
 # https://dart.dev/guides/language/analysis-options

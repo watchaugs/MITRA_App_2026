@@ -39,9 +39,7 @@
   "learn_no_content": "اڃا تائین ڪو مواد دستیاب ناہی",
   "learn_no_quiz": "اڃا تائین ڪو سوال ناہی",
   "learn_location_needed": "جڳھ جی ضرورت آھی",
-  "learn_location_needed_body": "توھان جی ریاست لاء صحیح مواد ڏیکارڻ لاء اسان کی توھان جی لگڀگ جڳھ جی ضرورت آھی",
   "learn_not_available_here": "ھتی اڃا تائین دستیاب ناہی",
-  "learn_not_available_body": "توھان جی علائقا لاء مواد جلد ئی اچی رھیو آھی",
   "learn_start_quiz": "ڪوز شروع ڪریو",
   "learn_view_ar": "ای آر ۾ ڏسو",
   "learn_watch_video": "ویڊیو ڏسو",
@@ -51,7 +49,6 @@
   "quiz_submit": "جمع ڪرایو",
   "quiz_next": "اگلا",
   "quiz_finish": "ختم ٿیو",
-  "quiz_no_quiz_body": "ھن موضوع تی اڃا تائین ڪو سوال نہ آھی جلد ئی واپس چیڪ ڪریو",
   "quiz_result_title": "تنھنجو نتیجو",
   "quiz_result_score": "{score}/{total}",
   "quiz_back_home": "گھر ڏانہن واپسی",
@@ -133,5 +130,10 @@
   "ar_how_to_control_the_model": "ماڊل کی ڪیئن ڪنٽرول ڪجی",
   "ar_use_the_buttons_at_the_botto": "ھیٺ بٽن استعمال ڪریو",
   "ar_tip_tap_the_model_to_replay_": "ٽپ: بیان کی ریپل ڪرڻ لاء ماڊل کی ٽیپ ڪریو",
-  "ar_got_it": "ملی ویو۔"
+  "ar_got_it": "ملی ویو۔",
+  "txt_home": "گھر جی",
+  "txt_students": "شاگرد",
+  "txt_analytics": "تجزیا",
+  "txt_profile": "پروفائل",
+  "txt_move_your_phone_slowly_to_find_the_floor": "فرش کی ڳولن لاء پنھنجو فون آہستی آہستی منتقل ڪریو"
 }

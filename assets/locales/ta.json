@@ -39,9 +39,7 @@
   "learn_no_content": "இன்னும் உள்ளடக்கம் எதுவும் இல்லை.",
   "learn_no_quiz": "இன்னும் வினாடி வினா இல்லை",
   "learn_location_needed": "இருப்பிடம் தேவை",
-  "learn_location_needed_body": "உங்கள் மாநிலத்திற்கான சரியான உள்ளடக்கத்தைக் காட்ட உங்கள் தோராயமான இருப்பிடம் தேவை.",
   "learn_not_available_here": "இங்கே இன்னும் இல்லை",
-  "learn_not_available_body": "உங்கள் பகுதிக்கான உள்ளடக்கம் விரைவில் வரும்.",
   "learn_start_quiz": "வினாடி வினாவைத் தொடங்கு",
   "learn_view_ar": "AR இல் பார்",
   "learn_watch_video": "வீடியோ பார்",
@@ -51,7 +49,6 @@
   "quiz_submit": "சமர்ப்பி",
   "quiz_next": "அடுத்து",
   "quiz_finish": "முடி",
-  "quiz_no_quiz_body": "இந்தத் தலைப்பில் இன்னும் வினாடி வினா இல்லை. விரைவில் மீண்டும் பார்க்கவும்.",
   "quiz_result_title": "உங்கள் முடிவு",
   "quiz_result_score": "{score}/{total}",
   "quiz_back_home": "முகப்புக்குத் திரும்பு",
@@ -133,5 +130,10 @@
   "ar_how_to_control_the_model": "மாதிரியை எவ்வாறு கட்டுப்படுத்துவது",
   "ar_use_the_buttons_at_the_botto": "கீழே உள்ள பொத்தான்களைப் பயன்படுத்தவும்",
   "ar_tip_tap_the_model_to_replay_": "உதவிக்குறிப்பு: கதையை மீண்டும் இயக்க மாதிரியைத் தட்டவும்.",
-  "ar_got_it": "புரிந்தது"
+  "ar_got_it": "புரிந்தது",
+  "txt_home": "முகப்பு",
+  "txt_students": "மாணவர்கள்",
+  "txt_analytics": "பகுப்பாய்வு",
+  "txt_profile": "சுயவிவரம்",
+  "txt_move_your_phone_slowly_to_find_the_floor": "தரையைக் கண்டறிய உங்கள் தொலைபேசியை மெதுவாக நகர்த்தவும்…"
 }

@@ -39,9 +39,7 @@
   "learn_no_content": "ഇതുവരെ ഉള്ളടക്കമൊന്നും ലഭ്യമല്ല.",
   "learn_no_quiz": "ഇതുവരെ ക്വിസ് ഇല്ല",
   "learn_location_needed": "സ്ഥലം ആവശ്യമാണ്",
-  "learn_location_needed_body": "നിങ്ങളുടെ സംസ്ഥാനത്തിന്റെ ശരിയായ ഉള്ളടക്കം കാണിക്കാൻ നിങ്ങളുടെ ഏകദേശ സ്ഥലം ആവശ്യമാണ്.",
   "learn_not_available_here": "ഇവിടെ ഇതുവരെ ലഭ്യമല്ല",
-  "learn_not_available_body": "നിങ്ങളുടെ പ്രദേശത്തേക്കുള്ള ഉള്ളടക്കം ഉടൻ വരുന്നു.",
   "learn_start_quiz": "ക്വിസ് ആരംഭിക്കുക",
   "learn_view_ar": "AR-ൽ കാണുക",
   "learn_watch_video": "വീഡിയോ കാണുക",
@@ -51,7 +49,6 @@
   "quiz_submit": "സമർപ്പിക്കുക",
   "quiz_next": "അടുത്തത്",
   "quiz_finish": "പൂർത്തിയാക്കുക",
-  "quiz_no_quiz_body": "ഈ വിഷയത്തിന് ഇതുവരെ ക്വിസ് ഇല്ല. ഉടൻ വീണ്ടും പരിശോധിക്കുക.",
   "quiz_result_title": "നിങ്ങളുടെ ഫലം",
   "quiz_result_score": "{score}/{total}",
   "quiz_back_home": "ഹോമിലേക്ക് മടങ്ങുക",
@@ -133,5 +130,10 @@
   "ar_how_to_control_the_model": "മോഡൽ എങ്ങനെ നിയന്ത്രിക്കാം",
   "ar_use_the_buttons_at_the_botto": "താഴെയുള്ള ബട്ടണുകൾ ഉപയോഗിക്കുക",
   "ar_tip_tap_the_model_to_replay_": "നുറുങ്ങ്ഃ വിവരണം വീണ്ടും പ്ലേ ചെയ്യാൻ മോഡൽ ടാപ്പുചെയ്യുക.",
-  "ar_got_it": "മനസ്സിലായി"
+  "ar_got_it": "മനസ്സിലായി",
+  "txt_home": "ഹോം",
+  "txt_students": "വിദ്യാർത്ഥികൾ",
+  "txt_analytics": "വിശകലനം",
+  "txt_profile": "പ്രൊഫൈൽ",
+  "txt_move_your_phone_slowly_to_find_the_floor": "തറ കണ്ടെത്താൻ നിങ്ങളുടെ ഫോൺ പതുക്കെ ചലിപ്പിക്കുക…"
 }

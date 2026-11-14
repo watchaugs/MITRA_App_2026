@@ -22,6 +22,7 @@ import '../../providers/translation_provider.dart';
 import '../../providers/consent_i18n.dart';
 import 'state_language_map.dart';
 
+import '../../providers/tr_ext.dart';
 // Native display names for every code we support (matches the JSON packs).
 const Map<String, String> kLangNativeNames = {
   'en': 'English',
@@ -140,8 +141,8 @@ class _LanguageScreenState extends ConsumerState<LanguageScreen> {
               const SizedBox(height: 8),
               Text(
                 widget.state != null && widget.state!.isNotEmpty
-                    ? 'For ${widget.state}. You can change this later in Settings.'
-                    : 'You can change this later in Settings.',
+                    ? context.trp(ref, 'language_subtitle_state', 'For {state}. You can change this later in Settings.', {'state': '${widget.state}'})
+                    : context.tr(ref, 'language_subtitle_generic', 'You can change this later in Settings.'),
                 style: TextStyle(
                   fontFamily: 'Mukta',
                   color: Colors.white.withValues(alpha: 0.6),
@@ -163,10 +164,10 @@ class _LanguageScreenState extends ConsumerState<LanguageScreen> {
                       native: kLangNativeNames[code] ?? code,
                       english: kLangEnglishNames[code] ?? code,
                       badge: isRegional
-                          ? 'Your region'
+                          ? context.tr(ref, 'badge_region', 'Your region')
                           : (code == 'hi'
-                              ? 'National'
-                              : (code == 'en' ? 'Default' : null)),
+                              ? context.tr(ref, 'badge_national', 'National')
+                              : (code == 'en' ? context.tr(ref, 'badge_default', 'Default') : null)),
                       selected: selected,
                       onTap: () => setState(() => _selected = code),
                     );

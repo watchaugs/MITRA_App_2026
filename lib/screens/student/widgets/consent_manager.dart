@@ -34,7 +34,7 @@ class _ConsentManagerState extends ConsumerState<ConsentManager> {
     if (uid == null) {
       setState(() {
         _loading = false;
-        _error = 'Not signed in.';
+        _error = ref.trNow('student_not_signed_in', 'Not signed in.');
       });
       return;
     }
@@ -50,7 +50,7 @@ class _ConsentManagerState extends ConsumerState<ConsentManager> {
     } catch (e) {
       setState(() {
         _loading = false;
-        _error = 'Could not load consent status.';
+        _error = ref.trNow('student_could_not_load_consent_status', 'Could not load consent status.');
       });
     }
   }
@@ -64,10 +64,10 @@ class _ConsentManagerState extends ConsumerState<ConsentManager> {
       builder: (ctx) => AlertDialog(
         backgroundColor: MitraColors.bgCard,
         title: Text(context.tr(ref, 'student_withdraw_consent', 'Withdraw consent?')),
-        content: const Text(
-          'You can withdraw your consent to data collection. Some features '
+        content: Text(
+          ref.trNow('student_you_can_withdraw_your_consent_to', 'You can withdraw your consent to data collection. Some features '
           'that need your data (progress tracking, leaderboards) may stop '
-          'working until you consent again. You can re-consent any time.',
+          'working until you consent again. You can re-consent any time.'),
         ),
         actions: [
           TextButton(
@@ -171,7 +171,7 @@ class _ConsentManagerState extends ConsumerState<ConsentManager> {
                         _granted ? MitraColors.emerald : MitraColors.crimson),
                 const SizedBox(width: 8),
                 Text(
-                  _granted ? 'Consent granted' : 'Consent not granted',
+                  _granted ? context.tr(ref, 'student_consent_granted_2', 'Consent granted') : context.tr(ref, 'student_consent_not_granted', 'Consent not granted'),
                   style: TextStyle(
                       fontFamily: 'Mukta',
                       fontWeight: FontWeight.w600,
@@ -190,7 +190,7 @@ class _ConsentManagerState extends ConsumerState<ConsentManager> {
             ),
             if (_consents.isNotEmpty) ...[
               const SizedBox(height: 6),
-              Text('Active: ${_consents.join(', ')}',
+              Text(context.trp(ref, 'student_active_v1', 'Active: {v1}', {'v1': '${_consents.join(', ')}'}),
                   style: TextStyle(
                       fontFamily: 'Mukta',
                       fontSize: 12,
@@ -211,7 +211,7 @@ class _ConsentManagerState extends ConsumerState<ConsentManager> {
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(MitraRadius.pill)),
                 ),
-                child: Text(_granted ? 'Withdraw consent' : 'Grant consent',
+                child: Text(_granted ? context.tr(ref, 'student_withdraw_consent_2', 'Withdraw consent') : context.tr(ref, 'student_grant_consent', 'Grant consent'),
                     style: const TextStyle(
                         fontFamily: 'Baloo2', fontWeight: FontWeight.w700)),
               ),

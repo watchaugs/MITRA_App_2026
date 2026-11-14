@@ -21,6 +21,7 @@ import '../../providers/translation_provider.dart';
 import '../../providers/consent_i18n.dart';
 import 'state_language_map.dart';
 
+import '../../providers/tr_ext.dart';
 // ── Constants ────────────────────────────────────────────────
 
 abstract class ConsentKeys {
@@ -264,7 +265,7 @@ class _ConsentScreenState extends ConsumerState<ConsentScreen> {
     } else {
       setState(() {
         _isSubmitting = false;
-        _errorMessage = 'Something went wrong. Please try again.';
+        _errorMessage = ref.trNow('error_generic', 'Something went wrong. Please try again.');
       });
     }
   }
@@ -477,14 +478,14 @@ class _ConsentScreenState extends ConsumerState<ConsentScreen> {
 // ════════════════════════════════════════════════════════════
 
 /// Top header with shield icon, title, and MoE badge.
-class _Header extends StatelessWidget {
+class _Header extends ConsumerWidget {
   const _Header();
 
   static const _headerBg = Color(0x14FFFFFF); // 0.08 opacity
   static const _borderColor = Color(0x26FFFFFF); // 0.15 opacity
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Container(
       decoration: const BoxDecoration(
         color: _headerBg,
@@ -492,7 +493,7 @@ class _Header extends StatelessWidget {
         border: Border(bottom: BorderSide(color: _borderColor, width: 1.5)),
       ),
       padding: const EdgeInsets.fromLTRB(20, 32, 20, 24),
-      child: const Column(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
@@ -507,9 +508,9 @@ class _Header extends StatelessWidget {
           ),
           SizedBox(height: 14),
           Text(
-            'MITRA collects learning data under the Digital Personal Data '
+            context.tr(ref, 'auth_mitra_collects_learning_data_under_t', 'MITRA collects learning data under the Digital Personal Data '
             'Protection Act, 2023 (DPDPA). Please read and confirm below '
-            'before continuing.',
+            'before continuing.'),
             style: TextStyle(
               fontFamily: 'Mukta',
               fontSize: 13,
@@ -543,16 +544,16 @@ class _ShieldIcon extends StatelessWidget {
   }
 }
 
-class _TitleColumn extends StatelessWidget {
+class _TitleColumn extends ConsumerWidget {
   const _TitleColumn();
 
   @override
-  Widget build(BuildContext context) {
-    return const Column(
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Data & Privacy',
+          context.tr(ref, 'auth_data_privacy', 'Data & Privacy'),
           style: TextStyle(
             fontFamily: 'Mukta',
             fontSize: 12,
@@ -561,7 +562,7 @@ class _TitleColumn extends StatelessWidget {
           ),
         ),
         Text(
-          'Consent Required',
+          context.tr(ref, 'auth_consent_required', 'Consent Required'),
           style: TextStyle(
             fontFamily: 'Baloo2',
             fontWeight: FontWeight.w800,
@@ -574,11 +575,11 @@ class _TitleColumn extends StatelessWidget {
   }
 }
 
-class _MoeBadge extends StatelessWidget {
+class _MoeBadge extends ConsumerWidget {
   const _MoeBadge();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
@@ -586,8 +587,8 @@ class _MoeBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(MitraRadius.pill),
         border: Border.all(color: MitraColors.saffron.withValues(alpha: 0.4)),
       ),
-      child: const Text(
-        '🇮🇳  MoE',
+      child: Text(
+        context.tr(ref, 'auth_moe', '🇮🇳  MoE'),
         style: TextStyle(
           fontFamily: 'Mukta',
           fontWeight: FontWeight.w600,
@@ -637,12 +638,12 @@ class _GlassSection extends StatelessWidget {
 }
 
 /// Single row: coloured icon + label.
-class _DataRow extends StatelessWidget {
+class _DataRow extends ConsumerWidget {
   final _DataItem item;
   const _DataRow({required this.item});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(
@@ -659,7 +660,7 @@ class _DataRow extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              item.label,
+              context.trText(ref, item.label),
               style: const TextStyle(
                 fontFamily: 'Mukta',
                 fontSize: 13,
@@ -675,12 +676,12 @@ class _DataRow extends StatelessWidget {
 }
 
 /// Emerald-tinted rights section.
-class _RightsSection extends StatelessWidget {
+class _RightsSection extends ConsumerWidget {
   final List<String> rights;
   const _RightsSection({required this.rights});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(MitraSpacing.lg),
@@ -692,13 +693,13 @@ class _RightsSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
               Icon(Icons.verified_user_outlined,
                   color: MitraColors.emerald, size: 16),
               SizedBox(width: 8),
               Text(
-                'Your Rights under DPDPA 2023',
+                context.tr(ref, 'auth_your_rights_under_dpdpa_2023', 'Your Rights under DPDPA 2023'),
                 style: TextStyle(
                   fontFamily: 'Baloo2',
                   fontWeight: FontWeight.w700,
@@ -804,7 +805,7 @@ class _ConsentCheckbox extends StatelessWidget {
 }
 
 /// Saffron pill — primary CTA.
-class _PrimaryActionButton extends StatelessWidget {
+class _PrimaryActionButton extends ConsumerWidget {
   final bool enabled;
   final bool isLoading;
   final VoidCallback onPressed;
@@ -816,7 +817,7 @@ class _PrimaryActionButton extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return SizedBox(
       width: double.infinity,
       height: 54,
@@ -842,8 +843,8 @@ class _PrimaryActionButton extends StatelessWidget {
                 child: CircularProgressIndicator(
                     color: Colors.white, strokeWidth: 2.5),
               )
-            : const Text(
-                'I Agree — Continue to MITRA',
+            : Text(
+                context.tr(ref, 'auth_i_agree_continue_to_mitra', 'I Agree — Continue to MITRA'),
                 style: TextStyle(color: Colors.white),
               ),
       ),
@@ -927,14 +928,14 @@ class _ErrorBanner extends StatelessWidget {
 }
 
 /// Small hint text below decline button.
-class _DeclineHint extends StatelessWidget {
+class _DeclineHint extends ConsumerWidget {
   const _DeclineHint();
 
   @override
-  Widget build(BuildContext context) {
-    return const Center(
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Center(
       child: Text(
-        'Declining will sign you out. You can re-consent on next login.',
+        context.tr(ref, 'auth_declining_will_sign_you_out_you', 'Declining will sign you out. You can re-consent on next login.'),
         textAlign: TextAlign.center,
         style: TextStyle(
           fontFamily: 'Mukta',

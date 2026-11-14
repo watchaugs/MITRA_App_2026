@@ -157,7 +157,7 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider);
-    final firstName = user?.firstName ?? 'Student';
+    final firstName = user?.firstName ?? context.tr(ref, 'common_student', 'Student');
     final subjectsAsync = ref.watch(subjectsProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -207,7 +207,7 @@ class HomeScreen extends ConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            _greeting(),
+                            context.trText(ref, _greeting()),
                             style: TextStyle(
                                 fontFamily: 'Mukta',
                                 fontSize: 15,
@@ -293,9 +293,9 @@ class HomeScreen extends ConsumerWidget {
                     return Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        _StatChip('⭐ $totalXp XP', isDark),
+                        _StatChip(context.trp(ref, 'student_totalxp_xp', '⭐ {totalXp} XP', {'totalXp': '$totalXp'}), isDark),
                         const SizedBox(width: 8),
-                        _StatChip('🔥 $streakDays Streak', isDark),
+                        _StatChip(context.trp(ref, 'student_streakdays_streak', '🔥 {streakDays} Streak', {'streakDays': '$streakDays'}), isDark),
                         const SizedBox(width: 16),
 
                         // The dynamic tag — tap to open My Level
@@ -325,7 +325,7 @@ class HomeScreen extends ConsumerWidget {
                     const SizedBox(height: 8),
                     ref.watch(dailyMotivationProvider).when(
                           loading: () => const _LoadingCard(),
-                          error: (_, __) => const _ErrorCard('Failed to load'),
+                          error: (_, __) => _ErrorCard(context.tr(ref, 'student_failed_to_load', 'Failed to load')),
                           data: (thought) {
                             final author =
                                 ref.watch(quoteAuthorProvider).valueOrNull ??
@@ -575,7 +575,7 @@ class _ContinueLearningCard extends ConsumerWidget {
                   Text(
                       last.title.isNotEmpty
                           ? last.title
-                          : 'Continue your lesson',
+                          : context.tr(ref, 'student_continue_your_lesson', 'Continue your lesson'),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
@@ -600,10 +600,10 @@ class _ContinueLearningCard extends ConsumerWidget {
                     children: [
                       Text(
                           last.bestPct >= 100
-                              ? 'Mastered ✓'
+                              ? context.tr(ref, 'student_mastered', 'Mastered ✓')
                               : last.bestPct > 0
-                                  ? '${last.bestPct}% complete'
-                                  : 'Not started yet',
+                                  ? context.trp(ref, 'student_bestpct_complete', '{bestPct}% complete', {'bestPct': '${last.bestPct}'})
+                                  : context.tr(ref, 'student_not_started_yet', 'Not started yet'),
                           style: const TextStyle(
                               fontFamily: 'Mukta',
                               fontSize: 12,
@@ -637,12 +637,12 @@ class _ContinueLearningCard extends ConsumerWidget {
   }
 }
 
-class _SubjectCard extends StatelessWidget {
+class _SubjectCard extends ConsumerWidget {
   final Subject subject;
   const _SubjectCard({required this.subject});
 
   @override
-  Widget build(BuildContext context) => GestureDetector(
+  Widget build(BuildContext context, WidgetRef ref) => GestureDetector(
         // Pass the tapped subject so Learn opens on its filter, not 'All'.
         onTap: () => context
             .go('/student/learn?subject=${Uri.encodeComponent(subject.name)}'),
@@ -682,7 +682,7 @@ class _SubjectCard extends StatelessWidget {
                 ),
               ),
               Text(
-                  '${(subject.progress * 100).toInt()}% · ${subject.arCount} AR topics',
+                  context.trp(ref, 'student_v1_arcount_ar_topics', '{v1}% · {arCount} AR topics', {'v1': '${(subject.progress * 100).toInt()}', 'arCount': '${subject.arCount}'}),
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                       fontFamily: 'Mukta',
@@ -747,8 +747,8 @@ class _ThoughtTile extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              '💭 Thought for the day',
+            Text(
+              context.tr(ref, 'student_thought_for_the_day', '💭 Thought for the day'),
               style: TextStyle(
                 fontFamily: 'Baloo2',
                 fontWeight: FontWeight.w700, // Explicitly Big & Bold Title
@@ -1028,7 +1028,7 @@ class _BrainSparkTile extends ConsumerWidget {
                                     fontSize: 16, color: accentColor)),
                             const SizedBox(width: 6),
                             Text(
-                              'BRAIN SPARK',
+                              context.tr(ref, 'student_brain_spark', 'BRAIN SPARK'),
                               style: TextStyle(
                                 fontFamily: 'Baloo2',
                                 fontWeight: FontWeight.w700, // Big & Bold Title
@@ -1110,8 +1110,8 @@ class _BrainSparkTile extends ConsumerWidget {
                         const SizedBox(width: 6),
                         Text(
                           hoursLeft > 0
-                              ? 'Next fact in ${hoursLeft}h ${minsLeft}m'
-                              : 'Next fact in ${minsLeft}m',
+                              ? context.trp(ref, 'student_next_fact_in_hoursleft_h_minsleft', 'Next fact in {hoursLeft}h {minsLeft}m', {'hoursLeft': '${hoursLeft}', 'minsLeft': '${minsLeft}'})
+                              : context.trp(ref, 'student_next_fact_in_minsleft_m', 'Next fact in {minsLeft}m', {'minsLeft': '${minsLeft}'}),
                           style: const TextStyle(
                             fontFamily: 'SpaceMono',
                             fontSize: 10,

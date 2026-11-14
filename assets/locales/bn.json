@@ -39,9 +39,7 @@
   "learn_no_content": "এখনও কোনো সামগ্রী নেই।",
   "learn_no_quiz": "এখনও কোনো কুইজ নেই",
   "learn_location_needed": "অবস্থান প্রয়োজন",
-  "learn_location_needed_body": "আপনার রাজ্যের সঠিক সামগ্রী দেখাতে আমাদের আপনার আনুমানিক অবস্থান প্রয়োজন।",
   "learn_not_available_here": "এখানে এখনও নেই",
-  "learn_not_available_body": "আপনার এলাকার সামগ্রী শীঘ্রই আসছে।",
   "learn_start_quiz": "কুইজ শুরু করুন",
   "learn_view_ar": "AR-এ দেখুন",
   "learn_watch_video": "ভিডিও দেখুন",
@@ -51,7 +49,6 @@
   "quiz_submit": "জমা দিন",
   "quiz_next": "পরবর্তী",
   "quiz_finish": "শেষ করুন",
-  "quiz_no_quiz_body": "এই বিষয়ের এখনও কোনো কুইজ নেই। শীঘ্রই আবার দেখুন।",
   "quiz_result_title": "আপনার ফলাফল",
   "quiz_result_score": "{score}/{total}",
   "quiz_back_home": "হোমে ফিরে যান",
@@ -133,5 +130,10 @@
   "ar_how_to_control_the_model": "কিভাবে মডেল নিয়ন্ত্রণ করতে হয়",
   "ar_use_the_buttons_at_the_botto": "নিচের বোতামগুলি ব্যবহার করুন",
   "ar_tip_tap_the_model_to_replay_": "টিপঃ বর্ণনাটি পুনরায় চালানোর জন্য মডেলটিতে ট্যাপ করুন।",
-  "ar_got_it": "বুঝতে পেরেছে"
+  "ar_got_it": "বুঝতে পেরেছে",
+  "txt_home": "হোম",
+  "txt_students": "ছাত্রছাত্রীরা",
+  "txt_analytics": "বিশ্লেষণ",
+  "txt_profile": "প্রোফাইল",
+  "txt_move_your_phone_slowly_to_find_the_floor": "মেঝে খুঁজতে আপনার ফোন ধীরে ধীরে ঘোরান…"
 }

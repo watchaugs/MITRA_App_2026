@@ -39,9 +39,7 @@
   "learn_no_content": "এতিয়ালৈকে কোনো সমল নাই।",
   "learn_no_quiz": "এতিয়ালৈকে কুইজ নাই",
   "learn_location_needed": "অৱস্থান প্ৰয়োজন",
-  "learn_location_needed_body": "আপোনাৰ ৰাজ্যৰ সঠিক সমল দেখুৱাবলৈ আমাক আপোনাৰ আনুমানিক অৱস্থান লাগে।",
   "learn_not_available_here": "ইয়াত এতিয়ালৈকে নাই",
-  "learn_not_available_body": "আপোনাৰ অঞ্চলৰ বাবে সমল সোনকালে আহি আছে।",
   "learn_start_quiz": "কুইজ আৰম্ভ কৰক",
   "learn_view_ar": "AR ত চাওক",
   "learn_watch_video": "ভিডিঅ’ চাওক",
@@ -51,7 +49,6 @@
   "quiz_submit": "জমা দিয়ক",
   "quiz_next": "পৰৱৰ্তী",
   "quiz_finish": "সমাপ্ত কৰক",
-  "quiz_no_quiz_body": "এই বিষয়ৰ এতিয়ালৈকে কুইজ নাই। সোনকালে পুনৰ চাওক।",
   "quiz_result_title": "আপোনাৰ ফলাফল",
   "quiz_result_score": "{score}/{total}",
   "quiz_back_home": "হʼমলৈ উভতি যাওক",
@@ -133,5 +130,10 @@
   "ar_how_to_control_the_model": "মডেলটো কেনেকৈ নিয়ন্ত্ৰণ কৰিব লাগে",
   "ar_use_the_buttons_at_the_botto": "তলৰ বুটামবোৰ ব্যৱহাৰ কৰক",
   "ar_tip_tap_the_model_to_replay_": "টিপঃ বৰ্ণনাটো পুনৰ বজোৱাৰ বাবে আৰ্হিটোত টেপ কৰক।",
-  "ar_got_it": "পাইছো"
+  "ar_got_it": "পাইছো",
+  "txt_home": "হʼম",
+  "txt_students": "শিক্ষাৰ্থীসকল",
+  "txt_analytics": "বিশ্লেষণ",
+  "txt_profile": "প্ৰʼফাইল",
+  "txt_move_your_phone_slowly_to_find_the_floor": "মজিয়া বিচাৰিবলৈ আপোনাৰ ফোনটো লাহে লাহে ঘূৰাওক…"
 }

@@ -135,7 +135,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
     final newName = _name.text.trim();
     if (newName.length < 2) {
-      _toast('Name must be at least 2 characters.');
+      _toast(ref.trNow('student_name_must_be_at_least_2', 'Name must be at least 2 characters.'));
       return;
     }
 
@@ -143,7 +143,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
     // Guard: if class changed but is locked, block and explain.
     if (classChanged && _classLocked) {
-      _toast('Class can be changed again in $_daysRemaining days.');
+      _toast(ref.trpNow('student_class_can_be_changed_again_in', 'Class can be changed again in {daysRemaining} days.', {'daysRemaining': '$_daysRemaining'}));
       return;
     }
 
@@ -186,7 +186,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       }
 
       if (mounted) {
-        _toast('Profile updated.');
+        _toast(ref.trNow('student_profile_updated', 'Profile updated.'));
         Navigator.of(context).maybePop();
       }
     } catch (e, st) {
@@ -194,7 +194,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       // generic message. Revert to the generic toast once the cause is known.
       debugPrint('🚨 PROFILE SAVE FAILED: $e');
       debugPrint('$st');
-      _toast('Could not save: ${e.toString().split('\n').first}');
+      _toast(ref.trpNow('student_could_not_save_v1', 'Could not save: {v1}', {'v1': '${e.toString().split('\n').first}'}));
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -215,9 +215,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           backgroundColor: MitraColors.bgCard,
           title: Text(context.tr(ref, 'student_class_locked', 'Class locked')),
           content: Text(
-            'You changed your class recently. To keep your learning path '
-            'stable, class can only be changed once every $kClassLockDays days.\n\n'
-            'You can change it again in $_daysRemaining days.',
+            ref.trpNow('student_you_changed_your_class_recently_to', 'You changed your class recently. To keep your learning path '
+            'stable, class can only be changed once every {kClassLockDays} days.\n\n'
+            'You can change it again in {daysRemaining} days.', {'kClassLockDays': '$kClassLockDays', 'daysRemaining': '$_daysRemaining'}),
           ),
           actions: [
             TextButton(
@@ -236,11 +236,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       builder: (ctx) => AlertDialog(
         backgroundColor: MitraColors.bgCard,
         title: Text(context.tr(ref, 'student_change_class', 'Change class?')),
-        content: const Text(
-          'Changing your class updates the subjects, topics and quizzes shown '
+        content: Text(
+          ref.trpNow('student_changing_your_class_updates_the_subj', 'Changing your class updates the subjects, topics and quizzes shown '
           'to you. Your XP and badges are kept, but your learning path will '
           'reset to the new class.\n\n'
-          'You can change class again only after $kClassLockDays days.',
+          'You can change class again only after {kClassLockDays} days.', {'kClassLockDays': '$kClassLockDays'}),
         ),
         actions: [
           TextButton(
@@ -264,7 +264,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           shrinkWrap: true,
           children: _kClasses
               .map((c) => ListTile(
-                    title: Text(c),
+                    title: Text(ref.trTextNow(c)),
                     trailing: c == _class
                         ? const Icon(Icons.check, color: MitraColors.emerald)
                         : null,
@@ -294,22 +294,22 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         iconTheme: IconThemeData(color: onSurface),
       ),
       body: _loading
-          ? const OrbitLoader(message: 'Loading…')
+          ? OrbitLoader(message: context.tr(ref, 'learn_loading', 'Loading…'))
           : SafeArea(
               child: ListView(
                 padding: const EdgeInsets.all(MitraSpacing.lg),
                 children: [
                   // Name
-                  _label('Name', onSurface),
+                  _label(context.tr(ref, 'student_name', 'Name'), onSurface),
                   TextField(
                     controller: _name,
                     style: TextStyle(color: onSurface),
-                    decoration: _boxDeco('Your name', onSurface),
+                    decoration: _boxDeco(context.tr(ref, 'student_your_name', 'Your name'), onSurface),
                   ),
                   const SizedBox(height: 20),
 
                   // Avatar
-                  _label('Avatar', onSurface),
+                  _label(context.tr(ref, 'student_avatar', 'Avatar'), onSurface),
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
@@ -337,7 +337,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   const SizedBox(height: 20),
 
                   // Language
-                  _label('Language', onSurface),
+                  _label(context.tr(ref, 'step_language', 'Language'), onSurface),
                   _chips(
                     _kLanguages.map((l) => l.$1).toList(),
                     _lang,
@@ -349,19 +349,19 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   const SizedBox(height: 20),
 
                   // Gender
-                  _label('Gender', onSurface),
+                  _label(context.tr(ref, 'auth_gender', 'Gender'), onSurface),
                   _chips(_kGenders, _gender, (v) => setState(() => _gender = v),
                       onSurface),
                   const SizedBox(height: 20),
 
                   // Mobile belongs to
-                  _label('Mobile belongs to', onSurface),
+                  _label(context.tr(ref, 'auth_mobile_belongs_to', 'Mobile belongs to'), onSurface),
                   _chips(_kMobileOwners, _mobileOwner,
                       (v) => setState(() => _mobileOwner = v), onSurface),
                   const SizedBox(height: 20),
 
                   // Class (gated)
-                  _label('Class', onSurface),
+                  _label(context.tr(ref, 'step_class', 'Class'), onSurface),
                   GestureDetector(
                     onTap: _onTapClass,
                     child: Container(
@@ -376,7 +376,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                         children: [
                           Expanded(
                             child: Text(
-                              _class.isEmpty ? 'Select class' : _class,
+                              _class.isEmpty ? context.tr(ref, 'student_select_class', 'Select class') : context.trText(ref, _class),
                               style: TextStyle(
                                   color: onSurface, fontFamily: 'Baloo2'),
                             ),
@@ -402,7 +402,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                     Padding(
                       padding: const EdgeInsets.only(top: 6),
                       child: Text(
-                        'Class can be changed again in $_daysRemaining days.',
+                        context.trp(ref, 'student_class_can_be_changed_again_in', 'Class can be changed again in {daysRemaining} days.', {'daysRemaining': '$_daysRemaining'}),
                         style: const TextStyle(
                             fontSize: 12, color: MitraColors.textMuted),
                       ),
@@ -486,7 +486,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                     color:
                         sel ? MitraColors.saffron : c.withValues(alpha: 0.15)),
               ),
-              child: Text(labelFor != null ? labelFor(item) : item,
+              child: Text(context.trText(ref, labelFor != null ? labelFor(item) : item),
                   style:
                       TextStyle(color: c, fontFamily: 'Mukta', fontSize: 14)),
             ),

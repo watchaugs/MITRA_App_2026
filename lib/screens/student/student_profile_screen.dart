@@ -89,13 +89,13 @@ class StudentProfileScreen extends ConsumerWidget {
                     // ── Stats ──────────────────────────────────────────
                     _StatCard(
                         emoji: '⭐',
-                        label: 'Total XP',
+                        label: context.tr(ref, 'student_total_xp_2', 'Total XP'),
                         value:
                             '${ref.watch(studentProfileProvider).valueOrNull?.totalXp ?? 0}'),
                     const SizedBox(height: 12),
                     _StatCard(
                         emoji: '🔥',
-                        label: 'Day Streak',
+                        label: context.tr(ref, 'student_day_streak_2', 'Day Streak'),
                         value:
                             '${ref.watch(studentProfileProvider).valueOrNull?.currentStreakDays ?? 0}'),
                     const SizedBox(height: 32),

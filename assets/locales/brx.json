@@ -39,9 +39,7 @@
   "learn_no_content": "दाबो जेबो आयदा गैया।",
   "learn_no_quiz": "दाबो जेबो क्युइज गैया",
   "learn_location_needed": "थावनि नांगौ",
-  "learn_location_needed_body": "नोंथांनि रायजोनि थाखाय थार आयदा दिन्थिनायनि थाखाय जोंनो नोंथांनि खाथिखाला थावनि नांगौ।",
   "learn_not_available_here": "दाबो बेयाव मोन्नो हानाय नङा",
-  "learn_not_available_body": "नोंथांनि ओनसोलनि आयदाफ्रा थाबैनो फैगासिनो दं।",
   "learn_start_quiz": "क्युइजखौ जागायजेन",
   "learn_view_ar": "एआरआव नाय",
   "learn_watch_video": "भिडिय 'खौ नाय",
@@ -51,7 +49,6 @@
   "quiz_submit": "साबमिट खालाम",
   "quiz_next": "बिनि उनाव",
   "quiz_finish": "फोजोब",
-  "quiz_no_quiz_body": "बे आयदाहा दाबो जेबो क्युइज गैया। थाबैनो नायफिन।",
   "quiz_result_title": "नोंनि फिथाया",
   "quiz_result_score": "{score}/{total}",
   "quiz_back_home": "न 'आव फैफिनो",
@@ -133,5 +130,10 @@
   "ar_how_to_control_the_model": "मडेलखौ माबोरै सामलायनो",
   "ar_use_the_buttons_at_the_botto": "गाहायनि बटनफोरखौ बाहाय",
   "ar_tip_tap_the_model_to_replay_": "बोसोनः बुंनायखौ दामनो थाखाय मडेलखौ टेप खालाम।",
-  "ar_got_it": "बेखौ मोनो"
+  "ar_got_it": "बेखौ मोनो",
+  "txt_home": "न '",
+  "txt_students": "सोलोंसाफोर",
+  "txt_analytics": "एनालाइटिक्स",
+  "txt_profile": "प्रफाइल",
+  "txt_move_your_phone_slowly_to_find_the_floor": "फ्ल 'र नागिरनो थाखाय गावनि फ' नखौ लासै-लासै लां"
 }

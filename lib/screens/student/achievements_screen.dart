@@ -21,6 +21,7 @@ import '../../models/achievement_models.dart';
 import '../../services/achievement_engine.dart';
 import '../../stores/auth_store.dart';
 
+import '../../providers/tr_ext.dart';
 // ── Tier Data Model ──────────────────────────────────────────────────────────
 
 class AchievementTier {
@@ -83,8 +84,8 @@ class AchievementsScreen extends ConsumerWidget {
                 const Icon(Icons.error_outline,
                     color: Colors.redAccent, size: 48),
                 const SizedBox(height: 12),
-                const Text(
-                  'Could not load achievements',
+                Text(
+                  context.tr(ref, 'student_could_not_load_achievements', 'Could not load achievements'),
                   style: TextStyle(
                       color: Colors.white,
                       fontSize: 16,
@@ -106,8 +107,8 @@ class AchievementsScreen extends ConsumerWidget {
                 TextButton.icon(
                   onPressed: () => ref.invalidate(studentProfileProvider),
                   icon: const Icon(Icons.refresh, color: Color(0xFF8B5CF6)),
-                  label: const Text(
-                    'Retry',
+                  label: Text(
+                    context.tr(ref, 'btn_retry', 'Retry'),
                     style: TextStyle(color: Color(0xFF8B5CF6)),
                   ),
                 ),
@@ -142,7 +143,7 @@ class AchievementsScreen extends ConsumerWidget {
                             .isNotEmpty ??
                         false)
                     ? ref.watch(currentUserProvider)!.fullName
-                    : 'Cosmic Explorer',
+                    : context.tr(ref, 'student_cosmic_explorer', 'Cosmic Explorer'),
               ),
               Expanded(
                 child: SingleChildScrollView(
@@ -206,7 +207,7 @@ class AchievementsScreen extends ConsumerWidget {
 
 // ── Header ───────────────────────────────────────────────────────────────────
 
-class _ThemedAchievementHeader extends StatelessWidget {
+class _ThemedAchievementHeader extends ConsumerWidget {
   final StudentProfile profile;
   final AchievementTier currentTier;
   final String studentName;
@@ -217,7 +218,7 @@ class _ThemedAchievementHeader extends StatelessWidget {
       required this.studentName});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final onSurface = Theme.of(context).colorScheme.onSurface;
 
     return Padding(
@@ -281,7 +282,7 @@ class _ThemedAchievementHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                'TOTAL XP',
+                context.tr(ref, 'student_total_xp', 'TOTAL XP'),
                 style: TextStyle(
                   fontFamily: 'SpaceMono',
                   fontSize: 10,
@@ -311,7 +312,7 @@ class _ThemedAchievementHeader extends StatelessWidget {
 // FLOATING COSMIC TILES
 // ═══════════════════════════════════════════════════════
 
-class _ConstellationNode extends StatefulWidget {
+class _ConstellationNode extends ConsumerStatefulWidget {
   final AchievementTier tier;
   final bool isLeftAligned;
   final bool isUnlocked;
@@ -333,10 +334,10 @@ class _ConstellationNode extends StatefulWidget {
   });
 
   @override
-  State<_ConstellationNode> createState() => _ConstellationNodeState();
+  ConsumerState<_ConstellationNode> createState() => _ConstellationNodeState();
 }
 
-class _ConstellationNodeState extends State<_ConstellationNode>
+class _ConstellationNodeState extends ConsumerState<_ConstellationNode>
     with SingleTickerProviderStateMixin {
   late AnimationController _glowController;
   late Animation<double> _pulseAnimation;
@@ -531,7 +532,7 @@ class _ConstellationNodeState extends State<_ConstellationNode>
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      '${(widget.progress * 100).toInt()}% Explored',
+                      context.trp(ref, 'student_v1_explored', '{v1}% Explored', {'v1': '${(widget.progress * 100).toInt()}'}),
                       style: TextStyle(
                         fontFamily: 'SpaceMono',
                         fontSize: 12,
@@ -542,8 +543,8 @@ class _ConstellationNodeState extends State<_ConstellationNode>
                     const SizedBox(height: 12),
                     Text(
                       widget.isUnlocked
-                          ? 'Coordinates Reached'
-                          : 'Requires ${widget.tier.minXp} XP',
+                          ? context.tr(ref, 'student_coordinates_reached', 'Coordinates Reached')
+                          : context.trp(ref, 'student_requires_minxp_xp', 'Requires {minXp} XP', {'minXp': '${widget.tier.minXp}'}),
                       style: TextStyle(
                         fontFamily: 'Mukta',
                         fontSize: 13,
@@ -566,7 +567,7 @@ class _ConstellationNodeState extends State<_ConstellationNode>
                           child: _MiniStat(
                             emoji: '⭐',
                             value: '${widget.totalXp}',
-                            label: 'Total XP',
+                            label: context.tr(ref, 'student_total_xp_2', 'Total XP'),
                             color: onSurface,
                           ),
                         ),
@@ -575,7 +576,7 @@ class _ConstellationNodeState extends State<_ConstellationNode>
                           child: _MiniStat(
                             emoji: '🔥',
                             value: '${widget.streak}',
-                            label: 'Day streak',
+                            label: context.tr(ref, 'student_day_streak', 'Day streak'),
                             color: onSurface,
                           ),
                         ),
@@ -584,10 +585,10 @@ class _ConstellationNodeState extends State<_ConstellationNode>
                     const SizedBox(height: 14),
                     Text(
                       widget.nextTier == null
-                          ? 'Highest level reached — Gyani 💎'
+                          ? context.tr(ref, 'student_highest_level_reached_gyani', 'Highest level reached — Gyani 💎')
                           : remaining > 0
-                              ? '$remaining XP to ${widget.nextTier!.title}'
-                              : '${widget.nextTier!.title} already unlocked ✓',
+                              ? context.trp(ref, 'student_remaining_xp_to_title', '{remaining} XP to {title}', {'remaining': '$remaining', 'title': '${widget.nextTier!.title}'})
+                              : context.trp(ref, 'student_title_already_unlocked', '{title} already unlocked ✓', {'title': '${widget.nextTier!.title}'}),
                       style: TextStyle(
                         fontFamily: 'SpaceMono',
                         fontSize: 12,

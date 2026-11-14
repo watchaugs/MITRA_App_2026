@@ -4,7 +4,9 @@ import '../../widgets/mitra_scaffold.dart';
 import '../../constants/colors.dart';
 import '../../widgets/sync_status_banner.dart';
 
-class TeacherShell extends StatelessWidget {
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../providers/tr_ext.dart';
+class TeacherShell extends ConsumerWidget {
   final Widget child;
   const TeacherShell({super.key, required this.child});
 
@@ -24,7 +26,7 @@ class TeacherShell extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final idx = _idx(context);
     return MitraScaffold(
       body: Column(
@@ -53,7 +55,7 @@ class TeacherShell extends StatelessWidget {
                   children: [
                     Text(_tabs[i].emoji, style: const TextStyle(fontSize: 22)),
                     const SizedBox(height: 2),
-                    Text(_tabs[i].label,
+                    Text(context.trText(ref, _tabs[i].label),
                         style: TextStyle(
                           fontFamily: 'Mukta',
                           fontWeight: FontWeight.w500,

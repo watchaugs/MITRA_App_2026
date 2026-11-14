@@ -39,9 +39,7 @@
   "learn_no_content": "अद्यावधि किमपि विषयवस्तु न प्राप्यते।",
   "learn_no_quiz": "इदानीमपि प्रश्नोत्तराः न सन्ति",
   "learn_location_needed": "स्थानम् आवश्यकम्",
-  "learn_location_needed_body": "भवतः राज्यस्य कृते सम्यक् विषयवस्तु दर्शयितुं वयं भवतः समीपस्थं स्थानं अपेक्ष्यामः।",
   "learn_not_available_here": "अत्र अद्यापि न उपलभ्यते",
-  "learn_not_available_body": "भवतः क्षेत्रस्य विषयवस्तु शीघ्रमेव आगमिष्यति।",
   "learn_start_quiz": "प्रश्नोत्तराणि आरभत",
   "learn_view_ar": "ए. आर् मध्ये पश्यतु",
   "learn_watch_video": "वीडियो पश्यतु",
@@ -51,7 +49,6 @@
   "quiz_submit": "समर्पयतु",
   "quiz_next": "अग्रे",
   "quiz_finish": "समाप्तम्",
-  "quiz_no_quiz_body": "अस्मिन् विषये अद्यावधि प्रश्नोत्तराः न सन्ति। शीघ्रमेव पुनः पश्यतु।",
   "quiz_result_title": "भवतः परिणामः",
   "quiz_result_score": "{score}/{total}",
   "quiz_back_home": "गृहं प्रति निवर्त्यताम्",
@@ -133,5 +130,10 @@
   "ar_how_to_control_the_model": "प्रतिरूपं कथं नियन्त्रयेत्",
   "ar_use_the_buttons_at_the_botto": "अधः स्थितान् बटन् इत्येतान् उपयुञ्जन्तु",
   "ar_tip_tap_the_model_to_replay_": "उपायः कथनस्य पुनःप्रसारणार्थं प्रतिरूपं नुदतु।",
-  "ar_got_it": "प्राप्तवान्"
+  "ar_got_it": "प्राप्तवान्",
+  "txt_home": "गृहम्",
+  "txt_students": "छात्राः",
+  "txt_analytics": "विश्लेषणम्",
+  "txt_profile": "वृत्तान्तः",
+  "txt_move_your_phone_slowly_to_find_the_floor": "तलम् अन्वेष्टुं स्वस्य दूरवाण्याः क्रमेण स्थानान्तरं करोतु"
 }

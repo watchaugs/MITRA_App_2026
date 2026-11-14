@@ -9,7 +9,9 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../constants/colors.dart';
 
-class UpdateRequiredScreen extends StatelessWidget {
+import '../../providers/tr_ext.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+class UpdateRequiredScreen extends ConsumerWidget {
   final String updateUrl;
   const UpdateRequiredScreen({super.key, required this.updateUrl});
 
@@ -22,7 +24,7 @@ class UpdateRequiredScreen extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       backgroundColor: MitraColors.bgDeep,
       body: SafeArea(
@@ -34,8 +36,8 @@ class UpdateRequiredScreen extends StatelessWidget {
               children: [
                 const Text('🚀', style: TextStyle(fontSize: 64)),
                 const SizedBox(height: 24),
-                const Text(
-                  'Update MITRA to continue',
+                Text(
+                  context.tr(ref, 'auth_update_mitra_to_continue', 'Update MITRA to continue'),
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontFamily: 'Baloo2',
@@ -46,7 +48,7 @@ class UpdateRequiredScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'A newer version is required to keep learning. Please update the app — it only takes a moment.',
+                  context.tr(ref, 'auth_a_newer_version_is_required_to', 'A newer version is required to keep learning. Please update the app — it only takes a moment.'),
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontFamily: 'Mukta',
@@ -66,8 +68,8 @@ class UpdateRequiredScreen extends StatelessWidget {
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14)),
                     ),
-                    child: const Text(
-                      'Update now',
+                    child: Text(
+                      context.tr(ref, 'auth_update_now', 'Update now'),
                       style: TextStyle(
                         fontFamily: 'Baloo2',
                         fontWeight: FontWeight.w700,

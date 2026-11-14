@@ -358,20 +358,21 @@ Future<void> _showWatchArFirstDialog(
   return showDialog<void>(
     context: context,
     builder: (ctx) => AlertDialog(
-      title: Text('Finish the AR module first'),
-      content: Text(
-          'Watch at least $threshold% of the AR module before taking its quiz.'),
+      title: Text(ctx.trCtx('student_finish_the_ar_module_first', 'Finish the AR module first')),
+      content: Text(ctx.trpCtx('student_watch_at_least_threshold_of_the_ar',
+          'Watch at least {threshold}% of the AR module before taking its quiz.',
+          {'threshold': '$threshold'})),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(ctx).pop(),
-          child: Text('Not now'),
+          child: Text(ctx.trCtx('student_not_now', 'Not now')),
         ),
         FilledButton(
           onPressed: () {
             Navigator.of(ctx).pop();
             openAr();
           },
-          child: Text('Open AR module'),
+          child: Text(ctx.trCtx('student_open_ar_module', 'Open AR module')),
         ),
       ],
     ),
@@ -837,9 +838,9 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
       final geoAsync = ref.watch(geoStateProvider);
       final geo = geoAsync.valueOrNull;
       if (geoAsync.isLoading && geo == null) {
-        return const Scaffold(
+        return Scaffold(
           backgroundColor: Colors.transparent,
-          body: OrbitLoader(message: 'Finding your state…'),
+          body: OrbitLoader(message: context.tr(ref, 'student_finding_your_state', 'Finding your state…')),
         );
       }
       if (geo != null && geo.status != GeoStatus.insideTerritory) {
@@ -879,8 +880,9 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      geo.message ??
-                          (isGps
+                      geo.message != null
+                          ? context.trText(ref, geo.message!)
+                          : (isGps
                               ? context.tr(
                                   ref,
                                   'learn_location_needed_body',
@@ -934,7 +936,7 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
             Expanded(
               child: quizAsync.when(
                 loading: () =>
-                    const OrbitLoader(message: 'Loading your lessons…'),
+                    OrbitLoader(message: context.tr(ref, 'student_loading_your_lessons', 'Loading your lessons…')),
                 error: (error, _) => _ErrorState(
                   // Localised via the app's i18n, falling back to the failure's
                   // English displayMessage if the translation pack lacks the key.
@@ -1015,9 +1017,9 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
                               final audio = arCatalog?.audioById ??
                                   const <String, String>{};
                               if (models.isEmpty && audio.isEmpty) {
-                                messenger.showSnackBar(const SnackBar(
+                                messenger.showSnackBar(SnackBar(
                                     content: Text(
-                                        'No downloadable lessons for your state yet.')));
+                                        ref.trNow('student_no_downloadable_lessons_for_your_sta', 'No downloadable lessons for your state yet.'))));
                                 return;
                               }
                               messenger.showSnackBar(SnackBar(
@@ -1029,8 +1031,8 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
                               );
                               messenger.showSnackBar(SnackBar(
                                   content: Text(n > 0
-                                      ? '✅ Saved $n files for offline use'
-                                      : 'Connect to Wi-Fi to download lessons.')));
+                                      ? ref.trpNow('student_saved_n_files_for_offline_use', '✅ Saved {n} files for offline use', {'n': '$n'})
+                                      : ref.trNow('student_connect_to_wi_fi_to_download', 'Connect to Wi-Fi to download lessons.'))));
                             },
                           ),
                         ),
@@ -1084,7 +1086,7 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
                                     ),
                                     const SizedBox(height: 8),
                                     Text(
-                                      subject,
+                                      context.trText(ref, subject),
                                       textAlign: TextAlign.center,
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
@@ -1279,7 +1281,7 @@ class _LearnHeader extends ConsumerWidget {
     final quizzesTaken = (xp / 500).floor();
 
     final isAll = selectedSubject == 'All';
-    final title = isAll ? 'Learn Modules' : selectedSubject;
+    final title = isAll ? context.tr(ref, 'student_learn_modules', 'Learn Modules') : selectedSubject;
     final emoji = isAll ? '📚' : _emojiFor(selectedSubject);
     final themeColor = isAll ? MitraColors.saffron : MitraColors.indigoLight;
 
@@ -1313,7 +1315,7 @@ class _LearnHeader extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        isAll ? 'Curriculum' : 'Subject',
+                        isAll ? context.tr(ref, 'student_curriculum', 'Curriculum') : context.tr(ref, 'student_subject', 'Subject'),
                         style: TextStyle(
                           fontFamily: 'Mukta',
                           fontSize: 12,
@@ -1344,13 +1346,13 @@ class _LearnHeader extends ConsumerWidget {
             children: [
               _StatBadge(
                 icon: '🎯',
-                label: '$topicsConsumed Topics',
+                label: context.trp(ref, 'student_topicsconsumed_topics', '{topicsConsumed} Topics', {'topicsConsumed': '$topicsConsumed'}),
                 color: onSurface,
               ),
               const SizedBox(height: 6),
               _StatBadge(
                 icon: '📝',
-                label: '$quizzesTaken Quizzes',
+                label: context.trp(ref, 'student_quizzestaken_quizzes', '{quizzesTaken} Quizzes', {'quizzesTaken': '$quizzesTaken'}),
                 color: onSurface,
               ),
             ],
@@ -1445,7 +1447,7 @@ class _SubjectSection extends ConsumerWidget {
 
     return Semantics(
       header: true,
-      label: '$subject, $totalItems items',
+      label: context.trp(ref, 'student_subject_totalitems_items', '{subject}, {totalItems} items', {'subject': '$subject', 'totalItems': '$totalItems'}),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1545,10 +1547,10 @@ class _SubjectSection extends ConsumerWidget {
                         (audiosByLangById[ar.id] ?? const {}).keys.toSet();
                     if (langs.isEmpty) return '';
                     if (myLang.isNotEmpty && langs.contains(myLang)) {
-                      return 'Your language';
+                      return context.tr(ref, 'student_your_language', 'Your language');
                     }
                     if (langs.contains('hi') || langs.contains('en')) {
-                      return 'Hindi/English';
+                      return context.tr(ref, 'student_hindi_english', 'Hindi/English');
                     }
                     return '';
                   }(),
@@ -1680,7 +1682,7 @@ class _QuizTile extends StatelessWidget {
 
 // ── AR Lesson tile (gated + badge + N-questions subtext) ─────────────────
 
-class _ArTile extends StatelessWidget {
+class _ArTile extends ConsumerWidget {
   final ArLessonRec lesson;
   final ValueChanged<String> onTap;
   final bool unlocked; // false = greyed, tap shows "unlock" hint
@@ -1703,12 +1705,12 @@ class _ArTile extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final onSurface = theme.colorScheme.onSurface;
 
     final subtext = questionCount > 0
-        ? '${lesson.topic.isNotEmpty ? '${lesson.topic} · ' : ''}$questionCount question${questionCount == 1 ? '' : 's'}'
+        ? '${lesson.topic.isNotEmpty ? '${lesson.topic} · ' : ''}${questionCount == 1 ? context.tr(ref, 'student_1_question', '1 question') : context.trp(ref, 'student_n_questions', '{count} questions', {'count': '$questionCount'})}'
         : lesson.topic;
     final audioNote = audioLabel.isEmpty ? '' : ' · 🔊 $audioLabel';
 
@@ -1750,10 +1752,10 @@ class _ArTile extends StatelessWidget {
             child: _QuizInfo(
               title: lesson.title,
               topic: comingSoon
-                  ? 'Coming soon'
+                  ? context.tr(ref, 'student_coming_soon', 'Coming soon')
                   : unlocked
                       ? subtext + audioNote
-                      : 'Score 100% on the previous module to unlock',
+                      : context.tr(ref, 'student_score_100_on_the_previous_module', 'Score 100% on the previous module to unlock'),
             ),
           ),
           const SizedBox(width: 8),
@@ -1767,8 +1769,8 @@ class _ArTile extends StatelessWidget {
                 border: Border.all(
                     color: MitraColors.emerald.withValues(alpha: 0.35)),
               ),
-              child: const Text(
-                '✓ COMPLETED 100%',
+              child: Text(
+                context.tr(ref, 'student_completed_100', '✓ COMPLETED 100%'),
                 style: TextStyle(
                     fontFamily: 'SpaceMono',
                     fontSize: 10,
@@ -1790,12 +1792,12 @@ class _ArTile extends StatelessWidget {
                 color: MitraColors.sky.withValues(alpha: 0.8),
                 borderRadius: BorderRadius.circular(MitraRadius.pill),
               ),
-              child: const Row(
+              child: Row(
                 children: [
                   Icon(Icons.view_in_ar, size: 14, color: Colors.black87),
                   SizedBox(width: 4),
                   Text(
-                    'View 3D',
+                    context.tr(ref, 'student_view_3d', 'View 3D'),
                     style: TextStyle(
                       fontFamily: 'Baloo2',
                       fontSize: 12,
@@ -1819,10 +1821,10 @@ class _ArTile extends StatelessWidget {
     return Semantics(
       button: true,
       label: comingSoon
-          ? 'Coming soon: ${lesson.title}. Not yet available.'
+          ? context.trp(ref, 'student_coming_soon_title_not_yet_available', 'Coming soon: {title}. Not yet available.', {'title': '${lesson.title}'})
           : unlocked
-              ? '3D Lesson: ${lesson.title}'
-              : 'Locked: ${lesson.title}. Score 100% on the previous module to unlock.',
+              ? context.trp(ref, 'student_3d_lesson_title', '3D Lesson: {title}', {'title': '${lesson.title}'})
+              : context.trp(ref, 'student_locked_title_score_100_on_the', 'Locked: {title}. Score 100% on the previous module to unlock.', {'title': '${lesson.title}'}),
       child: ExcludeSemantics(
         child: GestureDetector(
           // Locked tiles do nothing on tap (the hint is already visible).
@@ -1835,12 +1837,12 @@ class _ArTile extends StatelessWidget {
 }
 
 // ── Score badge (100% or best % so far) ──────────────────
-class _ScoreBadge extends StatelessWidget {
+class _ScoreBadge extends ConsumerWidget {
   final int pct;
   const _ScoreBadge({required this.pct});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final mastered = pct >= 100;
     final color = mastered ? MitraColors.emerald : MitraColors.saffron;
     return Container(
@@ -1851,7 +1853,7 @@ class _ScoreBadge extends StatelessWidget {
         border: Border.all(color: color.withValues(alpha: 0.35)),
       ),
       child: Text(
-        mastered ? '✓ COMPLETED 100%' : '$pct%',
+        mastered ? context.tr(ref, 'student_completed_100', '✓ COMPLETED 100%') : '$pct%',
         style: TextStyle(
           fontFamily: 'SpaceMono',
           fontSize: 10,
@@ -1865,12 +1867,12 @@ class _ScoreBadge extends StatelessWidget {
 
 // ── Extracted sub-widgets ────────────────────────────────
 
-class _QuestionCountBadge extends StatelessWidget {
+class _QuestionCountBadge extends ConsumerWidget {
   final int count;
   const _QuestionCountBadge({required this.count});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Container(
       width: 48,
       height: 48,
@@ -1894,8 +1896,8 @@ class _QuestionCountBadge extends StatelessWidget {
               color: MitraColors.indigoLight,
             ),
           ),
-          const Text(
-            'Qs',
+          Text(
+            context.tr(ref, 'student_qs', 'Qs'),
             style: TextStyle(
               fontFamily: 'Mukta',
               fontSize: 9,
@@ -1951,12 +1953,12 @@ class _QuizInfo extends StatelessWidget {
   }
 }
 
-class _AvgScoreChip extends StatelessWidget {
+class _AvgScoreChip extends ConsumerWidget {
   final double score;
   const _AvgScoreChip({required this.score});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
@@ -1965,7 +1967,7 @@ class _AvgScoreChip extends StatelessWidget {
         border: Border.all(color: MitraColors.emerald.withValues(alpha: 0.25)),
       ),
       child: Text(
-        'avg ${score.toStringAsFixed(0)}%',
+        context.trp(ref, 'student_avg_v1', 'avg {v1}%', {'v1': '${score.toStringAsFixed(0)}'}),
         style: const TextStyle(
           fontFamily: 'SpaceMono',
           fontSize: 10,
@@ -2015,17 +2017,17 @@ class _ErrorState extends StatelessWidget {
 
 // ── Shared retry button ──────────────────────────────────
 
-class _RetryButton extends StatelessWidget {
+class _RetryButton extends ConsumerWidget {
   final VoidCallback onTap;
   const _RetryButton({required this.onTap});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return GestureDetector(
       onTap: onTap,
       child: Semantics(
         button: true,
-        label: 'Retry loading quizzes',
+        label: context.tr(ref, 'student_retry_loading_quizzes', 'Retry loading quizzes'),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
           decoration: BoxDecoration(
@@ -2035,8 +2037,8 @@ class _RetryButton extends StatelessWidget {
               color: MitraColors.saffron.withValues(alpha: 0.35),
             ),
           ),
-          child: const Text(
-            'Retry',
+          child: Text(
+            context.tr(ref, 'btn_retry', 'Retry'),
             style: TextStyle(
               fontFamily: 'Baloo2',
               fontWeight: FontWeight.w700,

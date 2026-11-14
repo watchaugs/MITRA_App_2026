@@ -73,9 +73,9 @@ class NotificationsScreen extends ConsumerWidget {
                 loading: () => const Center(
                     child:
                         CircularProgressIndicator(color: MitraColors.saffron)),
-                error: (_, __) => _empty(onSurface),
+                error: (_, __) => _empty(context, ref, onSurface),
                 data: (items) {
-                  if (items.isEmpty) return _empty(onSurface);
+                  if (items.isEmpty) return _empty(context, ref, onSurface);
                   return RefreshIndicator(
                     color: MitraColors.saffron,
                     onRefresh: () async =>
@@ -101,13 +101,13 @@ class NotificationsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _empty(Color onSurface) => Center(
+  Widget _empty(BuildContext context, WidgetRef ref, Color onSurface) => Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             const Text('📭', style: TextStyle(fontSize: 48)),
             const SizedBox(height: 12),
-            Text('No notifications yet',
+            Text(context.tr(ref, 'notif_empty', 'No notifications yet'),
                 style: TextStyle(
                     fontFamily: 'Mukta',
                     fontSize: 14,
@@ -117,11 +117,11 @@ class NotificationsScreen extends ConsumerWidget {
       );
 }
 
-class _NotifCard extends StatelessWidget {
+class _NotifCard extends ConsumerWidget {
   final Map<String, dynamic> item;
   const _NotifCard({required this.item});
 
-  String _timeAgo() {
+  String _timeAgo(BuildContext context, WidgetRef ref) {
     final raw = item['created_at'];
     DateTime? dt;
     if (raw is String) {
@@ -131,17 +131,17 @@ class _NotifCard extends StatelessWidget {
     }
     if (dt == null) return '';
     final diff = DateTime.now().difference(dt);
-    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
-    if (diff.inHours < 24) return '${diff.inHours}h ago';
-    return '${diff.inDays}d ago';
+    if (diff.inMinutes < 60) return context.trp(ref, 'student_minutes_ago', '{n}m ago', {'n': '${diff.inMinutes}'});
+    if (diff.inHours < 24) return context.trp(ref, 'student_hours_ago', '{n}h ago', {'n': '${diff.inHours}'});
+    return context.trp(ref, 'student_days_ago', '{n}d ago', {'n': '${diff.inDays}'});
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final onSurface = Theme.of(context).colorScheme.onSurface;
     final title = (item['title'] ?? '').toString();
     final body = (item['body'] ?? item['message'] ?? '').toString();
-    final time = _timeAgo();
+    final time = _timeAgo(context, ref);
 
     return Container(
       padding: const EdgeInsets.all(MitraSpacing.md),
