@@ -1,7 +1,7 @@
 {
   "_lang_name": "मैथिली",
   "select_language_title": "अपन भाषा चुनू",
-  "language_subtitle_state": "{राज्य} लेल। अहाँ एकरा बादमे सेटिंग्समे बदलि सकैत छी।",
+  "language_subtitle_state": "{state} लेल। अहाँ एकरा बादमे सेटिंग्समे बदलि सकैत छी।",
   "language_subtitle_generic": "अहाँ एकरा बादमे सेटिंग्समे बदलि सकैत छी।",
   "badge_region": "अहाँक क्षेत्र",
   "badge_national": "राष्ट्रीय",
@@ -47,7 +47,7 @@
   "learn_watch_video": "वीडियो देखू",
   "learn_loading": "लोड भऽ रहल अछि",
   "quiz_title": "प्रश्नोत्तरी",
-  "quiz_question_of": "{कुल} क प्रश्न {वर्तमान}",
+  "quiz_question_of": "{total} क प्रश्न {current}",
   "quiz_submit": "जमा करू",
   "quiz_next": "अगिला",
   "quiz_finish": "समाप्त करू",

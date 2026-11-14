@@ -1,7 +1,7 @@
 {
   "_lang_name": "बड़ो",
   "select_language_title": "गावनि रावखौ सायख '",
-  "language_subtitle_state": "{स्टेट} नि थाखाय। नोंथाङा बेखौ उनाव सेटिंसआव सोलायनो हागोन।",
+  "language_subtitle_state": "{state} नि थाखाय। नोंथाङा बेखौ उनाव सेटिंसआव सोलायनो हागोन।",
   "language_subtitle_generic": "नोंथाङा बेखौ उनाव सेटिंसआव सोलायनो हागोन।",
   "badge_region": "नोंनि ओनसोला",
   "badge_national": "हादोरारि",
@@ -47,7 +47,7 @@
   "learn_watch_video": "भिडिय 'खौ नाय",
   "learn_loading": "ल 'डिं जागासिनो",
   "quiz_title": "क्युइज",
-  "quiz_question_of": "{गासै} नि सोदा {कारेन्ट}",
+  "quiz_question_of": "{total} नि सोदा {current}",
   "quiz_submit": "साबमिट खालाम",
   "quiz_next": "बिनि उनाव",
   "quiz_finish": "फोजोब",

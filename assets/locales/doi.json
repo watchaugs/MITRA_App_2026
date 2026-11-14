@@ -1,7 +1,7 @@
 {
   "_lang_name": "डोगरी",
   "select_language_title": "अपनी भाशा चुनो",
-  "language_subtitle_state": "{राज्य} आस्तै। तुस इसगी बाद इच सेटिंग्स च बदली सकदे ओ।",
+  "language_subtitle_state": "{state} आस्तै। तुस इसगी बाद इच सेटिंग्स च बदली सकदे ओ।",
   "language_subtitle_generic": "तुस इसगी बाद इच सेटिंग्स च बदली सकदे ओ।",
   "badge_region": "तुंʼदा खेतर",
   "badge_national": "राश्ट्री",
@@ -47,7 +47,7 @@
   "learn_watch_video": "वीडियो दस्सो",
   "learn_loading": "लोड होआ दा ऐ",
   "quiz_title": "क्विज़",
-  "quiz_question_of": "{कुल} दा सुआल {वर्तमान}",
+  "quiz_question_of": "{total} दा सुआल {current}",
   "quiz_submit": "पेश करो",
   "quiz_next": "अगला",
   "quiz_finish": "खत्म करो",

@@ -1,7 +1,7 @@
 {
   "_lang_name": "سنڌي",
   "select_language_title": "پنھنجی ٻولی چونڊیو",
-  "language_subtitle_state": "لاء {ریاست} توھان ان کی بعد ۾ سیٽنگن ۾ تبدیل ڪری سگھو ٿا",
+  "language_subtitle_state": "لاء {state} توھان ان کی بعد ۾ سیٽنگن ۾ تبدیل ڪری سگھو ٿا",
   "language_subtitle_generic": "توھان ان کی بعد ۾ سیٽنگن ۾ تبدیل ڪری سگھو ٿا",
   "badge_region": "توھانجو علائقو",
   "badge_national": "قومی طئور",
@@ -47,7 +47,7 @@
   "learn_watch_video": "ویڊیو ڏسو",
   "learn_loading": "لوڊ ڪندی",
   "quiz_title": "ڪوز",
-  "quiz_question_of": "سوال {موجودہ} جو {ڪل}",
+  "quiz_question_of": "سوال {current} جو {total}",
   "quiz_submit": "جمع ڪرایو",
   "quiz_next": "اگلا",
   "quiz_finish": "ختم ٿیو",

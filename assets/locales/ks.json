@@ -1,7 +1,7 @@
 {
   "_lang_name": "کٲشُر",
   "select_language_title": "پنٕنۍ زبان ژارنہٕ۔",
-  "language_subtitle_state": "{سٹیٹ} خٲطرٕہ۔ تہۍ ہیٚکو یہ پتہٕ سیٹنگزس منٛز بدلاوتھ۔",
+  "language_subtitle_state": "{state} خٲطرٕہ۔ تہۍ ہیٚکو یہ پتہٕ سیٹنگزس منٛز بدلاوتھ۔",
   "language_subtitle_generic": "تہۍ ہیٚکو یہ پتہٕ سیٹنگزس منٛز بدلاوتھ۔",
   "badge_region": "تہنٛد علاقہٕ۔",
   "badge_national": "قومی سطحس پیٹھ",
@@ -47,7 +47,7 @@
   "learn_watch_video": "ویڈیو وچھیو۔",
   "learn_loading": "لوڈ کرن۔",
   "quiz_title": "کوئز۔",
-  "quiz_question_of": "سوال {موجودٕ} {کل}",
+  "quiz_question_of": "سوال {current} {total}",
   "quiz_submit": "جمع کراو",
   "quiz_next": "پتہٕ۔",
   "quiz_finish": "ختم کر۔",

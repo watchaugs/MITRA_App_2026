@@ -1,7 +1,7 @@
 {
   "_lang_name": "ᱥᱟᱱᱛᱟᱲᱤ",
   "select_language_title": "ᱟᱢᱟᱜ ᱯᱟᱹᱨᱥᱤ ᱵᱟᱪᱷᱱᱟᱣ ᱢᱮ ᱾",
-  "language_subtitle_state": "{ᱯᱚᱱᱚᱛ] ᱞᱟᱹᱜᱤᱫ ᱾ ᱟᱢ ᱱᱚᱶᱟ ᱫᱚ ᱛᱟᱭᱚᱢᱛᱮ ᱥᱮᱴᱤᱝᱥ ᱨᱮ ᱵᱚᱱᱚᱫᱚᱞ ᱫᱟᱲᱮᱭᱟᱜᱼᱟ ᱾",
+  "language_subtitle_state": "{state} ᱞᱟᱹᱜᱤᱫ ᱾ ᱟᱢ ᱱᱚᱶᱟ ᱫᱚ ᱛᱟᱭᱚᱢᱛᱮ ᱥᱮᱴᱤᱝᱥ ᱨᱮ ᱵᱚᱱᱚᱫᱚᱞ ᱫᱟᱲᱮᱭᱟᱜᱼᱟ ᱾",
   "language_subtitle_generic": "ᱟᱢ ᱱᱚᱶᱟ ᱫᱚ ᱛᱟᱭᱚᱢᱛᱮ ᱥᱮᱴᱤᱝᱥ ᱨᱮ ᱵᱚᱱᱚᱫᱚᱞ ᱫᱟᱲᱮᱭᱟᱜᱼᱟ ᱾",
   "badge_region": "ᱟᱢᱟᱜ ᱴᱚᱴᱷᱟ ᱾",
   "badge_national": "ᱡᱟᱹᱛᱤᱭᱟᱹᱨᱤ ᱾",
@@ -47,7 +47,7 @@
   "learn_watch_video": "ᱵᱷᱤᱰᱤᱣ ᱧᱮᱞ ᱢᱮ ᱾",
   "learn_loading": "ᱞᱳᱰ ᱦᱩᱭᱩᱜ ᱠᱟᱱᱟ ᱾",
   "quiz_title": "ᱠᱩᱭᱤᱡ ᱾",
-  "quiz_question_of": "{ᱜᱩᱴ} ᱨᱮᱱᱟᱜ {ᱠᱟᱨᱮᱱᱴ} ᱼ ᱨᱮᱱᱟᱜ ᱪᱩᱠᱛᱤ ᱾",
+  "quiz_question_of": "{total} ᱨᱮᱱᱟᱜ {current} ᱼ ᱨᱮᱱᱟᱜ ᱪᱩᱠᱛᱤ ᱾",
   "quiz_submit": "ᱥᱟᱨᱢᱤᱴ ᱢᱮ ᱾",
   "quiz_next": "ᱛᱟᱭᱚᱢ ᱫᱟᱨᱟᱢ ᱾",
   "quiz_finish": "ᱢᱩᱪᱟᱹᱫ ᱢᱮ ᱾",

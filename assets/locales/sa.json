@@ -1,7 +1,7 @@
 {
   "_lang_name": "संस्कृतम्",
   "select_language_title": "स्वभाषां चिनोतु",
-  "language_subtitle_state": "[राज्यस्य] कृते। भवन्तः पश्चात् सेट्टिङ्ग्स् मध्ये एतत् परिवर्तयितुं शक्नुवन्ति।",
+  "language_subtitle_state": "{state} कृते। भवन्तः पश्चात् सेट्टिङ्ग्स् मध्ये एतत् परिवर्तयितुं शक्नुवन्ति।",
   "language_subtitle_generic": "भवन्तः पश्चात् सेट्टिङ्ग्स् मध्ये एतत् परिवर्तयितुं शक्नुवन्ति।",
   "badge_region": "भवतः प्रदेशः",
   "badge_national": "राष्ट्रियः",
@@ -47,7 +47,7 @@
   "learn_watch_video": "वीडियो पश्यतु",
   "learn_loading": "लोडिङ्ग् भवति",
   "quiz_title": "प्रश्नोत्तराः",
-  "quiz_question_of": "{टोटल्} इत्यस्य {करण्ट्} प्रश्नम्",
+  "quiz_question_of": "{total} इत्यस्य {current} प्रश्नम्",
   "quiz_submit": "समर्पयतु",
   "quiz_next": "अग्रे",
   "quiz_finish": "समाप्तम्",

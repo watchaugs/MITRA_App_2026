@@ -461,12 +461,16 @@ class _Section extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(title,
-                    style: const TextStyle(
-                        fontFamily: 'Baloo2',
-                        fontWeight: FontWeight.w600,
-                        fontSize: 16,
-                        color: MitraColors.textPrimary)),
+                Expanded(
+                  child: Text(title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                          fontFamily: 'Baloo2',
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
+                          color: MitraColors.textPrimary)),
+                ),
                 if (trailing != null) trailing!,
               ],
             ),
