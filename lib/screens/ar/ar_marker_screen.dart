@@ -85,7 +85,7 @@ class _ArMarkerScreenState extends ConsumerState<ArMarkerScreen> {
       ..setNavigationDelegate(NavigationDelegate(
         onWebResourceError: (err) {
           if (mounted) {
-            setState(() => _error = ref.trpNow('ar_could_not_start_ar_description', 'Could not start AR: {description}', {'description': '${err.description}'}));
+            setState(() => _error = ref.trpNow('ar_could_not_start_ar_description', 'Could not start AR: {description}', {'description': err.description.toString()}));
           }
         },
       ));

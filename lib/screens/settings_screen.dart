@@ -220,7 +220,7 @@ class _ClassChangeTileState extends ConsumerState<_ClassChangeTile> {
                   ),
                   Text(
                     _locked
-                        ? context.trp(ref, 'settings_locked_daysleft', '🔒  Locked · {daysLeft}', {'daysLeft': '$_daysLeft'})
+                        ? context.trp(ref, 'settings_locked_daysleft', '🔒  Locked · {daysLeft}', {'daysLeft': _daysLeft.toString()})
                         : context.tr(ref, 'settings_tap_to_select_a_new_class', 'Tap to select a new class'),
                     style: TextStyle(
                       fontFamily: 'Mukta',

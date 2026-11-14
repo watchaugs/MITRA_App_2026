@@ -194,7 +194,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       // generic message. Revert to the generic toast once the cause is known.
       debugPrint('🚨 PROFILE SAVE FAILED: $e');
       debugPrint('$st');
-      _toast(ref.trpNow('student_could_not_save_v1', 'Could not save: {v1}', {'v1': '${e.toString().split('\n').first}'}));
+      _toast(ref.trpNow('student_could_not_save_v1', 'Could not save: {v1}', {'v1': e.toString().split('\n').first}));
     } finally {
       if (mounted) setState(() => _saving = false);
     }

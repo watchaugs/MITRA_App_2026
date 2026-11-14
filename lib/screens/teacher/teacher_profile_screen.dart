@@ -32,7 +32,7 @@ class TeacherProfileScreen extends ConsumerWidget {
                         fontWeight: FontWeight.w800,
                         fontSize: 22,
                         color: MitraColors.textPrimary)),
-                Text(context.trp(ref, 'teacher_teacher_v1', 'Teacher · {v1}', {'v1': '${user?.assignedState ?? ''}'}),
+                Text(context.trp(ref, 'teacher_teacher_v1', 'Teacher · {v1}', {'v1': user?.assignedState ?? ''}),
                     style: const TextStyle(
                         fontFamily: 'Mukta',
                         fontSize: 13,

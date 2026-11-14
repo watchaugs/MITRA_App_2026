@@ -358,8 +358,10 @@ Future<void> _showWatchArFirstDialog(
   return showDialog<void>(
     context: context,
     builder: (ctx) => AlertDialog(
-      title: Text(ctx.trCtx('student_finish_the_ar_module_first', 'Finish the AR module first')),
-      content: Text(ctx.trpCtx('student_watch_at_least_threshold_of_the_ar',
+      title: Text(ctx.trCtx(
+          'student_finish_the_ar_module_first', 'Finish the AR module first')),
+      content: Text(ctx.trpCtx(
+          'student_watch_at_least_threshold_of_the_ar',
           'Watch at least {threshold}% of the AR module before taking its quiz.',
           {'threshold': '$threshold'})),
       actions: [
@@ -840,7 +842,9 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
       if (geoAsync.isLoading && geo == null) {
         return Scaffold(
           backgroundColor: Colors.transparent,
-          body: OrbitLoader(message: context.tr(ref, 'student_finding_your_state', 'Finding your state…')),
+          body: OrbitLoader(
+              message: context.tr(
+                  ref, 'student_finding_your_state', 'Finding your state…')),
         );
       }
       if (geo != null && geo.status != GeoStatus.insideTerritory) {
@@ -935,8 +939,9 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
             _LearnHeader(selectedSubject: _selectedSubject),
             Expanded(
               child: quizAsync.when(
-                loading: () =>
-                    OrbitLoader(message: context.tr(ref, 'student_loading_your_lessons', 'Loading your lessons…')),
+                loading: () => OrbitLoader(
+                    message: context.tr(ref, 'student_loading_your_lessons',
+                        'Loading your lessons…')),
                 error: (error, _) => _ErrorState(
                   // Localised via the app's i18n, falling back to the failure's
                   // English displayMessage if the translation pack lacks the key.
@@ -1009,7 +1014,10 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
                             icon: const Icon(
                                 Icons.download_for_offline_outlined,
                                 size: 18),
-                            label: Text(context.tr(ref, 'student_save_lessons_offline', 'Save lessons offline')),
+                            label: Text(context.tr(
+                                ref,
+                                'student_save_lessons_offline',
+                                'Save lessons offline')),
                             onPressed: () async {
                               final messenger = ScaffoldMessenger.of(context);
                               final models = arCatalog?.glbById ??
@@ -1018,12 +1026,16 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
                                   const <String, String>{};
                               if (models.isEmpty && audio.isEmpty) {
                                 messenger.showSnackBar(SnackBar(
-                                    content: Text(
-                                        ref.trNow('student_no_downloadable_lessons_for_your_sta', 'No downloadable lessons for your state yet.'))));
+                                    content: Text(ref.trNow(
+                                        'student_no_downloadable_lessons_for_your_sta',
+                                        'No downloadable lessons for your state yet.'))));
                                 return;
                               }
                               messenger.showSnackBar(SnackBar(
-                                  content: Text(context.tr(ref, 'student_downloading_over_wi_fi', 'Downloading over Wi-Fi…'))));
+                                  content: Text(context.tr(
+                                      ref,
+                                      'student_downloading_over_wi_fi',
+                                      'Downloading over Wi-Fi…'))));
                               final n = await ArPackStore.instance.downloadPack(
                                 models: models,
                                 audios: audio,
@@ -1031,8 +1043,14 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
                               );
                               messenger.showSnackBar(SnackBar(
                                   content: Text(n > 0
-                                      ? ref.trpNow('student_saved_n_files_for_offline_use', '✅ Saved {n} files for offline use', {'n': '$n'})
-                                      : ref.trNow('student_connect_to_wi_fi_to_download', 'Connect to Wi-Fi to download lessons.'))));
+                                      ? ref.trpNow(
+                                          'student_saved_n_files_for_offline_use',
+                                          '✅ Saved {n} files for offline use', {
+                                          'n': '$n'
+                                        })
+                                      : ref.trNow(
+                                          'student_connect_to_wi_fi_to_download',
+                                          'Connect to Wi-Fi to download lessons.'))));
                             },
                           ),
                         ),
@@ -1281,7 +1299,9 @@ class _LearnHeader extends ConsumerWidget {
     final quizzesTaken = (xp / 500).floor();
 
     final isAll = selectedSubject == 'All';
-    final title = isAll ? context.tr(ref, 'student_learn_modules', 'Learn Modules') : selectedSubject;
+    final title = isAll
+        ? context.tr(ref, 'student_learn_modules', 'Learn Modules')
+        : selectedSubject;
     final emoji = isAll ? '📚' : _emojiFor(selectedSubject);
     final themeColor = isAll ? MitraColors.saffron : MitraColors.indigoLight;
 
@@ -1315,7 +1335,10 @@ class _LearnHeader extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        isAll ? context.tr(ref, 'student_curriculum', 'Curriculum') : context.tr(ref, 'student_subject', 'Subject'),
+                        isAll
+                            ? context.tr(
+                                ref, 'student_curriculum', 'Curriculum')
+                            : context.tr(ref, 'student_subject', 'Subject'),
                         style: TextStyle(
                           fontFamily: 'Mukta',
                           fontSize: 12,
@@ -1346,13 +1369,21 @@ class _LearnHeader extends ConsumerWidget {
             children: [
               _StatBadge(
                 icon: '🎯',
-                label: context.trp(ref, 'student_topicsconsumed_topics', '{topicsConsumed} Topics', {'topicsConsumed': '$topicsConsumed'}),
+                label: context.trp(
+                    ref,
+                    'student_topicsconsumed_topics',
+                    '{topicsConsumed} Topics',
+                    {'topicsConsumed': '$topicsConsumed'}),
                 color: onSurface,
               ),
               const SizedBox(height: 6),
               _StatBadge(
                 icon: '📝',
-                label: context.trp(ref, 'student_quizzestaken_quizzes', '{quizzesTaken} Quizzes', {'quizzesTaken': '$quizzesTaken'}),
+                label: context.trp(
+                    ref,
+                    'student_quizzestaken_quizzes',
+                    '{quizzesTaken} Quizzes',
+                    {'quizzesTaken': '$quizzesTaken'}),
                 color: onSurface,
               ),
             ],
@@ -1447,7 +1478,11 @@ class _SubjectSection extends ConsumerWidget {
 
     return Semantics(
       header: true,
-      label: context.trp(ref, 'student_subject_totalitems_items', '{subject}, {totalItems} items', {'subject': '$subject', 'totalItems': '$totalItems'}),
+      label: context.trp(
+          ref,
+          'student_subject_totalitems_items',
+          '{subject}, {totalItems} items',
+          {'subject': subject, 'totalItems': totalItems.toString()}),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1547,10 +1582,12 @@ class _SubjectSection extends ConsumerWidget {
                         (audiosByLangById[ar.id] ?? const {}).keys.toSet();
                     if (langs.isEmpty) return '';
                     if (myLang.isNotEmpty && langs.contains(myLang)) {
-                      return context.tr(ref, 'student_your_language', 'Your language');
+                      return context.tr(
+                          ref, 'student_your_language', 'Your language');
                     }
                     if (langs.contains('hi') || langs.contains('en')) {
-                      return context.tr(ref, 'student_hindi_english', 'Hindi/English');
+                      return context.tr(
+                          ref, 'student_hindi_english', 'Hindi/English');
                     }
                     return '';
                   }(),
@@ -1710,7 +1747,9 @@ class _ArTile extends ConsumerWidget {
     final onSurface = theme.colorScheme.onSurface;
 
     final subtext = questionCount > 0
-        ? '${lesson.topic.isNotEmpty ? '${lesson.topic} · ' : ''}${questionCount == 1 ? context.tr(ref, 'student_1_question', '1 question') : context.trp(ref, 'student_n_questions', '{count} questions', {'count': '$questionCount'})}'
+        ? '${lesson.topic.isNotEmpty ? '${lesson.topic} · ' : ''}${questionCount == 1 ? context.tr(ref, 'student_1_question', '1 question') : context.trp(ref, 'student_n_questions', '{count} questions', {
+                'count': '$questionCount'
+              })}'
         : lesson.topic;
     final audioNote = audioLabel.isEmpty ? '' : ' · 🔊 $audioLabel';
 
@@ -1755,7 +1794,10 @@ class _ArTile extends ConsumerWidget {
                   ? context.tr(ref, 'student_coming_soon', 'Coming soon')
                   : unlocked
                       ? subtext + audioNote
-                      : context.tr(ref, 'student_score_100_on_the_previous_module', 'Score 100% on the previous module to unlock'),
+                      : context.tr(
+                          ref,
+                          'student_score_100_on_the_previous_module',
+                          'Score 100% on the previous module to unlock'),
             ),
           ),
           const SizedBox(width: 8),
@@ -1821,10 +1863,19 @@ class _ArTile extends ConsumerWidget {
     return Semantics(
       button: true,
       label: comingSoon
-          ? context.trp(ref, 'student_coming_soon_title_not_yet_available', 'Coming soon: {title}. Not yet available.', {'title': '${lesson.title}'})
+          ? context.trp(
+              ref,
+              'student_coming_soon_title_not_yet_available',
+              'Coming soon: {title}. Not yet available.',
+              {'title': lesson.title})
           : unlocked
-              ? context.trp(ref, 'student_3d_lesson_title', '3D Lesson: {title}', {'title': '${lesson.title}'})
-              : context.trp(ref, 'student_locked_title_score_100_on_the', 'Locked: {title}. Score 100% on the previous module to unlock.', {'title': '${lesson.title}'}),
+              ? context.trp(ref, 'student_3d_lesson_title',
+                  '3D Lesson: {title}', {'title': lesson.title})
+              : context.trp(
+                  ref,
+                  'student_locked_title_score_100_on_the',
+                  'Locked: {title}. Score 100% on the previous module to unlock.',
+                  {'title': lesson.title}),
       child: ExcludeSemantics(
         child: GestureDetector(
           // Locked tiles do nothing on tap (the hint is already visible).
@@ -1853,7 +1904,9 @@ class _ScoreBadge extends ConsumerWidget {
         border: Border.all(color: color.withValues(alpha: 0.35)),
       ),
       child: Text(
-        mastered ? context.tr(ref, 'student_completed_100', '✓ COMPLETED 100%') : '$pct%',
+        mastered
+            ? context.tr(ref, 'student_completed_100', '✓ COMPLETED 100%')
+            : '$pct%',
         style: TextStyle(
           fontFamily: 'SpaceMono',
           fontSize: 10,
@@ -1967,7 +2020,8 @@ class _AvgScoreChip extends ConsumerWidget {
         border: Border.all(color: MitraColors.emerald.withValues(alpha: 0.25)),
       ),
       child: Text(
-        context.trp(ref, 'student_avg_v1', 'avg {v1}%', {'v1': '${score.toStringAsFixed(0)}'}),
+        context.trp(ref, 'student_avg_v1', 'avg {v1}%',
+            {'v1': score.toStringAsFixed(0)}),
         style: const TextStyle(
           fontFamily: 'SpaceMono',
           fontSize: 10,
@@ -2027,7 +2081,8 @@ class _RetryButton extends ConsumerWidget {
       onTap: onTap,
       child: Semantics(
         button: true,
-        label: context.tr(ref, 'student_retry_loading_quizzes', 'Retry loading quizzes'),
+        label: context.tr(
+            ref, 'student_retry_loading_quizzes', 'Retry loading quizzes'),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
           decoration: BoxDecoration(

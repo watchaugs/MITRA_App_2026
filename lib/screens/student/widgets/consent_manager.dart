@@ -190,7 +190,7 @@ class _ConsentManagerState extends ConsumerState<ConsentManager> {
             ),
             if (_consents.isNotEmpty) ...[
               const SizedBox(height: 6),
-              Text(context.trp(ref, 'student_active_v1', 'Active: {v1}', {'v1': '${_consents.join(', ')}'}),
+              Text(context.trp(ref, 'student_active_v1', 'Active: {v1}', {'v1': _consents.join(', ')}),
                   style: TextStyle(
                       fontFamily: 'Mukta',
                       fontSize: 12,

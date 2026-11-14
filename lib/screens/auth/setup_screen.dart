@@ -848,7 +848,7 @@ class _ClassTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return Semantics(
       button: true,
-      label: context.trp(ref, 'auth_class_number', 'Class {number}', {'number': '$number'}) + (isSelected ? context.tr(ref, 'auth_selected_suffix', ', selected') : ''),
+      label: context.trp(ref, 'auth_class_number', 'Class {number}', {'number': number.toString()}) + (isSelected ? context.tr(ref, 'auth_selected_suffix', ', selected') : ''),
       selected: isSelected,
       child: Material(
         color: Colors.transparent,

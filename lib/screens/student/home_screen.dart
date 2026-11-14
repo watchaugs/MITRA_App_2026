@@ -1110,8 +1110,8 @@ class _BrainSparkTile extends ConsumerWidget {
                         const SizedBox(width: 6),
                         Text(
                           hoursLeft > 0
-                              ? context.trp(ref, 'student_next_fact_in_hoursleft_h_minsleft', 'Next fact in {hoursLeft}h {minsLeft}m', {'hoursLeft': '${hoursLeft}', 'minsLeft': '${minsLeft}'})
-                              : context.trp(ref, 'student_next_fact_in_minsleft_m', 'Next fact in {minsLeft}m', {'minsLeft': '${minsLeft}'}),
+                              ? context.trp(ref, 'student_next_fact_in_hoursleft_h_minsleft', 'Next fact in {hoursLeft}h {minsLeft}m', {'hoursLeft': '$hoursLeft', 'minsLeft': '$minsLeft'})
+                              : context.trp(ref, 'student_next_fact_in_minsleft_m', 'Next fact in {minsLeft}m', {'minsLeft': '$minsLeft'}),
                           style: const TextStyle(
                             fontFamily: 'SpaceMono',
                             fontSize: 10,

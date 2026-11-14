@@ -587,8 +587,8 @@ class _ConstellationNodeState extends ConsumerState<_ConstellationNode>
                       widget.nextTier == null
                           ? context.tr(ref, 'student_highest_level_reached_gyani', 'Highest level reached — Gyani 💎')
                           : remaining > 0
-                              ? context.trp(ref, 'student_remaining_xp_to_title', '{remaining} XP to {title}', {'remaining': '$remaining', 'title': '${widget.nextTier!.title}'})
-                              : context.trp(ref, 'student_title_already_unlocked', '{title} already unlocked ✓', {'title': '${widget.nextTier!.title}'}),
+                              ? context.trp(ref, 'student_remaining_xp_to_title', '{remaining} XP to {title}', {'remaining': remaining.toString(), 'title': widget.nextTier!.title})
+                              : context.trp(ref, 'student_title_already_unlocked', '{title} already unlocked ✓', {'title': widget.nextTier!.title}),
                       style: TextStyle(
                         fontFamily: 'SpaceMono',
                         fontSize: 12,

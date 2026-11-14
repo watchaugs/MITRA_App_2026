@@ -610,7 +610,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 Border.all(color: MitraColors.emerald.withValues(alpha: 0.3)),
           ),
           child: Text(
-            context.trp(ref, 'auth_otp_sent_to_91_v1_xxxxxxx', '💬  OTP sent to +91 {v1}XXXXXXX', {'v1': '${_phoneCtrl.text.substring(0, 3)}'}),
+            context.trp(ref, 'auth_otp_sent_to_91_v1_xxxxxxx', '💬  OTP sent to +91 {v1}XXXXXXX', {'v1': _phoneCtrl.text.substring(0, 3)}),
             style: const TextStyle(
                 fontFamily: 'Mukta', fontSize: 13, color: MitraColors.emerald),
           ),
@@ -676,7 +676,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
         Center(
           child: _resendTimer > 0
-              ? Text(context.trp(ref, 'auth_resend_in_resendtimer_s', 'Resend in {resendTimer}s', {'resendTimer': '${_resendTimer}'}),
+              ? Text(context.trp(ref, 'auth_resend_in_resendtimer_s', 'Resend in {resendTimer}s', {'resendTimer': '$_resendTimer'}),
                   style: const TextStyle(
                       fontFamily: 'Mukta',
                       fontSize: 12,
