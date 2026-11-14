@@ -2,10 +2,13 @@
 // MitraBackButtonHandler
 //
 // Registered as a WidgetsBindingObserver in main.dart.
-// Works reliably because AndroidManifest does NOT set
-// enableOnBackInvokedCallback=true — so Android still
+// Works reliably because AndroidManifest sets
+// enableOnBackInvokedCallback="false" — so Android still
 // sends back presses as key events that Flutter's
 // WidgetsBindingObserver.didPopRoute() intercepts.
+// REQUIRED since targetSdk 36: Android 16 enables
+// predictive back by default and would otherwise skip
+// this handler (no exit dialog, tabs closing the app).
 // ═══════════════════════════════════════════════════════
 
 import 'package:flutter/material.dart';

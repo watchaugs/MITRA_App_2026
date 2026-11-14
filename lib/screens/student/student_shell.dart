@@ -4,8 +4,10 @@ import 'package:go_router/go_router.dart';
 import '../../widgets/mitra_scaffold.dart';
 import '../../widgets/language_alphabet_background.dart';
 import '../../widgets/sync_status_banner.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../providers/tr_ext.dart';
 
-class StudentShell extends StatelessWidget {
+class StudentShell extends ConsumerWidget {
   final Widget child;
   const StudentShell({super.key, required this.child});
 
@@ -24,7 +26,7 @@ class StudentShell extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final idx = _currentIndex(context);
     final bottomPadding = MediaQuery.of(context).padding.bottom;
     final barHeight = 65.0 + bottomPadding;
@@ -82,25 +84,36 @@ class StudentShell extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: List.generate(_tabs.length, (i) {
                       final focused = i == idx;
-                      return GestureDetector(
-                        onTap: () => context.go(_tabs[i].route),
-                        behavior: HitTestBehavior.opaque,
-                        child: SizedBox(
-                          width: 80,
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              // ✨ Clean, icon-only layout. Sizes and fades smoothly.
-                              Opacity(
-                                opacity: focused ? 1.0 : 0.4,
-                                child: Text(_tabs[i].emoji,
-                                    style:
-                                        TextStyle(fontSize: focused ? 34 : 28)),
+                      // The bar is icon-only: give screen readers the tab name
+                      // (translated) instead of reading out the emoji.
+                      return Semantics(
+                          button: true,
+                          selected: focused,
+                          excludeSemantics: true,
+                          label: context.tr(
+                              ref,
+                              'tab_${_tabs[i].label.toLowerCase()}',
+                              _tabs[i].label),
+                          onTap: () => context.go(_tabs[i].route),
+                          child: GestureDetector(
+                            onTap: () => context.go(_tabs[i].route),
+                            behavior: HitTestBehavior.opaque,
+                            child: SizedBox(
+                              width: 80,
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  // ✨ Clean, icon-only layout. Sizes and fades smoothly.
+                                  Opacity(
+                                    opacity: focused ? 1.0 : 0.4,
+                                    child: Text(_tabs[i].emoji,
+                                        style: TextStyle(
+                                            fontSize: focused ? 34 : 28)),
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
-                        ),
-                      );
+                            ),
+                          ));
                     }),
                   ),
                 ),

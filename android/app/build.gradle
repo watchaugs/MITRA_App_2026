@@ -35,7 +35,8 @@ android {
         // Raised to 28 (Android 9): required by ar_flutter_plugin_2 for ARCore.
         // All ARCore-capable phones are well above this anyway.
         minSdkVersion 28
-        targetSdk 34
+        // Google Play: new apps and updates must target API 36 (Android 16).
+        targetSdk 36
         versionCode flutter.versionCode
         versionName flutter.versionName
         multiDexEnabled true

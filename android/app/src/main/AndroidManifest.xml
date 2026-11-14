@@ -23,11 +23,18 @@
     <!-- DPDPA minimisation: COARSE only. State detection does not need FINE. -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
+    <!-- enableOnBackInvokedCallback="false": the app targets API 36, where
+         Android 16 turns predictive back on by default and stops sending Back
+         as a key event. MitraBackButtonHandler (lib/back_button_dispatcher.dart)
+         relies on that key event for the "Exit app?" dialog and tab→Home
+         behaviour, so we keep legacy Back handling until it is migrated to
+         Flutter's predictive-back APIs (PopScope). -->
     <application
         android:label="MITRA"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:usesCleartextTraffic="false"
+        android:enableOnBackInvokedCallback="false"
         android:networkSecurityConfig="@xml/network_security_config">
         <!-- model_viewer_plus renders WebGL inside a WebView. Impeller (Vulkan)
              conflicts with the WebView's GL surface on some devices → the 3D

@@ -109,10 +109,11 @@ dependencies:
     path: ./packages/ar_flutter_plugin_2
   audioplayers: ^6.1.0
   vector_math: ^2.1.4
-  isar: ^3.1.0+1
-  isar_flutter_libs: ^3.1.0+1
+  # isar_community: maintained fork of isar 3.x with Android 16 KB page-size
+  # support (required by Google Play). Same API; package names differ.
+  isar_community: ^3.4.1
+  isar_community_flutter_libs: ^3.4.1
   firebase_remote_config: ^4.3.0
-  sentry_flutter: ^7.18.0
   workmanager: ^0.6.0
   webview_flutter: ^4.9.0
   webview_flutter_android: ^3.16.9
@@ -123,12 +124,9 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^4.0.0
   build_runner: ^2.4.13
-  riverpod_generator: any
-  hive_generator: any
-  json_serializable: ^6.8.0
   flutter_launcher_icons: ^0.14.4
   flutter_tts: ^4.2.5
-  isar_generator: ^3.1.0+1
+  isar_community_generator: ^3.4.1
 
 flutter:
   uses-material-design: true

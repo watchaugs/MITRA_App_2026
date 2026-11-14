@@ -29,7 +29,7 @@ import 'back_button_dispatcher.dart';
 import 'firebase_options.dart';
 
 // ✨ GAMIFICATION & ISAR IMPORTS
-import 'package:isar/isar.dart';
+import 'package:isar_community/isar.dart';
 import 'package:path_provider/path_provider.dart';
 import 'models/achievement_models.dart';
 import 'services/achievement_engine.dart';
