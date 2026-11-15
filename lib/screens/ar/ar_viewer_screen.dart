@@ -73,6 +73,16 @@ class ArViewerScreen extends ConsumerStatefulWidget {
 class _ArViewerScreenState extends ConsumerState<ArViewerScreen> {
   final AudioPlayer _audio = AudioPlayer();
   Duration? _audioDuration;
+  // Set when the viewer is closing. A narration that is still buffering when
+  // the student leaves would otherwise start playing AFTER the screen is gone.
+  bool _closing = false;
+
+  Future<void> _stopNarration() async {
+    _closing = true;
+    try {
+      await _audio.stop();
+    } catch (_) {}
+  }
 
   // Multi-language narration.
   Map<String, String> _audios = const {};
@@ -225,24 +235,36 @@ class _ArViewerScreenState extends ConsumerState<ArViewerScreen> {
   }
 
   // Narration: prefer the chosen-language audio; fall back to single audioUrl.
-  Future<void> _startNarration() async {
+  // The in-flight narration start (buffering can take seconds on a slow
+  // network). dispose() waits for it before releasing the player.
+  Future<void>? _narration;
+  Future<void> _startNarration() => _narration = _startNarrationImpl();
+
+  Future<void> _startNarrationImpl() async {
     final chosen = _activeLang != null ? _audios[_activeLang] : null;
     final url = (chosen ?? widget.audioUrl)?.trim();
-    if (url == null || url.isEmpty) return;
+    if (url == null || url.isEmpty || _closing) return;
     if (_activeLang != null) _logLanguageChoice(_activeLang!, switched: false);
     final fallback =
         _activeLang != null ? _audiosAac[_activeLang]?.trim() : null;
     try {
       await _audio.stop();
+      if (_closing) return;
       await _audio.play(UrlSource(url));
     } catch (_) {
       // Opus unsupported on this device → try the AAC fallback.
-      if (fallback != null && fallback.isNotEmpty) {
+      if (fallback != null && fallback.isNotEmpty && !_closing) {
         try {
           await _audio.stop();
           await _audio.play(UrlSource(fallback));
         } catch (_) {/* best-effort; never block the model */}
       }
+    }
+    // The student closed the viewer while the audio was still loading.
+    if (_closing) {
+      try {
+        await _audio.stop();
+      } catch (_) {}
     }
   }
 
@@ -261,7 +283,17 @@ class _ArViewerScreenState extends ConsumerState<ArViewerScreen> {
           postModuleScore: 0,
           renderMode: 'interactive3d',
         );
-    _audio.dispose();
+    // Stop first, then release — covers the hardware back button too (it pops
+    // the route without going through the close button).
+    _closing = true;
+    final player = _audio;
+    player.stop().catchError((_) {});
+    // Release only after any buffering play() settles, so a late-prepared
+    // track can't start on a half-released player.
+    (_narration ?? Future<void>.value())
+        .catchError((_) {})
+        .whenComplete(() => player.stop().catchError((_) {}))
+        .whenComplete(() => player.dispose());
     super.dispose();
   }
 
@@ -388,6 +420,7 @@ class _ArViewerScreenState extends ConsumerState<ArViewerScreen> {
                         _RoundIconButton(
                           icon: Icons.close,
                           onTap: () {
+                            _stopNarration();
                             if (context.canPop()) {
                               context.pop();
                             } else {

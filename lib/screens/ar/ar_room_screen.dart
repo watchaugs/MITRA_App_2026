@@ -396,53 +396,64 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
                       border: Border.all(
                           color: Colors.white.withValues(alpha: 0.08)),
                     ),
-                    // Horizontally scrollable so NO group is ever cut off on a
-                    // narrow phone. On wide screens all four fit and centre;
-                    // on narrow ones the user swipes the toolbar sideways.
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      physics: const BouncingScrollPhysics(),
-                      child: ConstrainedBox(
-                        constraints: BoxConstraints(
-                          minWidth: MediaQuery.sizeOf(context).width - 48,
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    // Two rows of two groups (Rotate · Move / Size · Depth).
+                    // Four groups in one row overflowed a 360dp phone and cut
+                    // Depth off; two rows fit every phone with full-size
+                    // buttons and line the groups up in equal columns.
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Row(
                           children: [
                             // ROTATE — tap = 30°, hold = smooth spin.
-                            _toolGroup(context.tr(ref, 'ar_rotate', 'Rotate'), [
-                              _spinBig(Icons.rotate_left, -1),
-                              _spinBig(Icons.rotate_right, 1),
-                            ]),
+                            Expanded(
+                              child: _toolGroup(
+                                  context.tr(ref, 'ar_rotate', 'Rotate'), [
+                                _spinBig(Icons.rotate_left, -1),
+                                _spinBig(Icons.rotate_right, 1),
+                              ]),
+                            ),
                             _divider(),
                             // MOVE — up / down off the floor.
-                            _toolGroup(context.tr(ref, 'ar_move', 'Move'), [
-                              _bigBtn(
-                                  Icons.keyboard_arrow_up, () => _moveY(0.05)),
-                              _bigBtn(Icons.keyboard_arrow_down,
-                                  () => _moveY(-0.05)),
-                            ]),
-                            _divider(),
-                            // SIZE — live % read-out between the buttons.
-                            _toolGroup(
-                                context.tr(ref, 'ar_size', 'Size'),
-                                [
-                                  _bigBtn(
-                                      Icons.remove, () => _resizeBy(1 / 1.2)),
-                                  _bigBtn(Icons.add, () => _resizeBy(1.2)),
-                                ],
-                                caption: '${(_modelScale * 100).round()}%'),
-                            _divider(),
-                            // DEPTH — nearer / farther.
-                            _toolGroup(context.tr(ref, 'ar_depth', 'Depth'), [
-                              _bigBtn(Icons.remove_circle_outline,
-                                  () => _moveZ(-0.1)), // nearer
-                              _bigBtn(Icons.add_circle_outline,
-                                  () => _moveZ(0.1)), // farther
-                            ]),
+                            Expanded(
+                              child: _toolGroup(
+                                  context.tr(ref, 'ar_move', 'Move'), [
+                                _bigBtn(Icons.keyboard_arrow_up,
+                                    () => _moveY(0.05)),
+                                _bigBtn(Icons.keyboard_arrow_down,
+                                    () => _moveY(-0.05)),
+                              ]),
+                            ),
                           ],
                         ),
-                      ),
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            // SIZE — live % read-out between the buttons.
+                            Expanded(
+                              child: _toolGroup(
+                                  context.tr(ref, 'ar_size', 'Size'),
+                                  [
+                                    _bigBtn(
+                                        Icons.remove, () => _resizeBy(1 / 1.2)),
+                                    _bigBtn(Icons.add, () => _resizeBy(1.2)),
+                                  ],
+                                  caption: '${(_modelScale * 100).round()}%'),
+                            ),
+                            _divider(),
+                            // DEPTH — nearer / farther.
+                            Expanded(
+                              child: _toolGroup(
+                                  context.tr(ref, 'ar_depth', 'Depth'), [
+                                _bigBtn(Icons.remove_circle_outline,
+                                    () => _moveZ(-0.1)), // nearer
+                                _bigBtn(Icons.add_circle_outline,
+                                    () => _moveZ(0.1)), // farther
+                              ]),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -487,6 +498,14 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
     _objectManager.onInitialize();
 
     _sessionManager.onPlaneOrPointTap = _onPlaneTap;
+    // The plugin calls this for every plane it finds; leaving it unset threw
+    // "LateInitializationError: Field 'onPlaneDetected'" on each detection.
+    // Use it to tell the student the floor is ready.
+    _sessionManager.onPlaneDetected = (_) {
+      if (!mounted || _placed) return;
+      setState(() => _hint =
+          ref.trNow('ar_tap_floor', 'Tap the floor to place the model.'));
+    };
     // Tapping the placed model replays its animation + narration.
     _objectManager.onNodeTap = (nodes) => _replay();
   }

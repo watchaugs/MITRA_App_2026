@@ -48,7 +48,6 @@ import '../../providers/tr_ext.dart';
 import '../../widgets/orbit_explorer.dart';
 import '../../stores/module_progress_store.dart';
 import '../../stores/ar_pack_store.dart';
-import '../../services/achievement_engine.dart';
 import '../../models/quiz_model.dart';
 
 // ═══════════════════════════════════════════════════════════
@@ -348,8 +347,13 @@ final arWatchThresholdProvider = FutureProvider<int>((ref) async {
     final n = v is num ? v.toInt() : int.tryParse('$v');
     if (n != null && n >= 1 && n <= 100) return n;
   } catch (_) {/* fall back */}
-  return 80;
+  return 85;
 });
+
+/// Normalised topic key, so a quiz and an AR module that share a topic match
+/// even when case/spacing differ ("Human Heart" == "human  heart").
+String _topicKey(String s) =>
+    s.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
 
 /// Rule 1 dialog: tapping a quiz before the AR is watched enough opens this.
 /// Offers an "Open AR module" action that jumps straight to the AR content.
@@ -1258,7 +1262,18 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
                                   }
                                   final query =
                                       qp.isEmpty ? '' : '?${qp.join('&')}';
-                                  context.push('/student/ar/$id$query');
+                                  // Refresh locks + header counters when the
+                                  // student comes back (AR progress is saved
+                                  // while watching, but nothing told Learn).
+                                  context
+                                      .push('/student/ar/$id$query')
+                                      .whenComplete(() {
+                                    if (!mounted) return;
+                                    ref
+                                        .read(
+                                            moduleProgressTickProvider.notifier)
+                                        .state++;
+                                  });
                                 },
                               );
                             }).toList(),
@@ -1288,15 +1303,40 @@ class _LearnHeader extends ConsumerWidget {
     final theme = Theme.of(context);
     final onSurface = theme.colorScheme.onSurface;
 
-    // ✨ Fetch real stats from the current user.
-    // Using XP to estimate counts dynamically for the UI demo,
-    // but you can wire this directly to your database variables later!
-    // Single source of truth: the achievement-engine profile (live Isar stream).
-    final profile = ref.watch(studentProfileProvider).valueOrNull;
-    final xp = profile?.totalXp ?? 0;
-    // Progress counters derived from the student's XP, matching the engine.
-    final topicsConsumed = (xp / 100).floor();
-    final quizzesTaken = (xp / 500).floor();
+    // Counters read the SAME list the student is looking at (the selected
+    // subject, or everything on "All") and show done / available. They used to
+    // be guessed from XP (xp/100, xp/500), so they sat at 0 with content live.
+    ref.watch(moduleProgressTickProvider);
+    final progress = ref.watch(moduleProgressStoreProvider);
+    final threshold = ref.watch(arWatchThresholdProvider).maybeWhen(
+          data: (v) => v,
+          orElse: () => 85,
+        );
+    final lang = ref.watch(translationProvider).langCode;
+    bool inSubject(String subject) =>
+        selectedSubject == 'All' || subject == selectedSubject;
+    final quizzes = (ref
+                .watch(quizFeedProvider(ref.watch(quizFilterParamsProvider)))
+                .valueOrNull ??
+            const <QuizSummary>[])
+        .where((q) =>
+            (q.languageTag == lang || q.languageTag == 'all') &&
+            inSubject(q.subject))
+        .toList();
+    final arCatalog = ref.watch(arCatalogProvider).valueOrNull;
+    final arBySubject = arCatalog?.bySubject ?? LearnScreen._arLessonsBySubject;
+    final lessons = [
+      for (final e in arBySubject.entries)
+        if (inSubject(e.key)) ...e.value.where((l) => !l.locked),
+    ];
+    final topicsWatched =
+        lessons.where((l) => progress.arWatchedPct(l.id) >= threshold).length;
+    final quizzesTaken = quizzes
+        .where(
+            (q) => progress.bestPct(q.id) > 0 || progress.hasSavedAttempt(q.id))
+        .length;
+    final topicsLabel = '$topicsWatched/${lessons.length}';
+    final quizzesLabel = '$quizzesTaken/${quizzes.length}';
 
     final isAll = selectedSubject == 'All';
     final title = isAll
@@ -1369,21 +1409,15 @@ class _LearnHeader extends ConsumerWidget {
             children: [
               _StatBadge(
                 icon: '🎯',
-                label: context.trp(
-                    ref,
-                    'student_topicsconsumed_topics',
-                    '{topicsConsumed} Topics',
-                    {'topicsConsumed': '$topicsConsumed'}),
+                label: context.trp(ref, 'student_topicsconsumed_topics',
+                    '{topicsConsumed} Topics', {'topicsConsumed': topicsLabel}),
                 color: onSurface,
               ),
               const SizedBox(height: 6),
               _StatBadge(
                 icon: '📝',
-                label: context.trp(
-                    ref,
-                    'student_quizzestaken_quizzes',
-                    '{quizzesTaken} Quizzes',
-                    {'quizzesTaken': '$quizzesTaken'}),
+                label: context.trp(ref, 'student_quizzestaken_quizzes',
+                    '{quizzesTaken} Quizzes', {'quizzesTaken': quizzesLabel}),
                 color: onSurface,
               ),
             ],
@@ -1463,16 +1497,34 @@ class _SubjectSection extends ConsumerWidget {
     final myLang = ref.watch(translationProvider).langCode.toLowerCase();
     final progress = ref.watch(moduleProgressStoreProvider);
 
-    // AR-watch % needed to unlock a quiz. Dashboard-configurable; 80 until the
+    // AR-watch % needed to unlock a quiz. Dashboard-configurable; 85 until the
     // setting loads or if the fetch fails.
     final arWatchThreshold = ref.watch(arWatchThresholdProvider).maybeWhen(
           data: (v) => v,
-          orElse: () => 80,
+          orElse: () => 85,
         );
 
-    // Match each AR module to its quiz by shared id → gives us the question
-    // count to show as subtext, and the quiz list item once AR is watched.
+    // Match each AR module to its quiz. Dashboard quizzes and AR modules have
+    // DIFFERENT ids, so an id-only match never fired — every quiz fell through
+    // to the ungated "standalone" list. Match by id first, then by topic
+    // (both are tagged class → subject → topic on the dashboard; this section
+    // is already one subject).
     final quizById = {for (final q in quizzes) q.id: q};
+    final quizByTopic = <String, QuizSummary>{};
+    for (final q in quizzes) {
+      final k = _topicKey(q.topic);
+      if (k.isNotEmpty) quizByTopic.putIfAbsent(k, () => q);
+    }
+    QuizSummary? quizFor(ArLessonRec ar) =>
+        quizById[ar.id] ?? quizByTopic[_topicKey(ar.topic)];
+    // A topic's quiz unlocks once ANY of that topic's modules is watched
+    // past the threshold.
+    bool topicWatched(ArLessonRec ar) {
+      final k = _topicKey(ar.topic);
+      return arLessons.any((x) =>
+          (x.id == ar.id || (k.isNotEmpty && _topicKey(x.topic) == k)) &&
+          progress.arWatchedPct(x.id) >= arWatchThreshold);
+    }
 
     final totalItems = quizzes.length + arLessons.length;
 
@@ -1562,11 +1614,12 @@ class _SubjectSection extends ConsumerWidget {
               }
 
               final unlocked = (i == 0) || prevMastered;
-              final best = progress.bestPct(ar.id);
+              final matchedQuiz = quizFor(ar);
+              // Quiz results are stored under the QUIZ id.
+              final best = progress.bestPct(matchedQuiz?.id ?? ar.id);
               // Quiz unlocks only after the AR narration is heard past the
-              // dashboard-configured threshold (default 80%).
-              final watched = progress.arWatchedPct(ar.id) >= arWatchThreshold;
-              final matchedQuiz = quizById[ar.id];
+              // dashboard-configured threshold (default 85%).
+              final watched = topicWatched(ar);
               final qCount = matchedQuiz?.questionCount ?? 0;
 
               widgets.add(
@@ -1576,7 +1629,8 @@ class _SubjectSection extends ConsumerWidget {
                   unlocked: unlocked,
                   bestPct: best,
                   questionCount: qCount,
-                  completed: watched, // watched enough → Completed stamp
+                  // This module's own narration watched enough → Completed.
+                  completed: progress.arWatchedPct(ar.id) >= arWatchThreshold,
                   audioLabel: () {
                     final langs =
                         (audiosByLangById[ar.id] ?? const {}).keys.toSet();
@@ -1597,7 +1651,9 @@ class _SubjectSection extends ConsumerWidget {
               // Once the module is unlocked, its quiz is ALWAYS shown. If the AR
               // hasn't been watched enough yet, the quiz appears greyed and
               // tapping it opens the "finish the AR first" dialog (Rule 1).
-              if (unlocked && matchedQuiz != null) {
+              if (unlocked &&
+                  matchedQuiz != null &&
+                  !shownQuizIds.contains(matchedQuiz.id)) {
                 shownQuizIds.add(matchedQuiz.id);
                 widgets.add(
                   _QuizTile(
@@ -1611,8 +1667,15 @@ class _SubjectSection extends ConsumerWidget {
                 );
               }
 
-              // Chain: the next module needs THIS one mastered.
-              prevMastered = progress.isMastered(ar.id);
+              // A quiz linked to a module that is still locked must not leak
+              // out as an open standalone tile below.
+              if (matchedQuiz != null) shownQuizIds.add(matchedQuiz.id);
+
+              // Chain: the next module needs THIS one mastered (its quiz at
+              // 100%). A module with no quiz counts once it has been watched.
+              prevMastered = matchedQuiz != null
+                  ? progress.isMastered(matchedQuiz.id)
+                  : progress.arWatchedPct(ar.id) >= arWatchThreshold;
             }
 
             // Any quizzes with no matching AR module (standalone) show as before.
