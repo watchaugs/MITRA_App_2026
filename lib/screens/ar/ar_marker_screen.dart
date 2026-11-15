@@ -177,6 +177,8 @@ class _ArMarkerScreenState extends ConsumerState<ArMarkerScreen> {
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setBackgroundColor(Colors.black)
       ..setOnConsoleMessage((_) {})
+      ..addJavaScriptChannel('MitraAR',
+          onMessageReceived: (m) => _onMarkerEvent(m.message))
       ..setNavigationDelegate(NavigationDelegate(
         onWebResourceError: (err) {
           if (mounted) {

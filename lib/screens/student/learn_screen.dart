@@ -439,6 +439,9 @@ class ArCatalog {
   final Map<String, String> chromaById;
   // Compiled textbook-page target (.mind) per lesson → enables "Scan page".
   final Map<String, String> mindById;
+  // Quizzes linked to this lesson's topic in the dashboard's Curriculum tree
+  // (manifest v3). These decide which quiz the AR watch-gate controls.
+  final Map<String, List<String>> quizIdsByArId;
   final bool territorySupported; // false = outside MITRA's approved area
   const ArCatalog({
     required this.bySubject,
@@ -450,6 +453,7 @@ class ArCatalog {
     this.audiosAacByLangById = const {},
     this.chromaById = const {},
     this.mindById = const {},
+    this.quizIdsByArId = const {},
     this.territorySupported = true,
   });
 }
@@ -491,6 +495,7 @@ ArCatalog? _catalogFromManifest(dynamic data) {
   final audiosAacByLangById = <String, Map<String, String>>{};
   final chromaById = <String, String>{};
   final mindById = <String, String>{};
+  final quizIdsByArId = <String, List<String>>{};
   for (final c in classes) {
     if (c is! Map) continue;
     final className = (c['class_name'] ?? c['class'] ?? '').toString();
@@ -554,6 +559,10 @@ ArCatalog? _catalogFromManifest(dynamic data) {
           }
           final mind = _absMedia((l['mind_url'] ?? '').toString());
           if (mind.isNotEmpty) mindById[id] = mind;
+          final qids = l['quiz_ids'];
+          if (qids is List && qids.isNotEmpty) {
+            quizIdsByArId[id] = qids.map((e) => e.toString()).toList();
+          }
         }
       }
     }
@@ -569,6 +578,7 @@ ArCatalog? _catalogFromManifest(dynamic data) {
     audiosAacByLangById: audiosAacByLangById,
     chromaById: chromaById,
     mindById: mindById,
+    quizIdsByArId: quizIdsByArId,
     territorySupported: true,
   );
 }
@@ -1216,6 +1226,8 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
                                 arLessons: filteredArLessons,
                                 audiosByLangById:
                                     arCatalog?.audiosByLangById ?? const {},
+                                quizIdsByArId:
+                                    arCatalog?.quizIdsByArId ?? const {},
                                 hideHeader: _selectedSubject !=
                                     'All', // ✨ Hides redundant headings when filtered!
                                 onQuizTap: (id) => LearnScreen._navigateToQuiz(
@@ -1515,6 +1527,7 @@ class _SubjectSection extends ConsumerWidget {
   final ValueChanged<String> onQuizTap;
   final ValueChanged<String> onArTap;
   final Map<String, Map<String, String>> audiosByLangById; // #8b
+  final Map<String, List<String>> quizIdsByArId; // tree-linked quizzes
 
   const _SubjectSection({
     required this.subject,
@@ -1524,6 +1537,7 @@ class _SubjectSection extends ConsumerWidget {
     required this.onQuizTap,
     required this.onArTap,
     this.audiosByLangById = const {},
+    this.quizIdsByArId = const {},
   });
 
   @override
@@ -1552,14 +1566,26 @@ class _SubjectSection extends ConsumerWidget {
       final k = _topicKey(q.topic);
       if (k.isNotEmpty) quizByTopic.putIfAbsent(k, () => q);
     }
-    QuizSummary? quizFor(ArLessonRec ar) =>
-        quizById[ar.id] ?? quizByTopic[_topicKey(ar.topic)];
+    // 1) a quiz linked to this lesson's topic in the Curriculum tree (the
+    //    tree decides), 2) same id, 3) same topic text.
+    QuizSummary? quizFor(ArLessonRec ar) {
+      for (final qid in quizIdsByArId[ar.id] ?? const <String>[]) {
+        final q = quizById[qid];
+        if (q != null) return q;
+      }
+      return quizById[ar.id] ?? quizByTopic[_topicKey(ar.topic)];
+    }
+
     // A topic's quiz unlocks once ANY of that topic's modules is watched
     // past the threshold.
     bool topicWatched(ArLessonRec ar) {
       final k = _topicKey(ar.topic);
+      final myQuiz = quizFor(ar)?.id;
       return arLessons.any((x) =>
-          (x.id == ar.id || (k.isNotEmpty && _topicKey(x.topic) == k)) &&
+          (x.id == ar.id ||
+              (k.isNotEmpty && _topicKey(x.topic) == k) ||
+              // modules linked to the same quiz in the tree count together
+              (myQuiz != null && quizFor(x)?.id == myQuiz)) &&
           progress.arWatchedPct(x.id) >= arWatchThreshold);
     }
 
