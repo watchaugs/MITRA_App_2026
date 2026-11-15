@@ -59,8 +59,11 @@ class ApiService {
 
         // ✨ BANDWIDTH FIX: Gzip outgoing batches
         // Only compress POST/PUT requests with payloads larger than 1KB
+        // Skip bodies already gzipped (a 401-retry re-runs this interceptor on
+        // the same options — compressing twice corrupts the payload).
         if ((options.method == 'POST' || options.method == 'PUT') &&
-            options.data != null) {
+            options.data != null &&
+            options.headers['Content-Encoding'] != 'gzip') {
           try {
             final jsonString = jsonEncode(options.data);
             final bytes = utf8.encode(jsonString);

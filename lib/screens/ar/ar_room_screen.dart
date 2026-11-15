@@ -501,6 +501,7 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
 
     final anchor = ARPlaneAnchor(transformation: hit.worldTransform);
     final okAnchor = await _anchorManager.addAnchor(anchor);
+    if (!mounted) return; // student closed AR mid-placement
     if (okAnchor != true) {
       setState(() => _hint = ref.trNow(
           'ar_could_not_anchor', 'Could not anchor here — try another spot.'));
@@ -546,6 +547,7 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
     );
 
     final okNode = await _objectManager.addNode(node);
+    if (!mounted) return; // student closed AR while the model was loading
     if (okNode == true) {
       _placedNode = node;
       // Push the composed matrix (with 0.3 scale and world position) after
