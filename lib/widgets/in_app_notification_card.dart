@@ -31,7 +31,8 @@ void showInAppNotificationCard(BuildContext context, RemoteMessage msg) {
         final type = data['deep_link_type']?.toString();
         final id = data['deep_link_id']?.toString();
         if (type != null && id != null && id.isNotEmpty) {
-          if (type == 'quiz') GoRouter.of(context).go('/quiz/$id');
+          // Quizzes open via Learn so the AR-watch gate still applies.
+          if (type == 'quiz') GoRouter.of(context).go('/student/learn');
           if (type == 'ar_topic') GoRouter.of(context).go('/student/ar/$id');
         }
       },

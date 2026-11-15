@@ -1952,7 +1952,8 @@ class _ArTile extends ConsumerWidget {
                         color: MitraColors.emerald.withValues(alpha: 0.35)),
                   ),
                   child: Text(
-                    context.tr(ref, 'student_viewed', '✓ VIEWED'),
+                    // Tick stays in code: MT read "✓" as the letter "Y".
+                    '✓ ${context.tr(ref, 'student_viewed', 'VIEWED')}',
                     style: TextStyle(
                         fontFamily: 'SpaceMono',
                         fontSize: 10,
@@ -2016,14 +2017,15 @@ class _ArTile extends ConsumerWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              watchedPct >= watchThreshold
-                  ? context.trp(ref, 'student_watched_pct_quiz_unlocked',
-                      'Watched {pct}% · Quiz unlocked', {'pct': '$watchedPct'})
-                  : context.trp(
-                      ref,
-                      'student_watched_pct_need_for_quiz',
-                      'Watched {pct}% · {need}% needed for the quiz',
-                      {'pct': '$watchedPct', 'need': '$watchThreshold'}),
+              // Two short strings, one number each, so translation can't
+              // swap the watched % and the required %.
+              '${context.trp(ref, 'student_watched_pct', 'Watched {pct}%', {
+                    'pct': '$watchedPct'
+                  })}'
+              ' · '
+              '${watchedPct >= watchThreshold ? context.tr(ref, 'student_quiz_unlocked', 'Quiz unlocked') : context.trp(ref, 'student_quiz_unlocks_at', 'Quiz unlocks at {need}%', {
+                      'need': '$watchThreshold'
+                    })}',
               style: TextStyle(
                 fontFamily: 'Mukta',
                 fontSize: 11,

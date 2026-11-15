@@ -600,10 +600,10 @@ class _ConstellationNodeState extends ConsumerState<_ConstellationNode>
                     const SizedBox(height: 14),
                     Text(
                       widget.nextTier == null
-                          ? context.tr(
-                              ref,
-                              'student_highest_level_reached_gyani',
-                              'Highest level reached — Gyani 💎')
+                          // Tier name comes from tier_* so it matches the
+                          // rest of the screen (was hard-coded inside the line).
+                          ? '${context.tr(ref, 'student_highest_level_reached', 'Highest level reached')}'
+                              ' — ${_tierName(context, ref, widget.tier)} 💎'
                           : remaining > 0
                               ? context.trp(
                                   ref,

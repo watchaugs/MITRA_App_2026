@@ -262,7 +262,8 @@ class _MitraAppState extends ConsumerState<MitraApp>
           final parts = data.split('|');
           final ctx = rootNavigatorKey.currentContext;
           if (ctx != null && parts.length == 2 && parts[1].isNotEmpty) {
-            if (parts[0] == 'quiz') GoRouter.of(ctx).go('/quiz/${parts[1]}');
+            // Quizzes open via Learn so the AR-watch gate still applies.
+            if (parts[0] == 'quiz') GoRouter.of(ctx).go('/student/learn');
             if (parts[0] == 'ar_topic') {
               GoRouter.of(ctx).go('/student/ar/${parts[1]}');
             }
@@ -396,7 +397,8 @@ class _MitraAppState extends ConsumerState<MitraApp>
     if (type == null || id == null || id.isEmpty) return;
     final ctx = rootNavigatorKey.currentContext;
     if (ctx == null) return;
-    if (type == 'quiz') GoRouter.of(ctx).go('/quiz/$id');
+    // Quizzes open via Learn so the AR-watch gate still applies.
+    if (type == 'quiz') GoRouter.of(ctx).go('/student/learn');
     if (type == 'ar_topic') GoRouter.of(ctx).go('/student/ar/$id');
   }
 
