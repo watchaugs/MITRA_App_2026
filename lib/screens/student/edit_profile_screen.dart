@@ -9,6 +9,8 @@ import '../../stores/auth_store.dart';
 import '../../providers/translation_provider.dart';
 import '../../providers/consent_i18n.dart';
 import '../../widgets/orbit_explorer.dart';
+import '../../services/geo_state_service.dart'; // effectiveStateProvider
+import '../auth/language_screen.dart' show kLangNativeNames, languagesForState;
 
 const _kFirestoreTimeout = Duration(seconds: 10);
 
@@ -42,16 +44,6 @@ const _kAvatars = [
   '🧙‍♀️',
   '👨‍🎤',
   '👩‍🎤',
-];
-const _kLanguages = [
-  ('hi', 'हिंदी'),
-  ('en', 'English'),
-  ('ta', 'தமிழ்'),
-  ('te', 'తెలుగు'),
-  ('kn', 'ಕನ್ನಡ'),
-  ('bn', 'বাংলা'),
-  ('mr', 'मराठी'),
-  ('gu', 'ગુજ.'),
 ];
 
 /// How many days the class stays locked after a change.
@@ -135,15 +127,23 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
     final newName = _name.text.trim();
     if (newName.length < 2) {
-      _toast(ref.trNow('student_name_must_be_at_least_2', 'Name must be at least 2 characters.'));
+      _toast(ref.trNow('student_name_must_be_at_least_2',
+          'Name must be at least 2 characters.'));
       return;
     }
+
+    // UI language must be one the student's (geofenced) state allows.
+    final allowedLangs = languagesForState(ref.read(effectiveStateProvider));
+    if (!allowedLangs.contains(_lang)) _lang = allowedLangs.first;
 
     final classChanged = _class != (user.classGrade ?? '');
 
     // Guard: if class changed but is locked, block and explain.
     if (classChanged && _classLocked) {
-      _toast(ref.trpNow('student_class_can_be_changed_again_in', 'Class can be changed again in {daysRemaining} days.', {'daysRemaining': '$_daysRemaining'}));
+      _toast(ref.trpNow(
+          'student_class_can_be_changed_again_in',
+          'Class can be changed again in {daysRemaining} days.',
+          {'daysRemaining': '$_daysRemaining'}));
       return;
     }
 
@@ -194,7 +194,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       // generic message. Revert to the generic toast once the cause is known.
       debugPrint('🚨 PROFILE SAVE FAILED: $e');
       debugPrint('$st');
-      _toast(ref.trpNow('student_could_not_save_v1', 'Could not save: {v1}', {'v1': e.toString().split('\n').first}));
+      _toast(ref.trpNow('student_could_not_save_v1', 'Could not save: {v1}',
+          {'v1': e.toString().split('\n').first}));
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -215,9 +216,15 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           backgroundColor: MitraColors.bgCard,
           title: Text(context.tr(ref, 'student_class_locked', 'Class locked')),
           content: Text(
-            ref.trpNow('student_you_changed_your_class_recently_to', 'You changed your class recently. To keep your learning path '
-            'stable, class can only be changed once every {kClassLockDays} days.\n\n'
-            'You can change it again in {daysRemaining} days.', {'kClassLockDays': '$kClassLockDays', 'daysRemaining': '$_daysRemaining'}),
+            ref.trpNow(
+                'student_you_changed_your_class_recently_to',
+                'You changed your class recently. To keep your learning path '
+                    'stable, class can only be changed once every {kClassLockDays} days.\n\n'
+                    'You can change it again in {daysRemaining} days.',
+                {
+                  'kClassLockDays': '$kClassLockDays',
+                  'daysRemaining': '$_daysRemaining'
+                }),
           ),
           actions: [
             TextButton(
@@ -237,10 +244,13 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         backgroundColor: MitraColors.bgCard,
         title: Text(context.tr(ref, 'student_change_class', 'Change class?')),
         content: Text(
-          ref.trpNow('student_changing_your_class_updates_the_subj', 'Changing your class updates the subjects, topics and quizzes shown '
-          'to you. Your XP and badges are kept, but your learning path will '
-          'reset to the new class.\n\n'
-          'You can change class again only after {kClassLockDays} days.', {'kClassLockDays': '$kClassLockDays'}),
+          ref.trpNow(
+              'student_changing_your_class_updates_the_subj',
+              'Changing your class updates the subjects, topics and quizzes shown '
+                  'to you. Your XP and badges are kept, but your learning path will '
+                  'reset to the new class.\n\n'
+                  'You can change class again only after {kClassLockDays} days.',
+              {'kClassLockDays': '$kClassLockDays'}),
         ),
         actions: [
           TextButton(
@@ -280,6 +290,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final onSurface = Theme.of(context).colorScheme.onSurface;
+    // Regional language of the geofenced state (profile state as fallback)
+    // + Hindi + English — same rule as the onboarding language picker.
+    final langs = languagesForState(ref.watch(effectiveStateProvider));
+    final selectedLang = langs.contains(_lang) ? _lang : langs.first;
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -304,12 +318,15 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   TextField(
                     controller: _name,
                     style: TextStyle(color: onSurface),
-                    decoration: _boxDeco(context.tr(ref, 'student_your_name', 'Your name'), onSurface),
+                    decoration: _boxDeco(
+                        context.tr(ref, 'student_your_name', 'Your name'),
+                        onSurface),
                   ),
                   const SizedBox(height: 20),
 
                   // Avatar
-                  _label(context.tr(ref, 'student_avatar', 'Avatar'), onSurface),
+                  _label(
+                      context.tr(ref, 'student_avatar', 'Avatar'), onSurface),
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
@@ -337,14 +354,15 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   const SizedBox(height: 20),
 
                   // Language
-                  _label(context.tr(ref, 'step_language', 'Language'), onSurface),
+                  _label(
+                      context.tr(ref, 'step_language', 'Language'), onSurface),
                   _chips(
-                    _kLanguages.map((l) => l.$1).toList(),
-                    _lang,
+                    langs,
+                    selectedLang,
                     (v) => setState(() => _lang = v),
                     onSurface,
                     labelFor: (code) =>
-                        _kLanguages.firstWhere((l) => l.$1 == code).$2,
+                        kLangNativeNames[code] ?? code.toUpperCase(),
                   ),
                   const SizedBox(height: 20),
 
@@ -355,7 +373,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   const SizedBox(height: 20),
 
                   // Mobile belongs to
-                  _label(context.tr(ref, 'auth_mobile_belongs_to', 'Mobile belongs to'), onSurface),
+                  _label(
+                      context.tr(
+                          ref, 'auth_mobile_belongs_to', 'Mobile belongs to'),
+                      onSurface),
                   _chips(_kMobileOwners, _mobileOwner,
                       (v) => setState(() => _mobileOwner = v), onSurface),
                   const SizedBox(height: 20),
@@ -376,7 +397,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                         children: [
                           Expanded(
                             child: Text(
-                              _class.isEmpty ? context.tr(ref, 'student_select_class', 'Select class') : context.trText(ref, _class),
+                              _class.isEmpty
+                                  ? context.tr(ref, 'student_select_class',
+                                      'Select class')
+                                  : context.trText(ref, _class),
                               style: TextStyle(
                                   color: onSurface, fontFamily: 'Baloo2'),
                             ),
@@ -402,7 +426,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                     Padding(
                       padding: const EdgeInsets.only(top: 6),
                       child: Text(
-                        context.trp(ref, 'student_class_can_be_changed_again_in', 'Class can be changed again in {daysRemaining} days.', {'daysRemaining': '$_daysRemaining'}),
+                        context.trp(
+                            ref,
+                            'student_class_can_be_changed_again_in',
+                            'Class can be changed again in {daysRemaining} days.',
+                            {'daysRemaining': '$_daysRemaining'}),
                         style: const TextStyle(
                             fontSize: 12, color: MitraColors.textMuted),
                       ),
@@ -486,7 +514,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                     color:
                         sel ? MitraColors.saffron : c.withValues(alpha: 0.15)),
               ),
-              child: Text(context.trText(ref, labelFor != null ? labelFor(item) : item),
+              child: Text(
+                  context.trText(ref, labelFor != null ? labelFor(item) : item),
                   style:
                       TextStyle(color: c, fontFamily: 'Mukta', fontSize: 14)),
             ),

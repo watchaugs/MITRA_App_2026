@@ -32,10 +32,12 @@ import '../../services/language_options_service.dart';
 import '../../services/geo_state_service.dart';
 import '../../services/telemetry_batch_buffer.dart';
 import '../../providers/telemetry_provider.dart';
+import '../../services/telemetry_service.dart';
 import '../auth/state_language_map.dart';
 import '../../stores/auth_store.dart';
 
 import '../../providers/tr_ext.dart';
+
 class ArViewerScreen extends ConsumerStatefulWidget {
   final String topicId;
   final String? modelUrl; // ?glb=  (Draco _lite.glb — needs a WASM decoder)
@@ -189,7 +191,7 @@ class _ArViewerScreenState extends ConsumerState<ArViewerScreen> {
   }
 
   DateTime? _arStart; // AR view duration telemetry
-  dynamic _telemetry; // captured in initState; safe to use in dispose
+  TelemetryService? _telemetry; // captured in initState; safe to use in dispose
 
   @override
   void initState() {
