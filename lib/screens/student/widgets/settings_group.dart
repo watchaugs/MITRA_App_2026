@@ -9,6 +9,7 @@ import '../../../providers/app_prefs.dart';
 import '../../../stores/auth_store.dart';
 
 import '../../../providers/tr_ext.dart';
+
 class SettingsGroup extends ConsumerWidget {
   const SettingsGroup({super.key});
 
@@ -49,12 +50,13 @@ class SettingsGroup extends ConsumerWidget {
                       letterSpacing: 1,
                       color: onSurface.withValues(alpha: 0.5))),
             ),
-            Container(
-              decoration: BoxDecoration(
-                color: onSurface.withValues(alpha: 0.05),
+            Material(
+              color: onSurface.withValues(alpha: 0.05),
+              shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(MitraRadius.md),
-                border: Border.all(color: onSurface.withValues(alpha: 0.12)),
+                side: BorderSide(color: onSurface.withValues(alpha: 0.12)),
               ),
+              clipBehavior: Clip.antiAlias,
               child: Column(children: children),
             ),
             const SizedBox(height: 16),
@@ -80,7 +82,8 @@ class SettingsGroup extends ConsumerWidget {
           ),
           tile(
             emoji: '📉',
-            label: context.tr(ref, 'student_reduce_video_autoplay', 'Reduce video autoplay'),
+            label: context.tr(
+                ref, 'student_reduce_video_autoplay', 'Reduce video autoplay'),
             trailing: Switch(
               value: prefs.dataSaver,
               onChanged: (v) =>
@@ -101,7 +104,8 @@ class SettingsGroup extends ConsumerWidget {
         section(context.tr(ref, 'student_legal_privacy', 'Legal & Privacy'), [
           tile(
               emoji: '📄',
-              label: context.tr(ref, 'profile_privacy_policy', 'Privacy Policy'),
+              label:
+                  context.tr(ref, 'profile_privacy_policy', 'Privacy Policy'),
               onTap: () => context.push('/legal/privacy')),
           tile(
               emoji: '📃',
@@ -109,17 +113,21 @@ class SettingsGroup extends ConsumerWidget {
               onTap: () => context.push('/legal/terms')),
           tile(
               emoji: '⚖️',
-              label: context.tr(ref, 'legal_grievance_data_protection', 'Grievance & Data Protection'),
+              label: context.tr(ref, 'legal_grievance_data_protection',
+                  'Grievance & Data Protection'),
               onTap: () => context.push('/legal/grievance')),
         ]),
 
         // ── Support ──
         section(context.tr(ref, 'student_support', 'Support'), [
           tile(
-              emoji: '❓', label: context.tr(ref, 'student_help_faq', 'Help & FAQ'), onTap: () => _showHelp(context)),
+              emoji: '❓',
+              label: context.tr(ref, 'student_help_faq', 'Help & FAQ'),
+              onTap: () => _showHelp(context)),
           tile(
               emoji: '🐞',
-              label: context.tr(ref, 'student_report_a_problem', 'Report a problem'),
+              label: context.tr(
+                  ref, 'student_report_a_problem', 'Report a problem'),
               onTap: () async {
                 final uri = Uri.parse(
                     'mailto:support@mitra.gov.in?subject=MITRA%20App%20Issue');
@@ -127,7 +135,10 @@ class SettingsGroup extends ConsumerWidget {
                   await launchUrl(uri, mode: LaunchMode.externalApplication);
                 }
               }),
-          tile(emoji: 'ℹ️', label: context.tr(ref, 'student_about', 'About'), onTap: () => _showAbout(context)),
+          tile(
+              emoji: 'ℹ️',
+              label: context.tr(ref, 'student_about', 'About'),
+              onTap: () => _showAbout(context)),
         ]),
       ],
     );
@@ -171,14 +182,16 @@ class SettingsGroup extends ConsumerWidget {
       context: context,
       applicationName: 'MITRA',
       applicationVersion: 'v${info.version} (${info.buildNumber})',
-      applicationLegalese: context.trCtx('student_about_legalese',
+      applicationLegalese: context.trCtx(
+          'student_about_legalese',
           'An educational initiative. Built for students under the '
-          'MITRA AR-learning program.'),
+              'MITRA AR-learning program.'),
       children: [
         const SizedBox(height: 12),
-        Text(context.trCtx('student_about_body',
+        Text(context.trCtx(
+            'student_about_body',
             'MITRA delivers curriculum-aligned lessons, 3D AR content, and '
-            'quizzes for school students. Your data is handled under the DPDPA, 2023.')),
+                'quizzes for school students. Your data is handled under the DPDPA, 2023.')),
       ],
     );
   }
@@ -199,7 +212,8 @@ class _Faq extends ConsumerWidget {
                     fontWeight: FontWeight.w700,
                     fontSize: 15)),
             const SizedBox(height: 4),
-            Text(context.trText(ref, a), style: const TextStyle(fontFamily: 'Mukta', fontSize: 13)),
+            Text(context.trText(ref, a),
+                style: const TextStyle(fontFamily: 'Mukta', fontSize: 13)),
           ],
         ),
       );

@@ -36,6 +36,7 @@ import '../../constants/colors.dart';
 import '../../services/achievement_engine.dart';
 import '../../services/ar_model_cache.dart';
 import '../../providers/telemetry_provider.dart';
+import '../../services/telemetry_service.dart';
 import '../../stores/module_progress_store.dart';
 import '../../theme/theme_provider.dart'; // getActiveHighlight + sharedPreferencesProvider
 import '../../services/language_options_service.dart';
@@ -93,6 +94,7 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
 
   final List<ARAnchor> _anchors = [];
   bool _placed = false;
+  bool _arReady = false; // set once ARView hands us the managers
   String _hint = 'Move your phone slowly to find the floor…';
 
   // Multi-language narration.
@@ -106,7 +108,7 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
   bool _showCoach = false;
 
   DateTime? _arStart; // AR view duration telemetry
-  dynamic _telemetry; // captured in initState; safe to use in dispose
+  TelemetryService? _telemetry; // captured in initState; safe to use in dispose
 
   @override
   void initState() {
@@ -266,7 +268,7 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
       renderMode: 'markerless',
     );
     _spinTimer?.cancel();
-    _sessionManager.dispose();
+    if (_arReady) _sessionManager.dispose();
     _audio.dispose();
     super.dispose();
   }
@@ -463,6 +465,7 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
     _sessionManager = sessionManager;
     _objectManager = objectManager;
     _anchorManager = anchorManager;
+    _arReady = true;
 
     _sessionManager.onInitialize(
       // ONE guide only: the blue plane grid. Feature points (the white/yellow
@@ -499,7 +502,8 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
     final anchor = ARPlaneAnchor(transformation: hit.worldTransform);
     final okAnchor = await _anchorManager.addAnchor(anchor);
     if (okAnchor != true) {
-      setState(() => _hint = ref.trNow('ar_could_not_anchor', 'Could not anchor here — try another spot.'));
+      setState(() => _hint = ref.trNow(
+          'ar_could_not_anchor', 'Could not anchor here — try another spot.'));
       return;
     }
     _anchors.add(anchor);
@@ -565,8 +569,8 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
       _startNarration(); // auto-start audio on placement
       setState(() {
         _placed = true;
-        _hint =
-            ref.trNow('ar_placed_walk_around_it_tap_it', 'Placed! Walk around it. Tap it to replay · use the buttons to move & rotate.');
+        _hint = ref.trNow('ar_placed_walk_around_it_tap_it',
+            'Placed! Walk around it. Tap it to replay · use the buttons to move & rotate.');
       });
       _maybeShowCoach(); // first-ever placement → show control hints once
     } else {
@@ -575,15 +579,15 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
       // on-screen 3D viewer, which uses a full WebGL renderer (model_viewer_plus)
       // that handles larger/compressed models far more gracefully than Filament.
       if (mounted) {
-        setState(() =>
-            _hint = ref.trNow('ar_switching_3d', 'This model is heavy for live AR — switching to 3D view…'));
+        setState(() => _hint = ref.trNow('ar_switching_3d',
+            'This model is heavy for live AR — switching to 3D view…'));
         await _anchorManager.removeAnchor(anchor);
         _anchors.remove(anchor);
         if (widget.onNativeLoadFailed != null) {
           widget.onNativeLoadFailed!();
         } else {
-          setState(() => _hint =
-              ref.trNow('ar_could_not_load_the_model_in', 'Could not load the model in AR. Try the 3D view from the lesson, or re-upload a lighter model.'));
+          setState(() => _hint = ref.trNow('ar_could_not_load_the_model_in',
+              'Could not load the model in AR. Try the 3D view from the lesson, or re-upload a lighter model.'));
         }
       }
     }
@@ -915,29 +919,47 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(context.tr(ref, 'ar_how_to_control_the_model', 'How to control the model'),
+                Text(
+                    context.tr(ref, 'ar_how_to_control_the_model',
+                        'How to control the model'),
                     style: TextStyle(
                         fontFamily: 'Baloo2',
                         color: Colors.white,
                         fontWeight: FontWeight.w800,
                         fontSize: 17)),
                 const SizedBox(height: 4),
-                Text(context.tr(ref, 'ar_use_the_buttons_at_the_botto', 'Use the buttons at the bottom'),
+                Text(
+                    context.tr(ref, 'ar_use_the_buttons_at_the_botto',
+                        'Use the buttons at the bottom'),
                     style: TextStyle(
                         fontFamily: 'Mukta',
                         color: Colors.white54,
                         fontSize: 12)),
                 const SizedBox(height: 10),
-                tip(Icons.rotate_right, context.tr(ref, 'ar_rotate', 'Rotate'),
-                    context.tr(ref, 'ar_tap_to_turn_30_press_hold', 'Tap to turn 30°. Press & hold to spin it around.')),
-                tip(Icons.swap_vert, context.tr(ref, 'ar_move', 'Move'),
-                    context.tr(ref, 'ar_lift_the_model_up_or_set', 'Lift the model up or set it down on the floor.')),
-                tip(Icons.photo_size_select_large, context.tr(ref, 'ar_size', 'Size'),
-                    context.tr(ref, 'ar_make_it_bigger_or_smaller_the', 'Make it bigger or smaller. The % shows current size.')),
-                tip(Icons.unfold_more, context.tr(ref, 'ar_depth', 'Depth'),
-                    context.tr(ref, 'ar_bring_it_nearer_to_you_or', 'Bring it nearer to you or push it farther away.')),
+                tip(
+                    Icons.rotate_right,
+                    context.tr(ref, 'ar_rotate', 'Rotate'),
+                    context.tr(ref, 'ar_tap_to_turn_30_press_hold',
+                        'Tap to turn 30°. Press & hold to spin it around.')),
+                tip(
+                    Icons.swap_vert,
+                    context.tr(ref, 'ar_move', 'Move'),
+                    context.tr(ref, 'ar_lift_the_model_up_or_set',
+                        'Lift the model up or set it down on the floor.')),
+                tip(
+                    Icons.photo_size_select_large,
+                    context.tr(ref, 'ar_size', 'Size'),
+                    context.tr(ref, 'ar_make_it_bigger_or_smaller_the',
+                        'Make it bigger or smaller. The % shows current size.')),
+                tip(
+                    Icons.unfold_more,
+                    context.tr(ref, 'ar_depth', 'Depth'),
+                    context.tr(ref, 'ar_bring_it_nearer_to_you_or',
+                        'Bring it nearer to you or push it farther away.')),
                 const SizedBox(height: 8),
-                Text(context.tr(ref, 'ar_tip_tap_the_model_to_replay_', 'Tip: tap the model to replay the narration.'),
+                Text(
+                    context.tr(ref, 'ar_tip_tap_the_model_to_replay_',
+                        'Tip: tap the model to replay the narration.'),
                     textAlign: TextAlign.center,
                     style: TextStyle(
                         fontFamily: 'Mukta', color: accent, fontSize: 12)),

@@ -26,7 +26,8 @@ class _DataRightsSectionState extends ConsumerState<DataRightsSection> {
     final user = ref.read(currentUserProvider);
     final uid = user?.id;
     if (uid == null) {
-      _toast(ref.trNow('student_please_sign_in_again', 'Please sign in again.'));
+      _toast(
+          ref.trNow('student_please_sign_in_again', 'Please sign in again.'));
       return;
     }
     setState(() => _submitting = true);
@@ -41,10 +42,13 @@ class _DataRightsSectionState extends ConsumerState<DataRightsSection> {
         'class': user?.classGrade,
       });
       _toast(type == 'deletion'
-          ? ref.trNow('student_deletion_request_submitted_our_team', 'Deletion request submitted. Our team will process it per DPDPA.')
-          : ref.trNow('student_data_copy_request_submitted_we_will', 'Data copy request submitted. We will prepare your data per DPDPA.'));
+          ? ref.trNow('student_deletion_request_submitted_our_team',
+              'Deletion request submitted. Our team will process it per DPDPA.')
+          : ref.trNow('student_data_copy_request_submitted_we_will',
+              'Data copy request submitted. We will prepare your data per DPDPA.'));
     } catch (_) {
-      _toast(ref.trNow('student_could_not_submit_please_try_again', 'Could not submit. Please try again.'));
+      _toast(ref.trNow('student_could_not_submit_please_try_again',
+          'Could not submit. Please try again.'));
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -53,10 +57,11 @@ class _DataRightsSectionState extends ConsumerState<DataRightsSection> {
   Future<void> _confirmExport() async {
     final ok = await _confirm(
       title: ref.trNow('student_download_my_data', 'Download my data'),
-      message:
-          ref.trNow('student_we_will_prepare_a_copy_of', 'We will prepare a copy of your MITRA data (profile and learning '
-          'progress) and share it with you. Under the DPDPA you have the right '
-          'to a copy of your personal data.'),
+      message: ref.trNow(
+          'student_we_will_prepare_a_copy_of',
+          'We will prepare a copy of your MITRA data (profile and learning '
+              'progress) and share it with you. Under the DPDPA you have the right '
+              'to a copy of your personal data.'),
       confirmLabel: ref.trNow('student_request_copy', 'Request copy'),
       danger: false,
     );
@@ -66,11 +71,12 @@ class _DataRightsSectionState extends ConsumerState<DataRightsSection> {
   Future<void> _confirmDeletion() async {
     final ok = await _confirm(
       title: ref.trNow('student_delete_my_account', 'Delete my account'),
-      message:
-          ref.trNow('student_this_requests_permanent_deletion_of', 'This requests permanent deletion of your MITRA account and learning '
-          'data (profile, XP, progress, quiz history). This cannot be undone '
-          'once processed. Some records may be retained in anonymised form '
-          'where the law requires.'),
+      message: ref.trNow(
+          'student_this_requests_permanent_deletion_of',
+          'This requests permanent deletion of your MITRA account and learning '
+              'data (profile, XP, progress, quiz history). This cannot be undone '
+              'once processed. Some records may be retained in anonymised form '
+              'where the law requires.'),
       confirmLabel: ref.trNow('student_request_deletion', 'Request deletion'),
       danger: true,
     );
@@ -150,17 +156,23 @@ class _DataRightsSectionState extends ConsumerState<DataRightsSection> {
                   letterSpacing: 1,
                   color: onSurface.withValues(alpha: 0.5))),
         ),
-        Container(
-          decoration: BoxDecoration(
-            color: onSurface.withValues(alpha: 0.05),
+        Material(
+          color: onSurface.withValues(alpha: 0.05),
+          shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(MitraRadius.md),
-            border: Border.all(color: onSurface.withValues(alpha: 0.12)),
+            side: BorderSide(color: onSurface.withValues(alpha: 0.12)),
           ),
+          clipBehavior: Clip.antiAlias,
           child: Column(children: [
-            tile(emoji: '⬇️', label: context.tr(ref, 'student_download_my_data', 'Download my data'), onTap: _confirmExport),
+            tile(
+                emoji: '⬇️',
+                label: context.tr(
+                    ref, 'student_download_my_data', 'Download my data'),
+                onTap: _confirmExport),
             tile(
                 emoji: '🗑️',
-                label: context.tr(ref, 'student_delete_my_account', 'Delete my account'),
+                label: context.tr(
+                    ref, 'student_delete_my_account', 'Delete my account'),
                 labelColor: MitraColors.crimson,
                 onTap: _confirmDeletion),
           ]),
@@ -169,7 +181,8 @@ class _DataRightsSectionState extends ConsumerState<DataRightsSection> {
         Padding(
           padding: const EdgeInsets.only(left: 4),
           child: Text(
-            context.tr(ref, 'student_your_rights_under_the_digital_person', 'Your rights under the Digital Personal Data Protection Act, 2023.'),
+            context.tr(ref, 'student_your_rights_under_the_digital_person',
+                'Your rights under the Digital Personal Data Protection Act, 2023.'),
             style: TextStyle(
                 fontFamily: 'Mukta',
                 fontSize: 11,

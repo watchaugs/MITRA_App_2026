@@ -72,7 +72,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final phone = _phoneCtrl.text.trim();
     if (phone.length != 10 || !RegExp(r'^[0-9]{10}$').hasMatch(phone)) {
       _showError(
-          ref.trNow('auth_invalid_number', 'Invalid Number'), ref.trNow('auth_please_enter_a_valid_10_digit', 'Please enter a valid 10-digit mobile number.'));
+          ref.trNow('auth_invalid_number', 'Invalid Number'),
+          ref.trNow('auth_please_enter_a_valid_10_digit',
+              'Please enter a valid 10-digit mobile number.'));
       return;
     }
 
@@ -91,7 +93,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         },
         verificationFailed: (FirebaseAuthException e) {
           setState(() => _loading = false);
-          _showError(ref.trNow('auth_verification_failed', 'Verification Failed'), e.message ?? ref.trNow('auth_unknown_error', 'Unknown error'));
+          _showError(
+              ref.trNow('auth_verification_failed', 'Verification Failed'),
+              e.message ?? ref.trNow('auth_unknown_error', 'Unknown error'));
         },
         codeSent: (String verificationId, int? resendToken) {
           setState(() {
@@ -109,7 +113,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       );
     } catch (e) {
       setState(() => _loading = false);
-      _showError(ref.trNow('auth_error', 'Error'), ref.trNow('auth_failed_to_trigger_sms_please_try', 'Failed to trigger SMS. Please try again.'));
+      _showError(
+          ref.trNow('auth_error', 'Error'),
+          ref.trNow('auth_failed_to_trigger_sms_please_try',
+              'Failed to trigger SMS. Please try again.'));
     }
   }
 
@@ -148,15 +155,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     } catch (e) {
       setState(() => _loading = false);
       debugPrint("🚨 GOOGLE SIGN-IN FATAL ERROR: $e");
-      _showError(ref.trNow('auth_google_login_failed', 'Google Login Failed'),
-          ref.trNow('auth_could_not_sign_in_with_google', 'Could not sign in with Google. Please try again.'));
+      _showError(
+          ref.trNow('auth_google_login_failed', 'Google Login Failed'),
+          ref.trNow('auth_could_not_sign_in_with_google',
+              'Could not sign in with Google. Please try again.'));
     }
   }
 
   Future<void> _verifyOTP() async {
     final code = _otpCtrls.map((c) => c.text).join();
     if (code.length != 6) {
-      _showError(ref.trNow('auth_incomplete_otp', 'Incomplete OTP'), ref.trNow('auth_please_enter_all_6_digits', 'Please enter all 6 digits.'));
+      _showError(
+          ref.trNow('auth_incomplete_otp', 'Incomplete OTP'),
+          ref.trNow(
+              'auth_please_enter_all_6_digits', 'Please enter all 6 digits.'));
       return;
     }
 
@@ -173,7 +185,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       await _saveUserAndNavigate(userCred.user!);
     } catch (e) {
       setState(() => _loading = false);
-      _showError(ref.trNow('auth_wrong_otp', 'Wrong OTP'), ref.trNow('auth_the_otp_is_incorrect_or_expired', 'The OTP is incorrect or expired.'));
+      _showError(
+          ref.trNow('auth_wrong_otp', 'Wrong OTP'),
+          ref.trNow('auth_the_otp_is_incorrect_or_expired',
+              'The OTP is incorrect or expired.'));
     }
   }
 
@@ -219,11 +234,27 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           : (existing?.fullName.trim().isNotEmpty ?? false)
               ? existing!.fullName.trim()
               : '';
+      // Read the saved profile once so the interim user doesn't wipe the
+      // class/state that auth_store's listener may already have loaded.
+      Map<String, dynamic>? profile;
+      try {
+        profile = (await FirebaseFirestore.instance
+                .collection('app_users')
+                .doc(firebaseUser.uid)
+                .get())
+            .data();
+      } catch (_) {/* offline — fall back to the bare interim user */}
       final consumerUser = MitraUser(
         id: firebaseUser.uid,
-        fullName: knownName, // empty until Firestore fills it; no placeholder
+        fullName: knownName.isNotEmpty
+            ? knownName
+            : (profile?['full_name']?.toString() ?? ''),
         phone: firebaseUser.phoneNumber ?? '',
         role: _role.name,
+      ).copyWith(
+        classGrade: profile?['class_grade']?.toString(),
+        assignedState: profile?['assigned_state']?.toString(),
+        assignedDistrict: profile?['assigned_district']?.toString(),
       );
 
       authNotifier.setUser(consumerUser);
@@ -267,9 +298,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         debugPrint('⚠️ Backend JWT exchange failed: $e');
       }
 
-      // ✨ INJECTED CODE: Lock the onboarding door permanently for returning users
+      // Onboarding is complete only when the profile has a state (written by
+      // /location). Setting it true unconditionally made /location unreachable.
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool('onboardingComplete', true);
+      if (profile != null) {
+        // profile == null only when offline → keep whatever flag is stored.
+        final savedState = (profile['assigned_state']?.toString() ?? '').trim();
+        await prefs.setBool('onboardingComplete', savedState.isNotEmpty);
+      }
 
       if (!mounted) return;
 
@@ -283,7 +319,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       // then the language picker → then consent (shown in the chosen language).
       // Returning users who already consented skip straight to the greeting.
       final onboardingDone = prefs.getBool('onboardingComplete') ?? false;
-      if (consentGiven) {
+      if (consentGiven && onboardingDone) {
         context.go('/greeting?next=$homeRoute');
       } else if (!onboardingDone) {
         // location → language → consent → home
@@ -297,7 +333,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       }
     } catch (e) {
       debugPrint("🚨 FIRESTORE ERROR: $e");
-      _showError(ref.trNow('auth_database_error', 'Database Error'), ref.trNow('auth_could_not_save_profile_to_cloud', 'Could not save profile to cloud.'));
+      _showError(
+          ref.trNow('auth_database_error', 'Database Error'),
+          ref.trNow('auth_could_not_save_profile_to_cloud',
+              'Could not save profile to cloud.'));
       setState(() => _loading = false);
     }
   }
@@ -383,7 +422,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           Text(
-                            context.tr(ref, 'auth_welcome_to_mitra', 'Welcome to MITRA'),
+                            context.tr(ref, 'auth_welcome_to_mitra',
+                                'Welcome to MITRA'),
                             style: TextStyle(
                                 fontFamily: 'Baloo2',
                                 fontWeight: FontWeight.w800,
@@ -391,7 +431,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 color: Colors.white),
                           ),
                           Text(
-                            context.tr(ref, 'auth_sign_in_to_continue_learning', 'Sign in to continue learning'),
+                            context.tr(ref, 'auth_sign_in_to_continue_learning',
+                                'Sign in to continue learning'),
                             style: TextStyle(
                                 fontFamily: 'Mukta',
                                 fontSize: 13,
@@ -453,8 +494,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                         const SizedBox(width: 6),
                                         Text(
                                           r == _Role.student
-                                              ? context.tr(ref, 'common_student', 'Student')
-                                              : context.tr(ref, 'auth_teacher', 'Teacher'),
+                                              ? context.tr(ref,
+                                                  'common_student', 'Student')
+                                              : context.tr(ref, 'auth_teacher',
+                                                  'Teacher'),
                                           style: TextStyle(
                                             fontFamily: 'Mukta',
                                             fontWeight: FontWeight.w500,
@@ -533,7 +576,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       fontSize: 16,
                       color: MitraColors.textPrimary),
                   decoration: InputDecoration(
-                    hintText: context.tr(ref, 'auth_10_digit_number', '10-digit number'),
+                    hintText: context.tr(
+                        ref, 'auth_10_digit_number', '10-digit number'),
                     hintStyle: TextStyle(color: MitraColors.textMuted),
                     border: InputBorder.none,
                     counterText: '',
@@ -546,7 +590,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         ),
         const SizedBox(height: MitraSpacing.lg),
         _GradientButton(
-          label: context.tr(ref, 'auth_send_otp', 'Send OTP →'), // Generalized for future SMS integration
+          label: context.tr(ref, 'auth_send_otp',
+              'Send OTP →'), // Generalized for future SMS integration
           loading: _loading,
           color: activeHighlight,
           onTap: _sendOTP,
@@ -584,7 +629,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             height: 24,
           ),
           label: Text(
-            context.tr(ref, 'auth_continue_with_google', 'Continue with Google'),
+            context.tr(
+                ref, 'auth_continue_with_google', 'Continue with Google'),
             style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
@@ -610,7 +656,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 Border.all(color: MitraColors.emerald.withValues(alpha: 0.3)),
           ),
           child: Text(
-            context.trp(ref, 'auth_otp_sent_to_91_v1_xxxxxxx', '💬  OTP sent to +91 {v1}XXXXXXX', {'v1': _phoneCtrl.text.substring(0, 3)}),
+            context.trp(
+                ref,
+                'auth_otp_sent_to_91_v1_xxxxxxx',
+                '💬  OTP sent to +91 {v1}XXXXXXX',
+                {'v1': _phoneCtrl.text.substring(0, 3)}),
             style: const TextStyle(
                 fontFamily: 'Mukta', fontSize: 13, color: MitraColors.emerald),
           ),
@@ -671,12 +721,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         const SizedBox(height: MitraSpacing.lg),
 
         _GradientButton(
-            label: context.tr(ref, 'auth_verify_login', 'Verify & Login →'), loading: _loading, onTap: _verifyOTP),
+            label: context.tr(ref, 'auth_verify_login', 'Verify & Login →'),
+            loading: _loading,
+            onTap: _verifyOTP),
         const SizedBox(height: MitraSpacing.sm),
 
         Center(
           child: _resendTimer > 0
-              ? Text(context.trp(ref, 'auth_resend_in_resendtimer_s', 'Resend in {resendTimer}s', {'resendTimer': '$_resendTimer'}),
+              ? Text(
+                  context.trp(
+                      ref,
+                      'auth_resend_in_resendtimer_s',
+                      'Resend in {resendTimer}s',
+                      {'resendTimer': '$_resendTimer'}),
                   style: const TextStyle(
                       fontFamily: 'Mukta',
                       fontSize: 12,
@@ -690,7 +747,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       }
                     });
                   },
-                  child: Text(context.tr(ref, 'auth_change_number_resend_otp', '← Change Number / Resend OTP'),
+                  child: Text(
+                      context.tr(ref, 'auth_change_number_resend_otp',
+                          '← Change Number / Resend OTP'),
                       style: TextStyle(
                           fontFamily: 'Mukta',
                           fontSize: 13,

@@ -240,6 +240,11 @@ class AuthNotifier extends StateNotifier<AuthState> {
       }
     }
     await _clearCachedUser();
+    // Drop backend JWTs so a shared device never calls the API as the previous student.
+    try {
+      await _secureProfileStore.delete(key: 'mitra_access_token');
+      await _secureProfileStore.delete(key: 'mitra_refresh_token');
+    } catch (_) {}
     await FirebaseAuth.instance.signOut();
     state = const AuthState(isLoggedIn: false, isLoading: false);
   }

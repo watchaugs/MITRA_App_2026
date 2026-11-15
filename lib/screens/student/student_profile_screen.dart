@@ -54,7 +54,9 @@ class StudentProfileScreen extends ConsumerWidget {
                           fontSize: 22,
                           color: MitraColors.textPrimary)),
                   Text(
-                      '${user?.classGrade ?? ''} · ${user?.assignedState ?? ''}',
+                      [user?.classGrade, user?.assignedState]
+                          .where((s) => (s ?? '').isNotEmpty)
+                          .join(' · '),
                       style: const TextStyle(
                           fontFamily: 'Mukta',
                           fontSize: 13,
@@ -89,13 +91,15 @@ class StudentProfileScreen extends ConsumerWidget {
                     // ── Stats ──────────────────────────────────────────
                     _StatCard(
                         emoji: '⭐',
-                        label: context.tr(ref, 'student_total_xp_2', 'Total XP'),
+                        label:
+                            context.tr(ref, 'student_total_xp_2', 'Total XP'),
                         value:
                             '${ref.watch(studentProfileProvider).valueOrNull?.totalXp ?? 0}'),
                     const SizedBox(height: 12),
                     _StatCard(
                         emoji: '🔥',
-                        label: context.tr(ref, 'student_day_streak_2', 'Day Streak'),
+                        label: context.tr(
+                            ref, 'student_day_streak_2', 'Day Streak'),
                         value:
                             '${ref.watch(studentProfileProvider).valueOrNull?.currentStreakDays ?? 0}'),
                     const SizedBox(height: 32),
@@ -246,19 +250,20 @@ class StudentProfileScreen extends ConsumerWidget {
                     const SizedBox(height: 24),
 
                     // ── Share feedback (NPS) ───────────────────────────
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .onSurface
-                            .withValues(alpha: 0.05),
+                    Material(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onSurface
+                          .withValues(alpha: 0.05),
+                      shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
+                        side: BorderSide(
                             color: Theme.of(context)
                                 .colorScheme
                                 .onSurface
                                 .withValues(alpha: 0.12)),
                       ),
+                      clipBehavior: Clip.antiAlias,
                       child: ListTile(
                         leading:
                             const Text('💬', style: TextStyle(fontSize: 20)),
