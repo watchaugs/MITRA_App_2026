@@ -131,6 +131,14 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
           .recordArProgress(widget.topicId, pct);
     });
     _audio.onDurationChanged.listen((d) => _audioDuration = d);
+    // Position updates stop just short of the end (~98-99%), so a full
+    // listen never reached 100%. Finishing the track counts as 100%.
+    _audio.onPlayerComplete.listen((_) {
+      if (!mounted) return;
+      ref
+          .read(moduleProgressStoreProvider)
+          .recordArProgress(widget.topicId, 100);
+    });
     _audios = widget.audios ?? const {};
     _audiosAac = widget.audiosAac ?? const {};
     _resolveLanguages();

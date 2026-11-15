@@ -68,11 +68,16 @@
 
       document.body.appendChild(scene);
 
+      // Tell the app so it can play/pause the narration (and count progress
+      // only while the model is actually on the page).
+      function toApp(m) { try { if (window.MitraAR) MitraAR.postMessage(m); } catch (e) {} }
       anchor.addEventListener('targetFound', function () {
         document.getElementById('msg').textContent = 'Model locked to the page.';
+        toApp('found');
       });
       anchor.addEventListener('targetLost', function () {
         document.getElementById('msg').textContent = 'Point your camera at the textbook page…';
+        toApp('lost');
       });
       scene.addEventListener('arError', function () {
         document.getElementById('err').style.display = 'flex';

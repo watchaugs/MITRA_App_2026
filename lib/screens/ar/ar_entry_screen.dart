@@ -22,6 +22,7 @@ import 'package:lottie/lottie.dart';
 import '../../theme/theme_provider.dart';
 
 import '../../providers/tr_ext.dart';
+
 class ArEntryScreen extends ConsumerStatefulWidget {
   final String topicId;
   final String? modelUrl; // Draco _lite.glb (the 3D viewer decodes Draco)
@@ -119,6 +120,9 @@ class _ArEntryScreenState extends ConsumerState<ArEntryScreen> {
         topicId: widget.topicId,
         targetsUrl: widget.targetsUrl,
         modelUrl: widget.modelUrl,
+        audioUrl: widget.audioUrl,
+        audios: widget.audios,
+        audiosAac: widget.audiosAac,
       );
     }
 
@@ -219,7 +223,8 @@ class _ViewChooser extends ConsumerWidget {
                   ),
                   const SizedBox(height: 20),
                   Text(
-                    context.tr(ref, 'ar_how_would_you_like_to_view', 'How would you like to view this?'),
+                    context.tr(ref, 'ar_how_would_you_like_to_view',
+                        'How would you like to view this?'),
                     textAlign: TextAlign.center,
                     style: TextStyle(
                         color: textPrimary,
@@ -231,9 +236,12 @@ class _ViewChooser extends ConsumerWidget {
                   if (arCapable) ...[
                     _choiceCard(
                       icon: Icons.view_in_ar,
-                      title: context.tr(ref, 'ar_view_in_your_room_ar', 'View in your room (AR)'),
-                      subtitle:
-                          context.tr(ref, 'ar_place_the_model_on_the_floor', 'Place the model on the floor and walk around it.'),
+                      title: context.tr(ref, 'ar_view_in_your_room_ar',
+                          'View in your room (AR)'),
+                      subtitle: context.tr(
+                          ref,
+                          'ar_place_the_model_on_the_floor',
+                          'Place the model on the floor and walk around it.'),
                       onTap: onPickAr,
                       accent: accent,
                       textPrimary: textPrimary,
@@ -243,8 +251,12 @@ class _ViewChooser extends ConsumerWidget {
                   ],
                   _choiceCard(
                     icon: Icons.threed_rotation,
-                    title: context.tr(ref, 'ar_view_on_screen_3d', 'View on screen (3D)'),
-                    subtitle: context.tr(ref, 'ar_spin_and_zoom_the_model_right', 'Spin and zoom the model right on your screen.'),
+                    title: context.tr(
+                        ref, 'ar_view_on_screen_3d', 'View on screen (3D)'),
+                    subtitle: context.tr(
+                        ref,
+                        'ar_spin_and_zoom_the_model_right',
+                        'Spin and zoom the model right on your screen.'),
                     onTap: onPick3d,
                     accent: accent,
                     textPrimary: textPrimary,
@@ -255,9 +267,12 @@ class _ViewChooser extends ConsumerWidget {
                     const SizedBox(height: 14),
                     _choiceCard(
                       icon: Icons.menu_book,
-                      title: context.tr(ref, 'ar_scan_textbook_page', 'Scan textbook page'),
-                      subtitle:
-                          context.tr(ref, 'ar_point_your_camera_at_the_page', 'Point your camera at the page to see the model on it.'),
+                      title: context.tr(
+                          ref, 'ar_scan_textbook_page', 'Scan textbook page'),
+                      subtitle: context.tr(
+                          ref,
+                          'ar_point_your_camera_at_the_page',
+                          'Point your camera at the page to see the model on it.'),
                       onTap: onPickMarker,
                       accent: accent,
                       textPrimary: textPrimary,

@@ -219,6 +219,14 @@ class _ArViewerScreenState extends ConsumerState<ArViewerScreen> {
     // Track narration progress → credit the AR module toward the ≥80% quiz gate,
     // exactly like ArRoomScreen. Without this, students who watch via the 3D
     // viewer (every non-ARCore phone) never unlock the quiz.
+    // Position updates stop just short of the end (~98-99%), so a full
+    // listen never reached 100%. Finishing the track counts as 100%.
+    _audio.onPlayerComplete.listen((_) {
+      if (!mounted) return;
+      ref
+          .read(moduleProgressStoreProvider)
+          .recordArProgress(widget.topicId, 100);
+    });
     _audio.onDurationChanged.listen((d) => _audioDuration = d);
     _audio.onPositionChanged.listen((pos) {
       final dur = _audioDuration;

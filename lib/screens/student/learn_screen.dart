@@ -437,6 +437,8 @@ class ArCatalog {
   final Map<String, Map<String, String>>
       audiosAacByLangById; // id -> {lang: url} AAC fallback
   final Map<String, String> chromaById;
+  // Compiled textbook-page target (.mind) per lesson → enables "Scan page".
+  final Map<String, String> mindById;
   final bool territorySupported; // false = outside MITRA's approved area
   const ArCatalog({
     required this.bySubject,
@@ -447,6 +449,7 @@ class ArCatalog {
     this.audiosByLangById = const {},
     this.audiosAacByLangById = const {},
     this.chromaById = const {},
+    this.mindById = const {},
     this.territorySupported = true,
   });
 }
@@ -487,6 +490,7 @@ ArCatalog? _catalogFromManifest(dynamic data) {
   final audiosByLangById = <String, Map<String, String>>{};
   final audiosAacByLangById = <String, Map<String, String>>{};
   final chromaById = <String, String>{};
+  final mindById = <String, String>{};
   for (final c in classes) {
     if (c is! Map) continue;
     final className = (c['class_name'] ?? c['class'] ?? '').toString();
@@ -548,6 +552,8 @@ ArCatalog? _catalogFromManifest(dynamic data) {
           if (l['chroma_enabled'] == true) {
             chromaById[id] = (l['chroma_color'] ?? '#00ff00').toString();
           }
+          final mind = _absMedia((l['mind_url'] ?? '').toString());
+          if (mind.isNotEmpty) mindById[id] = mind;
         }
       }
     }
@@ -562,6 +568,7 @@ ArCatalog? _catalogFromManifest(dynamic data) {
     audiosByLangById: audiosByLangById,
     audiosAacByLangById: audiosAacByLangById,
     chromaById: chromaById,
+    mindById: mindById,
     territorySupported: true,
   );
 }
@@ -606,6 +613,9 @@ final arCatalogProvider = FutureProvider<ArCatalog>((ref) async {
   final audioById = <String, String>{};
   final videoById = <String, String>{};
   final chromaById = <String, String>{};
+  final mindById = <String, String>{};
+  final audiosByLangById = <String, Map<String, String>>{};
+  final audiosAacByLangById = <String, Map<String, String>>{};
 
   if (raw is List) {
     for (final item in raw) {
@@ -635,6 +645,23 @@ final arCatalogProvider = FutureProvider<ArCatalog>((ref) async {
       if (m['chroma_enabled'] == true) {
         chromaById[id] = (m['chroma_color'] ?? '#00ff00').toString();
       }
+      final mind = _absMedia((m['mind_url'] ?? '').toString());
+      if (mind.isNotEmpty) mindById[id] = mind;
+      // Multi-language narration (now sent by /ar-topics too).
+      for (final entry in [
+        ('audios', audiosByLangById),
+        ('audios_aac', audiosAacByLangById),
+      ]) {
+        final raw = m[entry.$1];
+        if (raw is Map && raw.isNotEmpty) {
+          final out = <String, String>{};
+          raw.forEach((k, v) {
+            final u = _absMedia((v ?? '').toString());
+            if (u.isNotEmpty) out[k.toString().toLowerCase()] = u;
+          });
+          if (out.isNotEmpty) entry.$2[id] = out;
+        }
+      }
     }
   }
 
@@ -651,7 +678,10 @@ final arCatalogProvider = FutureProvider<ArCatalog>((ref) async {
     nativeGlbById: nativeGlbById,
     videoById: videoById,
     audioById: audioById,
+    audiosByLangById: audiosByLangById,
+    audiosAacByLangById: audiosAacByLangById,
     chromaById: chromaById,
+    mindById: mindById,
     territorySupported: territorySupported,
   );
 });
@@ -1260,6 +1290,13 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
                                       'chroma=${Uri.encodeComponent(chroma)}',
                                     );
                                   }
+                                  // Page target → offers "Scan page" in the
+                                  // AR chooser (was never passed, so the
+                                  // option never appeared).
+                                  final mind = arCatalog?.mindById[id];
+                                  if (mind != null && mind.isNotEmpty) {
+                                    qp.add('mind=${Uri.encodeComponent(mind)}');
+                                  }
                                   final query =
                                       qp.isEmpty ? '' : '?${qp.join('&')}';
                                   // Refresh locks + header counters when the
@@ -1629,8 +1666,10 @@ class _SubjectSection extends ConsumerWidget {
                   unlocked: unlocked,
                   bestPct: best,
                   questionCount: qCount,
-                  // This module's own narration watched enough → Completed.
-                  completed: progress.arWatchedPct(ar.id) >= arWatchThreshold,
+                  // VIEWED badge only once the whole narration was heard.
+                  completed: progress.arWatchedPct(ar.id) >= 100,
+                  watchedPct: progress.arWatchedPct(ar.id),
+                  watchThreshold: arWatchThreshold,
                   audioLabel: () {
                     final langs =
                         (audiosByLangById[ar.id] ?? const {}).keys.toSet();
@@ -1788,10 +1827,14 @@ class _ArTile extends ConsumerWidget {
   final bool unlocked; // false = greyed, tap shows "unlock" hint
   final int bestPct; // 0..100 best score on this module
   final int questionCount; // shown as "N questions" subtext
-  final bool completed; // ≥80% AR narration watched → Completed stamp
+  final bool completed; // 100% AR narration heard → VIEWED badge
   final bool
       comingSoon; // Rule 3: scheduled teaser — "Coming soon", not openable
   final String audioLabel; // #8b: '' | 'Your language' | 'Hindi/English'
+  // Highest % of this module's narration heard so far (3D view + AR room
+  // combined — both save to the same value), and the % the quiz needs.
+  final int watchedPct;
+  final int watchThreshold;
 
   const _ArTile({
     required this.lesson,
@@ -1802,6 +1845,8 @@ class _ArTile extends ConsumerWidget {
     this.completed = false,
     this.comingSoon = false,
     this.audioLabel = '',
+    this.watchedPct = 0,
+    this.watchThreshold = 85,
   });
 
   @override
@@ -1833,92 +1878,135 @@ class _ArTile extends ConsumerWidget {
           color: MitraColors.sky.withValues(alpha: unlocked ? 0.3 : 0.12),
         ),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: MitraColors.sky.withValues(alpha: unlocked ? 0.2 : 0.08),
-              borderRadius: BorderRadius.circular(MitraRadius.sm),
-              border: Border.all(color: MitraColors.sky.withValues(alpha: 0.3)),
-            ),
-            alignment: Alignment.center,
-            child: Text(
-              unlocked ? '🧊' : '🔒',
-              style: const TextStyle(fontSize: 24),
-            ),
-          ),
-          const SizedBox(width: MitraSpacing.md),
-          Expanded(
-            child: _QuizInfo(
-              title: lesson.title,
-              topic: comingSoon
-                  ? context.tr(ref, 'student_coming_soon', 'Coming soon')
-                  : unlocked
-                      ? subtext + audioNote
-                      : context.tr(
-                          ref,
-                          'student_score_100_on_the_previous_module',
-                          'Score 100% on the previous module to unlock'),
-            ),
-          ),
-          const SizedBox(width: 8),
-          // AR "Completed 100%" stamp once ≥80% of the narration is watched.
-          if (completed) ...[
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: MitraColors.emerald.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(MitraRadius.pill),
-                border: Border.all(
-                    color: MitraColors.emerald.withValues(alpha: 0.35)),
+          Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color:
+                      MitraColors.sky.withValues(alpha: unlocked ? 0.2 : 0.08),
+                  borderRadius: BorderRadius.circular(MitraRadius.sm),
+                  border:
+                      Border.all(color: MitraColors.sky.withValues(alpha: 0.3)),
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  unlocked ? '🧊' : '🔒',
+                  style: const TextStyle(fontSize: 24),
+                ),
               ),
-              child: Text(
-                context.tr(ref, 'student_completed_100', '✓ COMPLETED 100%'),
-                style: TextStyle(
-                    fontFamily: 'SpaceMono',
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    color: MitraColors.emerald),
+              const SizedBox(width: MitraSpacing.md),
+              Expanded(
+                child: _QuizInfo(
+                  title: lesson.title,
+                  topic: comingSoon
+                      ? context.tr(ref, 'student_coming_soon', 'Coming soon')
+                      : unlocked
+                          ? subtext + audioNote
+                          : context.tr(
+                              ref,
+                              'student_score_100_on_the_previous_module',
+                              'Score 100% on the previous module to unlock'),
+                ),
               ),
-            ),
-            const SizedBox(width: 8),
-          ],
-          // Badge: 100% once mastered, otherwise best % so far (if attempted).
-          if (bestPct > 0) ...[
-            _ScoreBadge(pct: bestPct),
-            const SizedBox(width: 8),
-          ],
-          if (unlocked)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: MitraColors.sky.withValues(alpha: 0.8),
-                borderRadius: BorderRadius.circular(MitraRadius.pill),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.view_in_ar, size: 14, color: Colors.black87),
-                  SizedBox(width: 4),
-                  Text(
-                    context.tr(ref, 'student_view_3d', 'View 3D'),
-                    style: TextStyle(
-                      fontFamily: 'Baloo2',
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.black87,
-                    ),
+              const SizedBox(width: 8),
+              // "VIEWED" badge once 100% of the narration has been heard.
+              if (completed) ...[
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: MitraColors.emerald.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(MitraRadius.pill),
+                    border: Border.all(
+                        color: MitraColors.emerald.withValues(alpha: 0.35)),
                   ),
-                ],
+                  child: Text(
+                    context.tr(ref, 'student_viewed', '✓ VIEWED'),
+                    style: TextStyle(
+                        fontFamily: 'SpaceMono',
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: MitraColors.emerald),
+                  ),
+                ),
+                const SizedBox(width: 8),
+              ],
+              // Badge: 100% once mastered, otherwise best % so far (if attempted).
+              if (bestPct > 0) ...[
+                _ScoreBadge(pct: bestPct),
+                const SizedBox(width: 8),
+              ],
+              if (unlocked)
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: MitraColors.sky.withValues(alpha: 0.8),
+                    borderRadius: BorderRadius.circular(MitraRadius.pill),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.view_in_ar, size: 14, color: Colors.black87),
+                      SizedBox(width: 4),
+                      Text(
+                        context.tr(ref, 'student_view_3d', 'View 3D'),
+                        style: TextStyle(
+                          fontFamily: 'Baloo2',
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              else
+                Icon(
+                  Icons.lock_outline,
+                  size: 18,
+                  color: onSurface.withValues(alpha: 0.4),
+                ),
+            ],
+          ),
+          // Viewing progress: how much of the narration has been heard and
+          // whether that's enough to open the quiz.
+          if (unlocked && !comingSoon) ...[
+            const SizedBox(height: 10),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(MitraRadius.pill),
+              child: LinearProgressIndicator(
+                value: watchedPct.clamp(0, 100) / 100,
+                minHeight: 6,
+                backgroundColor: onSurface.withValues(alpha: 0.08),
+                color: watchedPct >= watchThreshold
+                    ? MitraColors.emerald
+                    : MitraColors.sky,
               ),
-            )
-          else
-            Icon(
-              Icons.lock_outline,
-              size: 18,
-              color: onSurface.withValues(alpha: 0.4),
             ),
+            const SizedBox(height: 4),
+            Text(
+              watchedPct >= watchThreshold
+                  ? context.trp(ref, 'student_watched_pct_quiz_unlocked',
+                      'Watched {pct}% · Quiz unlocked', {'pct': '$watchedPct'})
+                  : context.trp(
+                      ref,
+                      'student_watched_pct_need_for_quiz',
+                      'Watched {pct}% · {need}% needed for the quiz',
+                      {'pct': '$watchedPct', 'need': '$watchThreshold'}),
+              style: TextStyle(
+                fontFamily: 'Mukta',
+                fontSize: 11,
+                color: watchedPct >= watchThreshold
+                    ? MitraColors.emerald
+                    : onSurface.withValues(alpha: 0.6),
+              ),
+            ),
+          ],
         ],
       ),
     );
