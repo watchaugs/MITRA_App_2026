@@ -430,5 +430,13 @@
   "txt_your_class_sets_your_learning_path_to_keep_it_stable_class_c": "तपाईँको कक्षाले तपाईँको सिक्ने मार्ग तय गर्दछ। यसलाई स्थिर राख्न, वर्ग परिवर्तनहरू प्रत्येक 90 दिनमा एक पटक सीमित छन्।",
   "txt_how_do_i_change_the_app_language_or_theme": "म कसरी एपको भाषा वा विषयवस्तु परिवर्तन गर्ने?",
   "txt_go_to_profile_edit_profile_for_language_and_profile_themes_f": "प्रोफाइलमा जानुहोस् भाषाका लागि प्रोफाइल सम्पादन गर्नुहोस्, र प्रोफाइलका लागि विषयवस्तुहरू।",
-  "txt_all": "सबै"
+  "txt_all": "सबै",
+  "student_viewed": "हेर्नुस्",
+  "student_watched_pct_quiz_unlocked": "हेरिएको {pct}% · क्विज अनलक गरिएको छ",
+  "student_watched_pct_need_for_quiz": "हेरेको {pct}% · {need}% क्विजका लागि आवश्यक छ",
+  "tier_jigyasu": "जिग्यासु",
+  "tier_anveshak": "अन्वेषक",
+  "tier_vidwan": "विदवान",
+  "tier_acharya": "आचार्य",
+  "tier_gyani": "ग्यानी"
 }

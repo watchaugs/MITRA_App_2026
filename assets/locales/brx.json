@@ -429,5 +429,13 @@
   "txt_your_class_sets_your_learning_path_to_keep_it_stable_class_c": "नोंनि थाखोआ नोंनि सोलोंनायनि लामाखौ थि खालामो। बेखौ दिदोम लाखिनो थाखाय, थाखो सोलायनायफोरा मोनफ्रोम 90 सानफोराव खनसेसिम सिमागोनां।",
   "txt_how_do_i_change_the_app_language_or_theme": "आं एपनि राव एबा थीमखौ माबोरै सोलायनो?",
   "txt_go_to_profile_edit_profile_for_language_and_profile_themes_f": "रावनि थाखाय प्र 'फाइल → एडिट प्र' फाइल आरो नुथायनि थाखाय प्र 'फाइल → थीमफोराव थां।",
-  "txt_all": "गासैबो"
+  "txt_all": "गासैबो",
+  "student_viewed": "नायबाय थानाय",
+  "student_watched_pct_quiz_unlocked": "नायजानाय {pct}% · क्युइजखौ अनलक खालामनाय जादों",
+  "student_watched_pct_need_for_quiz": "क्युइजनि थाखाय नांगौ नायजानाय {pct}% · {need}%",
+  "tier_jigyasu": "जिग्यासु",
+  "tier_anveshak": "अन्वेषक",
+  "tier_vidwan": "विदवान",
+  "tier_acharya": "आचार्य",
+  "tier_gyani": "ग्यानी"
 }

@@ -430,5 +430,13 @@
   "txt_your_class_sets_your_learning_path_to_keep_it_stable_class_c": "آپ کی کلاس آپ کے سیکھنے کا راستہ طے کرتی ہے۔ اسے مستحکم رکھنے کے لیے، کلاس کی تبدیلیاں ہر 90 دنوں میں ایک بار تک محدود ہیں۔",
   "txt_how_do_i_change_the_app_language_or_theme": "میں ایپ کی زبان یا تھیم کو کیسے تبدیل کر سکتا ہوں؟",
   "txt_go_to_profile_edit_profile_for_language_and_profile_themes_f": "زبان کے لیے پروفائل → پروفائل میں ترمیم کریں، اور ظاہری شکل کے لیے پروفائل → تھیمز پر جائیں۔",
-  "txt_all": "تمام"
+  "txt_all": "تمام",
+  "student_viewed": "دیکھا گیا",
+  "student_watched_pct_quiz_unlocked": "دیکھا گیا {pct}% · کوئز غیر مقفل ہے",
+  "student_watched_pct_need_for_quiz": "کوئز کے لیے درکار دیکھا گیا {pct}% · {need}%",
+  "tier_jigyasu": "جگیاسو",
+  "tier_anveshak": "انویشک",
+  "tier_vidwan": "ودوان",
+  "tier_acharya": "آچاریہ",
+  "tier_gyani": "گیان۔"
 }

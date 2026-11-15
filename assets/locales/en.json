@@ -429,5 +429,13 @@
   "txt_your_class_sets_your_learning_path_to_keep_it_stable_class_c": "Your class sets your learning path. To keep it stable, class changes are limited to once every 90 days.",
   "txt_how_do_i_change_the_app_language_or_theme": "How do I change the app language or theme?",
   "txt_go_to_profile_edit_profile_for_language_and_profile_themes_f": "Go to Profile → Edit Profile for language, and Profile → Themes for appearance.",
-  "txt_all": "All"
+  "txt_all": "All",
+  "student_viewed": "✓ VIEWED",
+  "student_watched_pct_quiz_unlocked": "Watched {pct}% · Quiz unlocked",
+  "student_watched_pct_need_for_quiz": "Watched {pct}% · {need}% needed for the quiz",
+  "tier_jigyasu": "Jigyasu",
+  "tier_anveshak": "Anveshak",
+  "tier_vidwan": "Vidwan",
+  "tier_acharya": "Acharya",
+  "tier_gyani": "Gyani"
 }

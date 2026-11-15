@@ -430,5 +430,13 @@
   "txt_your_class_sets_your_learning_path_to_keep_it_stable_class_c": "तुंʼदी क्लास तुंʼदे सिखने दा रस्ता सैट्ट करदी ऐ। इसगी स्थिर रखने आस्तै, वर्ग बदलाऽ हर 90एं दिनें च इक बारी तक्कर सीमत न।",
   "txt_how_do_i_change_the_app_language_or_theme": "में ऐप दी भाशा जां थीम किʼयां बदली सकनां?",
   "txt_go_to_profile_edit_profile_for_language_and_profile_themes_f": "भाशा आस्तै प्रोफ़ाइल → प्रोफ़ाइल संपादित करो, ते रूप-रेखा आस्तै प्रोफ़ाइल → थीम पर जाओ।",
-  "txt_all": "सारे"
+  "txt_all": "सारे",
+  "student_viewed": "वायव्ड व्यूव्ड",
+  "student_watched_pct_quiz_unlocked": "दिक्खेआ गेआ {pct}% · क्विज़ अनलाक कीता गेआ",
+  "student_watched_pct_need_for_quiz": "क्विज़ आस्तै जरूरी {pct}% · {need}% दिक्खेआ गेआ",
+  "tier_jigyasu": "जिग्यासु",
+  "tier_anveshak": "अन्वेषक",
+  "tier_vidwan": "विदवान",
+  "tier_acharya": "आचार्य",
+  "tier_gyani": "ग्यानी"
 }

@@ -429,5 +429,13 @@
   "txt_your_class_sets_your_learning_path_to_keep_it_stable_class_c": "ᱟᱢᱟᱜ ᱥᱮᱪᱮᱫ ᱫᱚ ᱟᱢᱟᱜ ᱥᱮᱪᱮᱫ ᱨᱮᱭᱟᱜ ᱰᱟᱦᱟᱨ ᱠᱚ ᱥᱟᱯᱲᱟᱣᱼᱟ ᱾ ᱱᱚᱶᱟ ᱫᱚ ᱵᱚᱱᱚᱫᱚᱞ ᱫᱚᱦᱚ ᱞᱟᱹᱜᱤᱫ, ᱦᱟᱹᱴᱤᱧ ᱵᱚᱱᱚᱫᱚᱞ 90 ᱫᱤᱱ ᱛᱟᱭᱚᱢ ᱢᱤᱫ ᱚᱠᱛᱮ ᱦᱟᱹᱵᱤᱡ ᱜᱮ ᱠᱚᱢ ᱦᱩᱭᱩᱜᱼᱟ ᱾",
   "txt_how_do_i_change_the_app_language_or_theme": "ᱤᱧ ᱪᱮᱫ ᱞᱮᱠᱟᱛᱮ ᱮᱯ ᱨᱮᱭᱟᱜ ᱯᱟᱹᱨᱥᱤ ᱥᱮ ᱛᱟᱹᱞᱤᱠᱟ ᱵᱚᱱᱚᱫᱚᱞ ᱫᱟᱲᱮᱭᱟᱜᱼᱟᱢ?",
   "txt_go_to_profile_edit_profile_for_language_and_profile_themes_f": "ᱯᱟᱹᱨᱥᱤ ᱞᱟᱹᱜᱤᱫ ᱯᱨᱳᱯᱷᱟᱭᱤᱞ → ᱮ<unk> ᱯᱨᱳᱯᱷᱟᱭᱤᱞ ᱟᱨ ᱩᱫᱩᱜ ᱥᱚᱫᱚᱨ ᱞᱟᱹᱜᱤᱫ ᱯᱨᱳᱯᱷᱟᱭᱤᱞ → ᱛᱟᱹᱞᱤᱠᱟ ᱨᱮ ᱥᱮᱱ ᱢᱮ ᱾",
-  "txt_all": "ᱥᱟᱱᱟᱢ ᱜᱮ ᱾"
+  "txt_all": "ᱥᱟᱱᱟᱢ ᱜᱮ ᱾",
+  "student_viewed": "ᱧᱮᱞ ᱟᱠᱟᱱᱟ ᱾",
+  "student_watched_pct_quiz_unlocked": "ᱧᱮᱞ ᱟᱠᱟᱱ {pct}% · ᱠᱩᱭᱤᱡ ᱚᱱᱚᱞᱚᱠ ᱦᱩᱭ ᱟᱠᱟᱱᱟ ᱾",
+  "student_watched_pct_need_for_quiz": "ᱠᱩᱭᱡ ᱞᱟᱹᱜᱤᱫ ᱧᱮᱞ ᱟᱠᱟᱱ {pct}% · {need}% ᱞᱟᱹᱠᱛᱤ ᱾",
+  "tier_jigyasu": "ᱡᱤᱜᱤᱭᱟᱥᱩ ᱾",
+  "tier_anveshak": "ᱚᱱᱵᱷᱮᱥᱚᱠ ᱾",
+  "tier_vidwan": "ᱵᱤᱫᱳᱣᱟᱱ ᱾",
+  "tier_acharya": "ᱟᱪᱟᱨᱡᱚ ᱾",
+  "tier_gyani": "ᱜᱤᱭᱟᱱᱤ ᱾"
 }

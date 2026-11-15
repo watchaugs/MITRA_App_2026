@@ -430,5 +430,13 @@
   "txt_your_class_sets_your_learning_path_to_keep_it_stable_class_c": "अहाँक कक्षा अहाँक शिक्षाक मार्ग निर्धारित करैत अछि। एकरा स्थिर रखबाक लेल, वर्ग परिवर्तन प्रत्येक 90 दिनमे एक बेर धरि सीमित रहैत अछि।",
   "txt_how_do_i_change_the_app_language_or_theme": "हम एपक भाषा वा विषयकेँ कोना बदलि सकैत छी?",
   "txt_go_to_profile_edit_profile_for_language_and_profile_themes_f": "प्रोफाइल पर जाउ भाषा के लेल प्रोफाइल संपादित करू, आ उपस्थिति के लेल प्रोफाइल पर जाउ।",
-  "txt_all": "सभ"
+  "txt_all": "सभ",
+  "student_viewed": "खूब देखल गेल",
+  "student_watched_pct_quiz_unlocked": "देखल गेल {pct}% · प्रश्नोत्तरी अनलॉक्ड अछि",
+  "student_watched_pct_need_for_quiz": "देखल गेल {pct}% · {need}% प्रश्नोत्तरी लेल आवश्यक अछि",
+  "tier_jigyasu": "जिग्यासु",
+  "tier_anveshak": "अन्वेषक",
+  "tier_vidwan": "विदवान",
+  "tier_acharya": "आचार्य",
+  "tier_gyani": "ज्ञानी"
 }

@@ -430,5 +430,13 @@
   "txt_your_class_sets_your_learning_path_to_keep_it_stable_class_c": "আপোনাৰ শ্ৰেণীয়ে আপোনাৰ শিক্ষণৰ পথ নিৰ্ধাৰণ কৰে। ইয়াক স্থিৰ কৰি ৰাখিবলৈ, শ্ৰেণী পৰিৱৰ্তন প্ৰতি 90 দিনত এবাৰলৈ সীমাবদ্ধ।",
   "txt_how_do_i_change_the_app_language_or_theme": "মই এপৰ ভাষা বা থিম কেনেকৈ সলনি কৰিম?",
   "txt_go_to_profile_edit_profile_for_language_and_profile_themes_f": "ভাষাৰ বাবে প্ৰফাইল → প্ৰফাইল সম্পাদনা কৰক, আৰু উপস্থিতিৰ বাবে প্ৰফাইল → থিমলৈ যাওক।",
-  "txt_all": "সকলোৱে"
+  "txt_all": "সকলোৱে",
+  "student_viewed": "ভিউৱেড",
+  "student_watched_pct_quiz_unlocked": "চোৱা হৈছে {pct}% · কুইজ আনলক কৰা হৈছে",
+  "student_watched_pct_need_for_quiz": "কুইজৰ বাবে প্ৰয়োজনীয় চোৱা {pct}% · {need}%",
+  "tier_jigyasu": "জিগ্যাসু",
+  "tier_anveshak": "অন্বেশক",
+  "tier_vidwan": "বিদৱান",
+  "tier_acharya": "আচাৰ্য্য",
+  "tier_gyani": "গ্যানি"
 }

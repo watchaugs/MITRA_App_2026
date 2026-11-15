@@ -427,5 +427,13 @@
   "txt_your_class_sets_your_learning_path_to_keep_it_stable_class_c": "تہنٛد کلاس چھ تہنٛد ہیٚچھنٕچ وتھ طے کران۔ یہ مستحکم تھاونہٕ خٲطرٕ چھ درجہٕ بدلاون پرٛؠتھ 90 دۄہن منٛز اکہ لٹہ محدود۔",
   "txt_how_do_i_change_the_app_language_or_theme": "بہٕ کتھ کٔنۍ ہؠکہٕ ایپٕچ زبان یا تھیم بدلاوتھ؟",
   "txt_go_to_profile_edit_profile_for_language_and_profile_themes_f": "زبان خٲطرٕ کٔرو پروفائل → ایڈیٹ پروفائل، تہٕ ظہور باپتھ کٔرو پروفائل → تھیمس پؠٹھ گژھن۔",
-  "txt_all": "تمام۔"
+  "txt_all": "تمام۔",
+  "student_viewed": "ۄچھینہٕ آمت۔",
+  "student_watched_pct_quiz_unlocked": "وٕچھنہٕ آمت {pct}% · کوئز ان لاک۔",
+  "student_watched_pct_need_for_quiz": "وٕچھنہٕ آمت {pct}% · {need}% چھ کوئز باپتھ ضروٗرت",
+  "tier_jigyasu": "جگیاسو",
+  "tier_anveshak": "انویشک",
+  "tier_vidwan": "ودوان",
+  "tier_acharya": "اچاریہ",
+  "tier_gyani": "گیانی۔"
 }

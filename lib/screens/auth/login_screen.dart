@@ -30,6 +30,11 @@ enum _LoginStep { phone, otp }
 
 enum _Role { student, teacher }
 
+// Teacher mode is still a mock-up (sample data only), so the Student/Teacher
+// toggle is hidden and everyone signs in as a student. Flip to true once the
+// teacher screens are wired to real data.
+const bool _kTeacherModeEnabled = false;
+
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
@@ -455,67 +460,72 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Role selector
-                  Row(
-                    children: _Role.values
-                        .map((r) => Expanded(
-                              child: Padding(
-                                padding: EdgeInsets.only(
-                                    right: r == _Role.student ? 4 : 0,
-                                    left: r == _Role.teacher ? 4 : 0),
-                                child: GestureDetector(
-                                  onTap: () => setState(() => _role = r),
-                                  child: AnimatedContainer(
-                                    duration: const Duration(milliseconds: 200),
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 12),
-                                    decoration: BoxDecoration(
-                                      color: _role == r
-                                          ? MitraColors.saffron
-                                              .withValues(alpha: 0.1)
-                                          : MitraColors.bgCard,
-                                      borderRadius:
-                                          BorderRadius.circular(MitraRadius.sm),
-                                      border: Border.all(
+                  // Role selector (hidden while teacher mode is a mock-up)
+                  if (_kTeacherModeEnabled) ...[
+                    Row(
+                      children: _Role.values
+                          .map((r) => Expanded(
+                                child: Padding(
+                                  padding: EdgeInsets.only(
+                                      right: r == _Role.student ? 4 : 0,
+                                      left: r == _Role.teacher ? 4 : 0),
+                                  child: GestureDetector(
+                                    onTap: () => setState(() => _role = r),
+                                    child: AnimatedContainer(
+                                      duration:
+                                          const Duration(milliseconds: 200),
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 12),
+                                      decoration: BoxDecoration(
                                         color: _role == r
                                             ? MitraColors.saffron
-                                            : MitraColors.border,
-                                        width: 1.5,
-                                      ),
-                                    ),
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Text(
-                                            r == _Role.student ? '🎒' : '👩‍🏫',
-                                            style:
-                                                const TextStyle(fontSize: 18)),
-                                        const SizedBox(width: 6),
-                                        Text(
-                                          r == _Role.student
-                                              ? context.tr(ref,
-                                                  'common_student', 'Student')
-                                              : context.tr(ref, 'auth_teacher',
-                                                  'Teacher'),
-                                          style: TextStyle(
-                                            fontFamily: 'Mukta',
-                                            fontWeight: FontWeight.w500,
-                                            fontSize: 14,
-                                            color: _role == r
-                                                ? MitraColors.saffron
-                                                : MitraColors.textMuted,
-                                          ),
+                                                .withValues(alpha: 0.1)
+                                            : MitraColors.bgCard,
+                                        borderRadius: BorderRadius.circular(
+                                            MitraRadius.sm),
+                                        border: Border.all(
+                                          color: _role == r
+                                              ? MitraColors.saffron
+                                              : MitraColors.border,
+                                          width: 1.5,
                                         ),
-                                      ],
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Text(
+                                              r == _Role.student
+                                                  ? '🎒'
+                                                  : '👩‍🏫',
+                                              style: const TextStyle(
+                                                  fontSize: 18)),
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            r == _Role.student
+                                                ? context.tr(ref,
+                                                    'common_student', 'Student')
+                                                : context.tr(ref,
+                                                    'auth_teacher', 'Teacher'),
+                                            style: TextStyle(
+                                              fontFamily: 'Mukta',
+                                              fontWeight: FontWeight.w500,
+                                              fontSize: 14,
+                                              color: _role == r
+                                                  ? MitraColors.saffron
+                                                  : MitraColors.textMuted,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   ),
                                 ),
-                              ),
-                            ))
-                        .toList(),
-                  ),
-                  const SizedBox(height: MitraSpacing.lg),
+                              ))
+                          .toList(),
+                    ),
+                    const SizedBox(height: MitraSpacing.lg),
+                  ],
 
                   // ✨ We hand the color down to the methods!
                   if (_step == _LoginStep.phone)

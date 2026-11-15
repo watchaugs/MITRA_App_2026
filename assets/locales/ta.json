@@ -429,5 +429,13 @@
   "txt_your_class_sets_your_learning_path_to_keep_it_stable_class_c": "உங்கள் வகுப்பு உங்கள் கற்றல் பாதையை அமைக்கிறது. அதை நிலையானதாக வைத்திருக்க, வகுப்பு மாற்றங்கள் 90 நாட்களுக்கு ஒரு முறை வரையறுக்கப்பட்டுள்ளன.",
   "txt_how_do_i_change_the_app_language_or_theme": "பயன்பாட்டு மொழி அல்லது கருப்பொருளை நான் எவ்வாறு மாற்றுவது?",
   "txt_go_to_profile_edit_profile_for_language_and_profile_themes_f": "மொழிக்கான சுயவிவரம் → சுயவிவரத்தைத் திருத்தவும், தோற்றத்திற்கான சுயவிவரம் → கருப்பொருள்கள் என்பதற்குச் செல்லவும்.",
-  "txt_all": "அனைத்தும்"
+  "txt_all": "அனைத்தும்",
+  "student_viewed": "பார்வையிடப்பட்டது",
+  "student_watched_pct_quiz_unlocked": "பார்த்தது {pct}% · வினாடி வினா திறக்கப்பட்டது",
+  "student_watched_pct_need_for_quiz": "வினாடி வினா போட்டிக்குத் தேவையான {pct}% · {need}% பார்க்கப்பட்டது",
+  "tier_jigyasu": "ஜிக்யாசூ",
+  "tier_anveshak": "அன்வேஷாக்",
+  "tier_vidwan": "வித்வான்",
+  "tier_acharya": "ஆச்சார்யா",
+  "tier_gyani": "கியானி"
 }

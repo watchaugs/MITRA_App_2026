@@ -429,5 +429,13 @@
   "txt_your_class_sets_your_learning_path_to_keep_it_stable_class_c": "तुमचा वर्ग तुमचा शिकण्याचा मार्ग ठरवतो. ते स्थिर ठेवण्यासाठी, वर्गातील बदल दर 90 दिवसांनी एकदा मर्यादित असतात.",
   "txt_how_do_i_change_the_app_language_or_theme": "मी एपची भाषा किंवा संकल्पना कशी बदलू?",
   "txt_go_to_profile_edit_profile_for_language_and_profile_themes_f": "भाषेसाठी प्रोफाईल → प्रोफाईल संपादित करा आणि स्वरूपासाठी प्रोफाईल → थीम वर जा.",
-  "txt_all": "सगळेच"
+  "txt_all": "सगळेच",
+  "student_viewed": "वाय. व्ही",
+  "student_watched_pct_quiz_unlocked": "पाहिले {pct}% · प्रश्नमंजुषा उघडी",
+  "student_watched_pct_need_for_quiz": "प्रश्नमंजुषेसाठी आवश्यक असलेले {pct}% · {need}% पाहिले",
+  "tier_jigyasu": "जिग्यासू",
+  "tier_anveshak": "अन्वेषक",
+  "tier_vidwan": "विदवान",
+  "tier_acharya": "आचार्य",
+  "tier_gyani": "ग्यानी"
 }

@@ -429,5 +429,13 @@
   "txt_your_class_sets_your_learning_path_to_keep_it_stable_class_c": "توھان جی ڪلاس توھان جی سکڻ جو رستو مقرر ڪری ٿی ان کی مستحڪم رکڻ لاء، ڪلاس تبدیلیون ہر 90 ڏینھن ۾ ھڪ ڀیرو تائین محدود آھن",
   "txt_how_do_i_change_the_app_language_or_theme": "مان ایپ ٻولی یا موضوع کی ڪیئن بدلائی سگھان ٿو؟",
   "txt_go_to_profile_edit_profile_for_language_and_profile_themes_f": "پروفائل ڏانہن وڃو ٻولی لاء پروفائل ترمیم ڪریو، ۽ پروفائل لاء موضوع",
-  "txt_all": "سڀئی"
+  "txt_all": "سڀئی",
+  "student_viewed": "نظر اچی ویو",
+  "student_watched_pct_quiz_unlocked": "ڏٺو ویو {pct}% · ڪوز انلاڪ ڪیو ویو",
+  "student_watched_pct_need_for_quiz": "ڏسو ویو {pct}% · {need}% سوالنامی لاء ضروری آھی",
+  "tier_jigyasu": "جگیاسو",
+  "tier_anveshak": "انوشڪ",
+  "tier_vidwan": "ودوان",
+  "tier_acharya": "آچاریہ",
+  "tier_gyani": "گیان"
 }

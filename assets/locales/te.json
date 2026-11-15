@@ -430,5 +430,13 @@
   "txt_your_class_sets_your_learning_path_to_keep_it_stable_class_c": "మీ తరగతి మీ అభ్యాస మార్గాన్ని నిర్దేశిస్తుంది. దీనిని స్థిరంగా ఉంచడానికి, తరగతి మార్పులు ప్రతి 90 రోజులకు ఒకసారి పరిమితం చేయబడతాయి.",
   "txt_how_do_i_change_the_app_language_or_theme": "యాప్ లాంగ్వేజ్ లేదా థీమ్ను ఎలా మార్చాలి?",
   "txt_go_to_profile_edit_profile_for_language_and_profile_themes_f": "భాష కోసం ప్రొఫైల్ → ఎడిట్ ప్రొఫైల్, మరియు ప్రదర్శన కోసం ప్రొఫైల్ → థీమ్లకు వెళ్లండి.",
-  "txt_all": "అన్నీ"
+  "txt_all": "అన్నీ",
+  "student_viewed": "వై వీడ్",
+  "student_watched_pct_quiz_unlocked": "వీక్షించిన {pct}% · క్విజ్ అన్లాక్ చేయబడింది",
+  "student_watched_pct_need_for_quiz": "చూశారు {pct}% · {need}% క్విజ్ కోసం అవసరం",
+  "tier_jigyasu": "జిగ్యాసు",
+  "tier_anveshak": "అన్వేషాక్",
+  "tier_vidwan": "విద్వాన్",
+  "tier_acharya": "ఆచార్య",
+  "tier_gyani": "గ్యానీ"
 }

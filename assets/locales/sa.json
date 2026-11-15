@@ -430,5 +430,13 @@
   "txt_how_do_i_change_the_app_language_or_theme": "आप्-भाषां वा विषयवस्तु वा कथं परिवर्तयिष्यामि?",
   "txt_go_to_profile_edit_profile_for_language_and_profile_themes_f": "भाषायाः कृते प्रोफैल्-एडिट्-प्रोफैल् इत्यत्र गच्छन्तु, तथा च स्वरूपस्य कृते प्रोफैल्-थीम्स् इत्यत्र गच्छन्तु।",
   "txt_all": "सर्वम्",
-  "student_next_fact_in_hoursleft_h_minsleft": "{hoursLeft} ह {minsLeft} मी मध्ये अग्रिमं तथ्यम्"
+  "student_next_fact_in_hoursleft_h_minsleft": "{hoursLeft} ह {minsLeft} मी मध्ये अग्रिमं तथ्यम्",
+  "student_viewed": "दृष्टः",
+  "student_watched_pct_quiz_unlocked": "निरीक्षितं {pct}% · क्विज़् अन्लाक् कृतम्",
+  "student_watched_pct_need_for_quiz": "निरीक्षितं {pct}% · {need}% प्रश्नोत्तरार्थं आवश्यकम्",
+  "tier_jigyasu": "जिग्यासु",
+  "tier_anveshak": "अन्वेषकः",
+  "tier_vidwan": "विदवानः",
+  "tier_acharya": "आचार्यः",
+  "tier_gyani": "ग्यानी"
 }

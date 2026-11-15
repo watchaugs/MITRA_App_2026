@@ -157,7 +157,8 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider);
-    final firstName = user?.firstName ?? context.tr(ref, 'common_student', 'Student');
+    final firstName =
+        user?.firstName ?? context.tr(ref, 'common_student', 'Student');
     final subjectsAsync = ref.watch(subjectsProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -293,16 +294,29 @@ class HomeScreen extends ConsumerWidget {
                     return Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        _StatChip(context.trp(ref, 'student_totalxp_xp', '⭐ {totalXp} XP', {'totalXp': '$totalXp'}), isDark),
+                        _StatChip(
+                            context.trp(ref, 'student_totalxp_xp',
+                                '⭐ {totalXp} XP', {'totalXp': '$totalXp'}),
+                            isDark),
                         const SizedBox(width: 8),
-                        _StatChip(context.trp(ref, 'student_streakdays_streak', '🔥 {streakDays} Streak', {'streakDays': '$streakDays'}), isDark),
+                        _StatChip(
+                            context.trp(
+                                ref,
+                                'student_streakdays_streak',
+                                '🔥 {streakDays} Streak',
+                                {'streakDays': '$streakDays'}),
+                            isDark),
                         const SizedBox(width: 16),
 
                         // The dynamic tag — tap to open My Level
                         GestureDetector(
                           onTap: () => context.push('/achievements'),
                           child: _GlowingAchievementText(
-                            title: currentTier.title,
+                            // Tier name in the app language (tier_* keys).
+                            title: context.tr(
+                                ref,
+                                'tier_${currentTier.title.toLowerCase()}',
+                                currentTier.title),
                             color: currentTier.glowColor,
                           ),
                         ),
@@ -325,7 +339,8 @@ class HomeScreen extends ConsumerWidget {
                     const SizedBox(height: 8),
                     ref.watch(dailyMotivationProvider).when(
                           loading: () => const _LoadingCard(),
-                          error: (_, __) => _ErrorCard(context.tr(ref, 'student_failed_to_load', 'Failed to load')),
+                          error: (_, __) => _ErrorCard(context.tr(
+                              ref, 'student_failed_to_load', 'Failed to load')),
                           data: (thought) {
                             final author =
                                 ref.watch(quoteAuthorProvider).valueOrNull ??
@@ -575,7 +590,8 @@ class _ContinueLearningCard extends ConsumerWidget {
                   Text(
                       last.title.isNotEmpty
                           ? last.title
-                          : context.tr(ref, 'student_continue_your_lesson', 'Continue your lesson'),
+                          : context.tr(ref, 'student_continue_your_lesson',
+                              'Continue your lesson'),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
@@ -600,10 +616,16 @@ class _ContinueLearningCard extends ConsumerWidget {
                     children: [
                       Text(
                           last.bestPct >= 100
-                              ? context.tr(ref, 'student_mastered', 'Mastered ✓')
+                              ? context.tr(
+                                  ref, 'student_mastered', 'Mastered ✓')
                               : last.bestPct > 0
-                                  ? context.trp(ref, 'student_bestpct_complete', '{bestPct}% complete', {'bestPct': '${last.bestPct}'})
-                                  : context.tr(ref, 'student_not_started_yet', 'Not started yet'),
+                                  ? context.trp(
+                                      ref,
+                                      'student_bestpct_complete',
+                                      '{bestPct}% complete',
+                                      {'bestPct': '${last.bestPct}'})
+                                  : context.tr(ref, 'student_not_started_yet',
+                                      'Not started yet'),
                           style: const TextStyle(
                               fontFamily: 'Mukta',
                               fontSize: 12,
@@ -682,7 +704,11 @@ class _SubjectCard extends ConsumerWidget {
                 ),
               ),
               Text(
-                  context.trp(ref, 'student_v1_arcount_ar_topics', '{v1}% · {arCount} AR topics', {'v1': '${(subject.progress * 100).toInt()}', 'arCount': '${subject.arCount}'}),
+                  context.trp(ref, 'student_v1_arcount_ar_topics',
+                      '{v1}% · {arCount} AR topics', {
+                    'v1': '${(subject.progress * 100).toInt()}',
+                    'arCount': '${subject.arCount}'
+                  }),
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                       fontFamily: 'Mukta',
@@ -748,7 +774,8 @@ class _ThoughtTile extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              context.tr(ref, 'student_thought_for_the_day', '💭 Thought for the day'),
+              context.tr(
+                  ref, 'student_thought_for_the_day', '💭 Thought for the day'),
               style: TextStyle(
                 fontFamily: 'Baloo2',
                 fontWeight: FontWeight.w700, // Explicitly Big & Bold Title
@@ -1028,7 +1055,8 @@ class _BrainSparkTile extends ConsumerWidget {
                                     fontSize: 16, color: accentColor)),
                             const SizedBox(width: 6),
                             Text(
-                              context.tr(ref, 'student_brain_spark', 'BRAIN SPARK'),
+                              context.tr(
+                                  ref, 'student_brain_spark', 'BRAIN SPARK'),
                               style: TextStyle(
                                 fontFamily: 'Baloo2',
                                 fontWeight: FontWeight.w700, // Big & Bold Title
@@ -1110,8 +1138,18 @@ class _BrainSparkTile extends ConsumerWidget {
                         const SizedBox(width: 6),
                         Text(
                           hoursLeft > 0
-                              ? context.trp(ref, 'student_next_fact_in_hoursleft_h_minsleft', 'Next fact in {hoursLeft}h {minsLeft}m', {'hoursLeft': '$hoursLeft', 'minsLeft': '$minsLeft'})
-                              : context.trp(ref, 'student_next_fact_in_minsleft_m', 'Next fact in {minsLeft}m', {'minsLeft': '$minsLeft'}),
+                              ? context.trp(
+                                  ref,
+                                  'student_next_fact_in_hoursleft_h_minsleft',
+                                  'Next fact in {hoursLeft}h {minsLeft}m', {
+                                  'hoursLeft': '$hoursLeft',
+                                  'minsLeft': '$minsLeft'
+                                })
+                              : context.trp(
+                                  ref,
+                                  'student_next_fact_in_minsleft_m',
+                                  'Next fact in {minsLeft}m',
+                                  {'minsLeft': '$minsLeft'}),
                           style: const TextStyle(
                             fontFamily: 'SpaceMono',
                             fontSize: 10,

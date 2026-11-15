@@ -57,6 +57,11 @@ const List<AchievementTier> _galacticTiers = [
       Color(0xFFFFD700)), // Radiant Gold
 ];
 
+/// Tier names follow the app language (keys tier_jigyasu … tier_gyani in the
+/// translation packs); English stays the fallback.
+String _tierName(BuildContext context, WidgetRef ref, AchievementTier t) =>
+    context.tr(ref, 'tier_${t.title.toLowerCase()}', t.title);
+
 // ── Root Screen ──────────────────────────────────────────────────────────────
 
 class AchievementsScreen extends ConsumerWidget {
@@ -85,7 +90,8 @@ class AchievementsScreen extends ConsumerWidget {
                     color: Colors.redAccent, size: 48),
                 const SizedBox(height: 12),
                 Text(
-                  context.tr(ref, 'student_could_not_load_achievements', 'Could not load achievements'),
+                  context.tr(ref, 'student_could_not_load_achievements',
+                      'Could not load achievements'),
                   style: TextStyle(
                       color: Colors.white,
                       fontSize: 16,
@@ -143,7 +149,8 @@ class AchievementsScreen extends ConsumerWidget {
                             .isNotEmpty ??
                         false)
                     ? ref.watch(currentUserProvider)!.fullName
-                    : context.tr(ref, 'student_cosmic_explorer', 'Cosmic Explorer'),
+                    : context.tr(
+                        ref, 'student_cosmic_explorer', 'Cosmic Explorer'),
               ),
               Expanded(
                 child: SingleChildScrollView(
@@ -259,7 +266,7 @@ class _ThemedAchievementHeader extends ConsumerWidget {
                     ),
                   ),
                   Text(
-                    currentTier.title,
+                    _tierName(context, ref, currentTier),
                     style: TextStyle(
                       fontFamily: 'Baloo2',
                       fontWeight: FontWeight.w800,
@@ -497,7 +504,7 @@ class _ConstellationNodeState extends ConsumerState<_ConstellationNode>
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              widget.tier.title,
+                              _tierName(context, ref, widget.tier),
                               style: TextStyle(
                                 fontFamily: 'Baloo2',
                                 fontWeight: FontWeight.w700,
@@ -532,7 +539,8 @@ class _ConstellationNodeState extends ConsumerState<_ConstellationNode>
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      context.trp(ref, 'student_v1_explored', '{v1}% Explored', {'v1': '${(widget.progress * 100).toInt()}'}),
+                      context.trp(ref, 'student_v1_explored', '{v1}% Explored',
+                          {'v1': '${(widget.progress * 100).toInt()}'}),
                       style: TextStyle(
                         fontFamily: 'SpaceMono',
                         fontSize: 12,
@@ -543,8 +551,13 @@ class _ConstellationNodeState extends ConsumerState<_ConstellationNode>
                     const SizedBox(height: 12),
                     Text(
                       widget.isUnlocked
-                          ? context.tr(ref, 'student_coordinates_reached', 'Coordinates Reached')
-                          : context.trp(ref, 'student_requires_minxp_xp', 'Requires {minXp} XP', {'minXp': '${widget.tier.minXp}'}),
+                          ? context.tr(ref, 'student_coordinates_reached',
+                              'Coordinates Reached')
+                          : context.trp(
+                              ref,
+                              'student_requires_minxp_xp',
+                              'Requires {minXp} XP',
+                              {'minXp': '${widget.tier.minXp}'}),
                       style: TextStyle(
                         fontFamily: 'Mukta',
                         fontSize: 13,
@@ -567,7 +580,8 @@ class _ConstellationNodeState extends ConsumerState<_ConstellationNode>
                           child: _MiniStat(
                             emoji: '⭐',
                             value: '${widget.totalXp}',
-                            label: context.tr(ref, 'student_total_xp_2', 'Total XP'),
+                            label: context.tr(
+                                ref, 'student_total_xp_2', 'Total XP'),
                             color: onSurface,
                           ),
                         ),
@@ -576,7 +590,8 @@ class _ConstellationNodeState extends ConsumerState<_ConstellationNode>
                           child: _MiniStat(
                             emoji: '🔥',
                             value: '${widget.streak}',
-                            label: context.tr(ref, 'student_day_streak', 'Day streak'),
+                            label: context.tr(
+                                ref, 'student_day_streak', 'Day streak'),
                             color: onSurface,
                           ),
                         ),
@@ -585,10 +600,26 @@ class _ConstellationNodeState extends ConsumerState<_ConstellationNode>
                     const SizedBox(height: 14),
                     Text(
                       widget.nextTier == null
-                          ? context.tr(ref, 'student_highest_level_reached_gyani', 'Highest level reached — Gyani 💎')
+                          ? context.tr(
+                              ref,
+                              'student_highest_level_reached_gyani',
+                              'Highest level reached — Gyani 💎')
                           : remaining > 0
-                              ? context.trp(ref, 'student_remaining_xp_to_title', '{remaining} XP to {title}', {'remaining': remaining.toString(), 'title': widget.nextTier!.title})
-                              : context.trp(ref, 'student_title_already_unlocked', '{title} already unlocked ✓', {'title': widget.nextTier!.title}),
+                              ? context.trp(
+                                  ref,
+                                  'student_remaining_xp_to_title',
+                                  '{remaining} XP to {title}', {
+                                  'remaining': remaining.toString(),
+                                  'title':
+                                      _tierName(context, ref, widget.nextTier!)
+                                })
+                              : context.trp(
+                                  ref,
+                                  'student_title_already_unlocked',
+                                  '{title} already unlocked ✓', {
+                                  'title':
+                                      _tierName(context, ref, widget.nextTier!)
+                                }),
                       style: TextStyle(
                         fontFamily: 'SpaceMono',
                         fontSize: 12,

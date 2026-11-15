@@ -430,5 +430,13 @@
   "txt_your_class_sets_your_learning_path_to_keep_it_stable_class_c": "നിങ്ങളുടെ ക്ലാസ് നിങ്ങളുടെ പഠന പാത ക്രമീകരിക്കുന്നു. ഇത് സ്ഥിരമായി നിലനിർത്തുന്നതിന്, ക്ലാസ് മാറ്റങ്ങൾ 90 ദിവസത്തിലൊരിക്കൽ മാത്രമായി പരിമിതപ്പെടുത്തിയിരിക്കുന്നു.",
   "txt_how_do_i_change_the_app_language_or_theme": "ആപ്ലിക്കേഷൻ ഭാഷയോ പ്രമേയമോ ഞാൻ എങ്ങനെ മാറ്റും?",
   "txt_go_to_profile_edit_profile_for_language_and_profile_themes_f": "ഭാഷയ്ക്കായി പ്രൊഫൈൽ → എഡിറ്റ് പ്രൊഫൈൽ, രൂപത്തിനായി പ്രൊഫൈൽ → തീമുകൾ എന്നിവയിലേക്ക് പോകുക.",
-  "txt_all": "എല്ലാം"
+  "txt_all": "എല്ലാം",
+  "student_viewed": "വൈ വീവ്ദ്",
+  "student_watched_pct_quiz_unlocked": "കണ്ട {pct}% · ക്വിസ് അൺലോക്ക് ചെയ്തു",
+  "student_watched_pct_need_for_quiz": "ക്വിസിന് ആവശ്യമായ {pct}% · {need}% കണ്ടു",
+  "tier_jigyasu": "ജിഗ്യാസു",
+  "tier_anveshak": "അൻവേശക്",
+  "tier_vidwan": "വിദ്വാൻ",
+  "tier_acharya": "ആചാര്യ",
+  "tier_gyani": "ഗ്യാനി"
 }
