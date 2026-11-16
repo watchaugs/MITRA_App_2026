@@ -24,7 +24,11 @@
 //   mp_best_<id>   : int   best percentage score 0..100
 //   mp_arseen_<id> : bool  AR lesson for this module launched + watched once
 //
-//   A module is "mastered" when mp_best_<id> == 100.
+//   mp_mastery_pct : int  quiz % that counts as mastered (dashboard setting
+//                         quiz_mastery_pct, cached so it works offline; 100
+//                         until the first fetch)
+//
+//   A module is "mastered" when mp_best_<id> >= mp_mastery_pct.
 // ═══════════════════════════════════════════════════════
 
 import 'dart:convert';
@@ -42,20 +46,23 @@ String _optsKey(String id) => 'mp_opts_$id'; // \u0001 rows, \u0002 options
 String _explKey(String id) => 'mp_expl_$id'; // \u0001-joined explanations
 String _arPctKey(String id) => 'mp_arpct_$id'; // highest AR audio % reached
 const _lastModuleKey = 'mp_last_module';
+const _masteryKey = 'mp_mastery_pct';
 
 /// Immutable snapshot of one module's progress.
 class ModuleProgress {
   final String id;
   final int bestPct; // 0..100
   final bool arWatched;
+  final int masteryPct; // dashboard quiz mastery %, 1..100
 
   const ModuleProgress({
     required this.id,
     this.bestPct = 0,
     this.arWatched = false,
+    this.masteryPct = 100,
   });
 
-  bool get mastered => bestPct >= 100;
+  bool get mastered => bestPct >= masteryPct;
   bool get attempted => bestPct > 0;
 }
 
@@ -70,7 +77,19 @@ class ModuleProgressStore {
     return v.clamp(0, 100);
   }
 
-  bool isMastered(String id) => bestPct(id) >= 100;
+  /// Quiz score (%) that counts as mastered — set on the dashboard
+  /// (Curriculum → "Quiz % to master a module"), cached on the device.
+  int get masteryPct => (_prefs.getInt(_masteryKey) ?? 100).clamp(1, 100);
+
+  /// Returns true when the stored value changed.
+  Future<bool> setMasteryPct(int pct) async {
+    final p = pct.clamp(1, 100);
+    if (p == masteryPct && _prefs.containsKey(_masteryKey)) return false;
+    await _prefs.setInt(_masteryKey, p);
+    return true;
+  }
+
+  bool isMastered(String id) => bestPct(id) >= masteryPct;
 
   bool arWatched(String id) {
     if (id.isEmpty) return false;
@@ -81,6 +100,7 @@ class ModuleProgressStore {
         id: id,
         bestPct: bestPct(id),
         arWatched: arWatched(id),
+        masteryPct: masteryPct,
       );
 
   // ── Writes ─────────────────────────────────────────────

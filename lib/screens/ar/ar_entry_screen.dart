@@ -18,6 +18,7 @@ import '../../constants/colors.dart';
 import 'ar_room_screen.dart';
 import 'ar_viewer_screen.dart';
 import 'ar_marker_screen.dart';
+import 'ar_image_anchor_screen.dart';
 import 'package:lottie/lottie.dart';
 import '../../theme/theme_provider.dart';
 
@@ -31,6 +32,7 @@ class ArEntryScreen extends ConsumerStatefulWidget {
   final Map<String, String>? audios; // multi-language narration {lang: url}
   final Map<String, String>? audiosAac; // AAC fallback {lang: url}
   final String? targetsUrl;
+  final String? targetImageUrl; // page image → native ARCore Scan page
   final String? videoUrl;
   final String? chromaColor;
 
@@ -43,6 +45,7 @@ class ArEntryScreen extends ConsumerStatefulWidget {
     this.audios,
     this.audiosAac,
     this.targetsUrl,
+    this.targetImageUrl,
     this.videoUrl,
     this.chromaColor,
   });
@@ -57,6 +60,7 @@ class _ArEntryScreenState extends ConsumerState<ArEntryScreen> {
   static const _ch = MethodChannel('mitra/device');
   bool _arCapable = false;
   _ViewMode? _chosen; // null until the student picks AR or 3D
+  bool _forceWebMarker = false; // native page scan failed → MindAR web scanner
   bool _ready = false;
 
   @override
@@ -110,11 +114,36 @@ class _ArEntryScreenState extends ConsumerState<ArEntryScreen> {
       );
     }
 
-    // A textbook-page marker is available for this lesson?
-    final hasMarker = (widget.targetsUrl ?? '').isNotEmpty &&
+    // Native page scan: ARCore phone + the page image + a model ARCore can load.
+    final nativeModel =
+        (widget.nativeModelUrl != null && widget.nativeModelUrl!.isNotEmpty)
+            ? widget.nativeModelUrl!
+            : (widget.modelUrl ?? '');
+    final hasWebMarker = (widget.targetsUrl ?? '').isNotEmpty &&
         (widget.modelUrl ?? '').isNotEmpty;
+    final hasNativeMarker = _arCapable &&
+        (widget.targetImageUrl ?? '').isNotEmpty &&
+        nativeModel.isNotEmpty;
+    // A textbook-page marker is available for this lesson?
+    final hasMarker = hasWebMarker || hasNativeMarker;
 
-    // Marker AR chosen → the WebView player (works on any camera phone).
+    // Marker AR chosen → native ARCore image tracking when possible, else the
+    // MindAR WebView player (works on any camera phone).
+    if (_chosen == _ViewMode.marker && hasNativeMarker && !_forceWebMarker) {
+      return ArImageAnchorScreen(
+        topicId: widget.topicId,
+        imageUrl: widget.targetImageUrl!,
+        modelUrl: nativeModel,
+        audioUrl: widget.audioUrl,
+        audios: widget.audios,
+        audiosAac: widget.audiosAac,
+        onFallback: hasWebMarker
+            ? () {
+                if (mounted) setState(() => _forceWebMarker = true);
+              }
+            : null,
+      );
+    }
     if (_chosen == _ViewMode.marker) {
       return ArMarkerScreen(
         topicId: widget.topicId,

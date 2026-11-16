@@ -28,7 +28,10 @@ const path = require('path');
 const DIR = path.join(__dirname, '..', '..', 'assets', 'locales');
 const DRY = process.argv.includes('--dry-run');
 const DROP = ['student_watched_pct_quiz_unlocked', 'student_watched_pct_need_for_quiz',
-  'student_highest_level_reached_gyani'];
+  'student_highest_level_reached_gyani',
+  // "100%" was hard-coded; replaced by *_pct keys that take the dashboard's mastery %.
+  'quiz_100_mastery_achieved', 'quiz_you_must_score_100_to_unlock', 'student_score_100_on_the_previous_module',
+  'student_completed_100', 'student_locked_title_score_100_on_the'];
 
 const DEVA = ['जिज्ञासु', 'अन्वेषक', 'विद्वान', 'आचार्य', 'ज्ञानी'];
 const URDU = ['جگیاسو', 'انویشک', 'ودوان', 'آچاریہ', 'گیانی'];

@@ -615,7 +615,10 @@ class _ContinueLearningCard extends ConsumerWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                          last.bestPct >= 100
+                          last.bestPct >=
+                                  ref
+                                      .watch(moduleProgressStoreProvider)
+                                      .masteryPct
                               ? context.tr(
                                   ref, 'student_mastered', 'Mastered ✓')
                               : last.bestPct > 0

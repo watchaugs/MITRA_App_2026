@@ -324,6 +324,8 @@ final routerProvider = Provider<GoRouter>((ref) {
           audios: _parseAudios(state.uri.queryParameters['audios']),
           audiosAac: _parseAudios(state.uri.queryParameters['audios_aac']),
           targetsUrl: state.uri.queryParameters['mind'],
+          // Page image for native ARCore image tracking (Scan page).
+          targetImageUrl: state.uri.queryParameters['img'],
           videoUrl: state.uri.queryParameters['video'],
           chromaColor: state.uri.queryParameters['chroma'],
         ),

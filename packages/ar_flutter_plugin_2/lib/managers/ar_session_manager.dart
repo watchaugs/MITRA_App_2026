@@ -37,6 +37,16 @@ class ARSessionManager {
   /// Callback that is triggered once error is triggered
   ErrorHandler? onError;
 
+  /// MITRA: called once ARCore has fully tracked the page image registered with
+  /// [setImageTarget] and anchored at its centre. [anchorName] is the anchor to
+  /// pass to ARObjectManager.addNode(planeAnchor: ...); [extentX]/[extentZ]
+  /// are the page size ARCore measured, in metres.
+  void Function(String anchorName, double extentX, double extentZ)?
+      onImageTargetAnchored;
+
+  /// MITRA: 'found' while the page is fully tracked, 'lost' when it isn't.
+  void Function(String state)? onImageTracking;
+
   ARSessionManager(int id, this.buildContext, this.planeDetectionConfig,
       {this.debug = false}) {
     _channel = MethodChannel('arsession_$id');
@@ -122,9 +132,21 @@ class ARSessionManager {
   }
 
   //Show or hide planes
-  void showPlanes(bool showPlanes){
+  /// MITRA: register ONE page image (JPG/PNG bytes) for ARCore image tracking.
+  /// [widthMeters] = printed width if known (faster lock-on); null = estimate.
+  /// Throws PlatformException: NO_SESSION (retry shortly), IMAGE_QUALITY (page
+  /// has too few features), BAD_IMAGE / NO_IMAGE / IMAGE_TARGET_ERROR.
+  Future<bool> setImageTarget(Uint8List bytes, {double? widthMeters}) async {
+    final ok = await _channel.invokeMethod<bool>('setImageTarget', {
+      'bytes': bytes,
+      'widthMeters': widthMeters,
+    });
+    return ok == true;
+  }
+
+  void showPlanes(bool showPlanes) {
     _channel.invokeMethod<void>('showPlanes', {
-    "showPlanes": showPlanes,
+      "showPlanes": showPlanes,
     });
   }
 
@@ -138,14 +160,13 @@ class ARSessionManager {
           if (onError != null) {
             onError!(call.arguments[0]);
             print(call.arguments);
-          }
-          else{
+          } else {
             ScaffoldMessenger.of(buildContext).showSnackBar(SnackBar(
                 content: Text(call.arguments[0]),
                 action: SnackBarAction(
                     label: 'HIDE',
-                    onPressed:
-                    ScaffoldMessenger.of(buildContext).hideCurrentSnackBar)));
+                    onPressed: ScaffoldMessenger.of(buildContext)
+                        .hideCurrentSnackBar)));
           }
           break;
         case 'onPlaneOrPointTap':
@@ -166,6 +187,17 @@ class ARSessionManager {
             final planeCountResult = call.arguments as int;
             onPlaneDetected(planeCountResult);
           }
+          break;
+        case 'onImageTargetAnchored':
+          final a = Map<String, dynamic>.from(call.arguments as Map);
+          onImageTargetAnchored?.call(
+            (a['name'] ?? 'image_target').toString(),
+            (a['extentX'] as num?)?.toDouble() ?? 0,
+            (a['extentZ'] as num?)?.toDouble() ?? 0,
+          );
+          break;
+        case 'onImageTracking':
+          onImageTracking?.call(call.arguments.toString());
           break;
         case 'dispose':
           _channel.invokeMethod<void>("dispose");
@@ -206,7 +238,6 @@ class ARSessionManager {
       'handleRotation': handleRotation,
     });
   }
-
 
   /// Dispose the AR view on the platforms to pause the scenes and disconnect the platform handlers.
   /// You should call this before removing the AR view to prevent out of memory erros

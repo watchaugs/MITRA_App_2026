@@ -57,6 +57,10 @@ import io.github.sceneview.math.Scale
 import io.github.sceneview.math.colorOf
 import io.github.sceneview.loaders.MaterialLoader
 import com.google.ar.core.exceptions.SessionPausedException
+import android.graphics.BitmapFactory
+import com.google.ar.core.AugmentedImage
+import com.google.ar.core.AugmentedImageDatabase
+import com.google.ar.core.exceptions.ImageInsufficientQualityException
 
 class ArView(
     context: Context,
@@ -91,6 +95,16 @@ class ArView(
     private var handleRotation = false
     private var isSessionPaused = false
 
+    // ── MITRA: textbook-page image anchoring (ARCore Augmented Images) ──────
+    // setImageTarget registers ONE page image; when ARCore fully tracks it we
+    // anchor at the page centre (anchor name IMAGE_TARGET_ANCHOR, which Dart
+    // then uses with addNode(planeAnchor: ...)), and report found/lost so the
+    // app can play/pause narration.
+    private val IMAGE_TARGET_ANCHOR = "image_target"
+    private var imageTargetActive = false
+    private var imageTargetAnchored = false
+    private var imageTrackingState: String? = null
+
     private class PointCloudNode(
         modelInstance: ModelInstance,
         var id: Int,
@@ -108,6 +122,7 @@ class ArView(
                 "snapshot" -> handleSnapshot(result)
                 "disableCamera" -> handleDisableCamera(result)
                 "enableCamera" -> handleEnableCamera(result)
+                "setImageTarget" -> handleSetImageTarget(call, result)
                 else -> result.notImplemented()
             }
         }
@@ -477,6 +492,15 @@ class ArView(
                                         mainScope.launch {
                                             sessionChannel.invokeMethod("onPlaneDetected", detectedPlanes.size)
                                         }
+                                    }
+                                }
+
+                                // getAllTrackables, not getUpdatedTrackables: SceneView also
+                                // calls session.update() each frame, so "updated since the
+                                // last update()" can miss changes. One image is cheap to poll.
+                                if (imageTargetActive) {
+                                    session?.getAllTrackables(AugmentedImage::class.java)?.forEach { image ->
+                                        onAugmentedImageUpdate(image)
                                     }
                                 }
                             }
@@ -979,6 +1003,81 @@ class ArView(
             Log.e(TAG, "Error in handleAddAnchor: ${e.message}")
             e.printStackTrace()
             result.success(false)
+        }
+    }
+
+    // setImageTarget { bytes: ByteArray (JPG/PNG of the page), widthMeters: Double? }
+    // widthMeters (printed width) lets ARCore lock on faster; null = estimate.
+    private fun handleSetImageTarget(call: MethodCall, result: MethodChannel.Result) {
+        val bytes = call.argument<ByteArray>("bytes")
+        val widthMeters = call.argument<Double>("widthMeters")
+        if (bytes == null || bytes.isEmpty()) {
+            result.error("NO_IMAGE", "Target image bytes are missing", null)
+            return
+        }
+        val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+        if (bitmap == null) {
+            result.error("BAD_IMAGE", "Target image could not be decoded", null)
+            return
+        }
+        // Configure the LIVE session (sceneView.configureSession only runs when a
+        // session is first created, so it would silently do nothing here).
+        val session = sceneView.session
+        if (session == null) {
+            result.error("NO_SESSION", "AR session not ready yet", null)
+            return
+        }
+        try {
+            val db = AugmentedImageDatabase(session)
+            if (widthMeters != null && widthMeters > 0) {
+                db.addImage(IMAGE_TARGET_ANCHOR, bitmap, widthMeters.toFloat())
+            } else {
+                db.addImage(IMAGE_TARGET_ANCHOR, bitmap)
+            }
+            session.configure(session.config.apply {
+                augmentedImageDatabase = db
+                focusMode = Config.FocusMode.AUTO
+            })
+            imageTargetActive = true
+            imageTargetAnchored = false
+            imageTrackingState = null
+            result.success(true)
+        } catch (e: ImageInsufficientQualityException) {
+            // Too few distinct features (plain/blurry page) — ARCore can't track it.
+            result.error("IMAGE_QUALITY", e.message ?: "Image has too few features", null)
+        } catch (e: Exception) {
+            Log.e(TAG, "setImageTarget failed", e)
+            result.error("IMAGE_TARGET_ERROR", e.message, null)
+        }
+    }
+
+    private fun onAugmentedImageUpdate(image: AugmentedImage) {
+        if (image.name != IMAGE_TARGET_ANCHOR) return
+        val full = image.trackingState == TrackingState.TRACKING &&
+            image.trackingMethod == AugmentedImage.TrackingMethod.FULL_TRACKING
+
+        if (full && !imageTargetAnchored) {
+            try {
+                val anchor = image.createAnchor(image.centerPose)
+                val anchorNode = AnchorNode(sceneView.engine, anchor)
+                sceneView.addChildNode(anchorNode)
+                anchorNodesMap[IMAGE_TARGET_ANCHOR] = anchorNode
+                imageTargetAnchored = true
+                val info = mapOf(
+                    "name" to IMAGE_TARGET_ANCHOR,
+                    "extentX" to image.extentX.toDouble(),
+                    "extentZ" to image.extentZ.toDouble(),
+                )
+                mainScope.launch { sessionChannel.invokeMethod("onImageTargetAnchored", info) }
+            } catch (e: Exception) {
+                Log.e(TAG, "Image anchor failed", e)
+            }
+        }
+
+        val state = if (full) "found" else "lost"
+        if (state != imageTrackingState) {
+            imageTrackingState = state
+            mainScope.launch { sessionChannel.invokeMethod("onImageTracking", state) }
         }
     }
 

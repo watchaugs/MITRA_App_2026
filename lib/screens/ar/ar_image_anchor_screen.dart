@@ -15,7 +15,6 @@
 // can switch to the web scanner via [onFallback].
 // ═══════════════════════════════════════════════════════════════════════════
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:ar_flutter_plugin_2/ar_flutter_plugin.dart';
 import 'package:ar_flutter_plugin_2/datatypes/config_planedetection.dart';
@@ -27,7 +26,8 @@ import 'package:ar_flutter_plugin_2/managers/ar_session_manager.dart';
 import 'package:ar_flutter_plugin_2/models/ar_anchor.dart';
 import 'package:ar_flutter_plugin_2/models/ar_node.dart';
 import 'package:audioplayers/audioplayers.dart';
-import 'package:flutter/foundation.dart' show consolidateHttpClientResponseBytes;
+import 'package:flutter/foundation.dart'
+    show consolidateHttpClientResponseBytes;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -130,8 +130,8 @@ class _ArImageAnchorScreenState extends ConsumerState<ArImageAnchorScreen> {
     } else {
       _audio.pause().catchError((_) {});
       if (_placed) {
-        setState(() => _hint =
-            ref.trNow('ar_keep_page_in_view', 'Keep the page in view'));
+        setState(() =>
+            _hint = ref.trNow('ar_keep_page_in_view', 'Keep the page in view'));
       }
     }
   }
@@ -243,7 +243,8 @@ class _ArImageAnchorScreenState extends ConsumerState<ArImageAnchorScreen> {
         _fail(e.code == 'IMAGE_QUALITY'
             ? ref.trNow('ar_page_image_not_trackable',
                 'ARCore can\'t recognise this page image (too few details).')
-            : ref.trpNow('ar_could_not_start_ar_description',
+            : ref.trpNow(
+                'ar_could_not_start_ar_description',
                 'Could not start AR: {description}',
                 {'description': e.message ?? e.code}));
         return;
@@ -258,7 +259,8 @@ class _ArImageAnchorScreenState extends ConsumerState<ArImageAnchorScreen> {
   }
 
   Future<Uint8List> _download(String url) async {
-    final client = HttpClient()..connectionTimeout = const Duration(seconds: 20);
+    final client = HttpClient()
+      ..connectionTimeout = const Duration(seconds: 20);
     try {
       final req = await client.getUrl(Uri.parse(url));
       final res = await req.close().timeout(const Duration(seconds: 30));
@@ -269,7 +271,8 @@ class _ArImageAnchorScreenState extends ConsumerState<ArImageAnchorScreen> {
     }
   }
 
-  Future<void> _onAnchored(String anchorName, double extentX, double extentZ) async {
+  Future<void> _onAnchored(
+      String anchorName, double extentX, double extentZ) async {
     if (_placed || _placing || _closing || !mounted) return;
     _placing = true;
     setState(() => _hint =
@@ -294,8 +297,8 @@ class _ArImageAnchorScreenState extends ConsumerState<ArImageAnchorScreen> {
     );
     final ok = await _objects!.addNode(
       node,
-      planeAnchor:
-          ARPlaneAnchor(name: anchorName, transformation: vm.Matrix4.identity()),
+      planeAnchor: ARPlaneAnchor(
+          name: anchorName, transformation: vm.Matrix4.identity()),
     );
     if (_closing || !mounted) return;
     _placing = false;

@@ -339,10 +339,19 @@ class ApiQuizRepository implements QuizRepository {
 // ═══════════════════════════════════════════════════════════
 
 /// AR-watch threshold (%) required to unlock a module's quiz. Set on the
-/// dashboard (learning-settings). Defaults to 80 if the fetch fails.
+/// dashboard (learning-settings). Defaults to 85 if the fetch fails.
+/// The same response carries quiz_mastery_pct, cached in the progress store.
 final arWatchThresholdProvider = FutureProvider<int>((ref) async {
   try {
     final res = await CurriculumAPI.learningSettings();
+    final m = res.data['quiz_mastery_pct'];
+    final mn = m is num ? m.toInt() : int.tryParse('$m');
+    if (mn != null && mn >= 1 && mn <= 100) {
+      final changed =
+          await ref.read(moduleProgressStoreProvider).setMasteryPct(mn);
+      // Locks/badges re-check against the new bar.
+      if (changed) ref.read(moduleProgressTickProvider.notifier).state++;
+    }
     final v = res.data['ar_watch_threshold'];
     final n = v is num ? v.toInt() : int.tryParse('$v');
     if (n != null && n >= 1 && n <= 100) return n;
@@ -439,6 +448,8 @@ class ArCatalog {
   final Map<String, String> chromaById;
   // Compiled textbook-page target (.mind) per lesson → enables "Scan page".
   final Map<String, String> mindById;
+  // The page image itself (JPG/PNG) → native ARCore image tracking.
+  final Map<String, String> targetImageById;
   // Quizzes linked to this lesson's topic in the dashboard's Curriculum tree
   // (manifest v3). These decide which quiz the AR watch-gate controls.
   final Map<String, List<String>> quizIdsByArId;
@@ -453,6 +464,7 @@ class ArCatalog {
     this.audiosAacByLangById = const {},
     this.chromaById = const {},
     this.mindById = const {},
+    this.targetImageById = const {},
     this.quizIdsByArId = const {},
     this.territorySupported = true,
   });
@@ -495,6 +507,7 @@ ArCatalog? _catalogFromManifest(dynamic data) {
   final audiosAacByLangById = <String, Map<String, String>>{};
   final chromaById = <String, String>{};
   final mindById = <String, String>{};
+  final targetImageById = <String, String>{};
   final quizIdsByArId = <String, List<String>>{};
   for (final c in classes) {
     if (c is! Map) continue;
@@ -559,6 +572,8 @@ ArCatalog? _catalogFromManifest(dynamic data) {
           }
           final mind = _absMedia((l['mind_url'] ?? '').toString());
           if (mind.isNotEmpty) mindById[id] = mind;
+          final img = _absMedia((l['target_image_url'] ?? '').toString());
+          if (img.isNotEmpty) targetImageById[id] = img;
           final qids = l['quiz_ids'];
           if (qids is List && qids.isNotEmpty) {
             quizIdsByArId[id] = qids.map((e) => e.toString()).toList();
@@ -578,6 +593,7 @@ ArCatalog? _catalogFromManifest(dynamic data) {
     audiosAacByLangById: audiosAacByLangById,
     chromaById: chromaById,
     mindById: mindById,
+    targetImageById: targetImageById,
     quizIdsByArId: quizIdsByArId,
     territorySupported: true,
   );
@@ -624,6 +640,7 @@ final arCatalogProvider = FutureProvider<ArCatalog>((ref) async {
   final videoById = <String, String>{};
   final chromaById = <String, String>{};
   final mindById = <String, String>{};
+  final targetImageById = <String, String>{};
   final audiosByLangById = <String, Map<String, String>>{};
   final audiosAacByLangById = <String, Map<String, String>>{};
 
@@ -657,6 +674,8 @@ final arCatalogProvider = FutureProvider<ArCatalog>((ref) async {
       }
       final mind = _absMedia((m['mind_url'] ?? '').toString());
       if (mind.isNotEmpty) mindById[id] = mind;
+      final img = _absMedia((m['target_image_url'] ?? '').toString());
+      if (img.isNotEmpty) targetImageById[id] = img;
       // Multi-language narration (now sent by /ar-topics too).
       for (final entry in [
         ('audios', audiosByLangById),
@@ -692,6 +711,7 @@ final arCatalogProvider = FutureProvider<ArCatalog>((ref) async {
     audiosAacByLangById: audiosAacByLangById,
     chromaById: chromaById,
     mindById: mindById,
+    targetImageById: targetImageById,
     territorySupported: territorySupported,
   );
 });
@@ -1309,6 +1329,11 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
                                   if (mind != null && mind.isNotEmpty) {
                                     qp.add('mind=${Uri.encodeComponent(mind)}');
                                   }
+                                  // The page image → native ARCore scan.
+                                  final img = arCatalog?.targetImageById[id];
+                                  if (img != null && img.isNotEmpty) {
+                                    qp.add('img=${Uri.encodeComponent(img)}');
+                                  }
                                   final query =
                                       qp.isEmpty ? '' : '?${qp.join('&')}';
                                   // Refresh locks + header counters when the
@@ -1652,7 +1677,8 @@ class _SubjectSection extends ConsumerWidget {
               ),
             ),
           // Gated modules, in list order. The first is always open; each later
-          // one unlocks only when the previous module is mastered (100%).
+          // one unlocks only when the previous module is mastered (quiz at the
+          // dashboard's mastery %, 100 by default).
           ...() {
             final widgets = <Widget>[];
             final shownQuizIds = <String>{};
@@ -1736,8 +1762,8 @@ class _SubjectSection extends ConsumerWidget {
               // out as an open standalone tile below.
               if (matchedQuiz != null) shownQuizIds.add(matchedQuiz.id);
 
-              // Chain: the next module needs THIS one mastered (its quiz at
-              // 100%). A module with no quiz counts once it has been watched.
+              // Chain: the next module needs THIS one mastered (its quiz at the
+              // mastery %). A module with no quiz counts once it has been watched.
               prevMastered = matchedQuiz != null
                   ? progress.isMastered(matchedQuiz.id)
                   : progress.arWatchedPct(ar.id) >= arWatchThreshold;
@@ -1879,6 +1905,8 @@ class _ArTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final onSurface = theme.colorScheme.onSurface;
+    // Quiz % that unlocks the next module (dashboard setting, cached).
+    final masteryPct = ref.watch(moduleProgressStoreProvider).masteryPct;
 
     final subtext = questionCount > 0
         ? '${lesson.topic.isNotEmpty ? '${lesson.topic} · ' : ''}${questionCount == 1 ? context.tr(ref, 'student_1_question', '1 question') : context.trp(ref, 'student_n_questions', '{count} questions', {
@@ -1933,10 +1961,11 @@ class _ArTile extends ConsumerWidget {
                       ? context.tr(ref, 'student_coming_soon', 'Coming soon')
                       : unlocked
                           ? subtext + audioNote
-                          : context.tr(
+                          : context.trp(
                               ref,
-                              'student_score_100_on_the_previous_module',
-                              'Score 100% on the previous module to unlock'),
+                              'student_score_pct_on_the_previous_module',
+                              'Score {need}% on the previous module to unlock',
+                              {'need': '$masteryPct'}),
                 ),
               ),
               const SizedBox(width: 8),
@@ -2052,9 +2081,9 @@ class _ArTile extends ConsumerWidget {
                   '3D Lesson: {title}', {'title': lesson.title})
               : context.trp(
                   ref,
-                  'student_locked_title_score_100_on_the',
-                  'Locked: {title}. Score 100% on the previous module to unlock.',
-                  {'title': lesson.title}),
+                  'student_locked_title_score_pct_on_the',
+                  'Locked: {title}. Score {need}% on the previous module to unlock.',
+                  {'title': lesson.title, 'need': '$masteryPct'}),
       child: ExcludeSemantics(
         child: GestureDetector(
           // Locked tiles do nothing on tap (the hint is already visible).
@@ -2066,14 +2095,14 @@ class _ArTile extends ConsumerWidget {
   }
 }
 
-// ── Score badge (100% or best % so far) ──────────────────
+// ── Score badge (mastered, or best % so far) ──────────────
 class _ScoreBadge extends ConsumerWidget {
   final int pct;
   const _ScoreBadge({required this.pct});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final mastered = pct >= 100;
+    final mastered = pct >= ref.watch(moduleProgressStoreProvider).masteryPct;
     final color = mastered ? MitraColors.emerald : MitraColors.saffron;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -2084,7 +2113,10 @@ class _ScoreBadge extends ConsumerWidget {
       ),
       child: Text(
         mastered
-            ? context.tr(ref, 'student_completed_100', '✓ COMPLETED 100%')
+            // Tick stays in code (MT reads "✓" as the letter "Y").
+            ? '✓ ${context.trp(ref, 'student_mastered_pct', 'MASTERED {pct}%', {
+                    'pct': '$pct'
+                  })}'
             : '$pct%',
         style: TextStyle(
           fontFamily: 'SpaceMono',
