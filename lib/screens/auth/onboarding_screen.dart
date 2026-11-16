@@ -7,7 +7,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/tr_ext.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart'; // 🚨 NEW IMPORT ADDED
 import '../../widgets/mitra_scaffold.dart';
 import '../../constants/colors.dart';
 
@@ -100,9 +99,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             right: 24,
             child: TextButton(
               onPressed: () => context.go('/login'),
-              // 🚨 FIX: Replaced standard TextStyle with GoogleFonts
+              // Bundled Mukta (was GoogleFonts, which downloads at runtime).
               child: Text(context.tr(ref, 'auth_skip', 'Skip'),
-                  style: GoogleFonts.mukta(color: MitraColors.textMuted)),
+                  style: const TextStyle(
+                      fontFamily: 'Mukta', color: MitraColors.textMuted)),
             ),
           ),
 
@@ -151,8 +151,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                         _currentIdx < _slides.length - 1
                             ? context.tr(ref, 'auth_next', 'Next →')
                             : context.tr(ref, 'auth_get_started', 'Get Started →'),
-                        // 🚨 FIX: Replaced standard TextStyle with GoogleFonts
-                        style: GoogleFonts.baloo2(
+                        style: const TextStyle(
+                          fontFamily: 'Baloo2',
                           fontWeight: FontWeight.w700,
                           fontSize: 16,
                           color: Colors.white,
@@ -210,8 +210,8 @@ class _SlideWidget extends ConsumerWidget {
               RichText(
                 textAlign: TextAlign.center,
                 text: TextSpan(
-                  // 🚨 FIX: Replaced standard TextStyle with GoogleFonts
-                  style: GoogleFonts.baloo2(
+                  style: const TextStyle(
+                      fontFamily: 'Baloo2',
                       fontWeight: FontWeight.w800,
                       fontSize: 28,
                       color: MitraColors.textPrimary),
@@ -229,8 +229,8 @@ class _SlideWidget extends ConsumerWidget {
               Text(
                 context.trText(ref, slide.body),
                 textAlign: TextAlign.center,
-                // 🚨 FIX: Replaced standard TextStyle with GoogleFonts
-                style: GoogleFonts.mukta(
+                style: const TextStyle(
+                  fontFamily: 'Mukta',
                   fontSize: 15,
                   color: MitraColors.textSecondary,
                   height: 1.6,

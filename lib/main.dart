@@ -1,6 +1,8 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -40,11 +42,31 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   debugPrint('🔔 Background FCM: ${message.messageId}');
 }
 
+// The bundled fonts are SIL OFL: their licence must ship with the app. This
+// lists them on Flutter's licence page (showLicensePage / About).
+void _registerFontLicenses() {
+  const fonts = {
+    'Mukta': 'assets/fonts/OFL-Mukta.txt',
+    'Baloo 2': 'assets/fonts/OFL-Baloo2.txt',
+    'Space Mono': 'assets/fonts/OFL-SpaceMono.txt',
+    'Courgette': 'assets/fonts/OFL-Courgette.txt',
+  };
+  LicenseRegistry.addLicense(() async* {
+    for (final e in fonts.entries) {
+      try {
+        yield LicenseEntryWithLineBreaks(
+            [e.key], await rootBundle.loadString(e.value));
+      } catch (_) {/* missing licence file never breaks the app */}
+    }
+  });
+}
+
 Future<void> main() async {
   gAppLaunchedAt = DateTime.now();
   runZonedGuarded(() async {
     WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
     FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
+    _registerFontLicenses();
 
     // Flutter framework errors → crash telemetry (best-effort).
     FlutterError.onError = (details) {
