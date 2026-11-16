@@ -432,13 +432,17 @@
   "student_quiz_unlocked": "کوئز ان لاک",
   "quiz_mastery_achieved_pct": "مہارت حاصل! ({pct}%)",
   "quiz_you_must_score_pct_to_unlock": "بیاکھ ماڈیول ان لاک کرنہٕ خٲطرٕ چھ تۄہہ {need}% سکور کرن ضروری۔ مہربٲنی کٔرتھ وچھو اے آر سبق دوبارٕ تہٕ کٔرو دوبارٕ کوٗشش۔",
-  "student_score_pct_on_the_previous_module": "ان لاک کرنہٕ باپتھ کٔرو پٔتمہ ماڈیولس پؠٹھ% {need} سکور۔",
+  "student_score_pct_on_the_previous_module": "ان لاک کرنہٕ باپتھ کٔرو پٔتمہ ماڈیولس پؠٹھ% {need} سکور",
   "student_locked_title_score_pct_on_the": "بند: {title}۔ ان لاک کرنہٕ باپتھ کٔرو پٔتمہ ماڈیولس پؠٹھ% {need} سکور۔",
-  "ar_point_camera_at_page": "ٹیکسٹ بک پیجس پؠٹھ ہاو کیمرہ۔",
+  "ar_point_camera_at_page": "ٹیکسٹ بک پیجس پؠٹھ ہاو کیمرہ",
   "ar_page_found_placing": "پیج آو لبنہٕ، ماڈل تھوتھ۔",
-  "ar_keep_page_in_view": "پیج تھوو نظرس منٛز۔",
+  "ar_keep_page_in_view": "پیج تھوو نظرس منٛز",
   "ar_could_not_load_page_image": "پیجٕچ تصویر ہیکہ نہٕ لوڈ کٔرتھ۔ پنن کنکشن کٔرو چیک۔",
   "ar_page_image_not_trackable": "اے آر کور ہیٛکہٕ نہٕ یہٕ پیج امیج پہچانتھ (واریاہ کم تفصیلات)۔",
   "ar_model_could_not_load": "یہٕ 3D ماڈلز ٲس نہٕ آمژٕ۔",
-  "ar_use_web_scanner": "ویب سٕکینر کریو استعمال۔"
+  "ar_use_web_scanner": "ویب سٕکینر کریو استعمال",
+  "ar_point_camera_page_video": "پنن کیمرہ ہاو پیجس پؠٹھ یتھ پؠٹھ ماڈل یا ویڈیو ؤچھو۔",
+  "ar_view_video": "ویڈیو",
+  "ar_video_could_not_play": "ویڈیو ہیکہ نہٕ پلے کٔرتھ۔ پنن انٹرنیٹ کٔرو چیک۔",
+  "ar_video_preparing": "ویڈیو تیار کران"
 }

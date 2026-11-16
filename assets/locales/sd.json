@@ -445,5 +445,9 @@
   "ar_could_not_load_page_image": "صفحی جی تصویر کی لوڊ نہ ڪری سگھیو پنھنجی ڪنیڪشن کی چیڪ ڪریو",
   "ar_page_image_not_trackable": "ARCore ھن صفحی جی تصویر کی سڃاڻائی نٿو سگہی (تمام گھٽ تفصیل)",
   "ar_model_could_not_load": "3D ماڊل لوڊ نہ ٿی سگھیو",
-  "ar_use_web_scanner": "ویب اسڪنر استعمال ڪریو"
+  "ar_use_web_scanner": "ویب اسڪنر استعمال ڪریو",
+  "ar_point_camera_page_video": "پنھنجی ڪیمرا کی صفحی تی اشارو ڪریو ان تی ماڊل یا وڊیو ڏسڻ لاء",
+  "ar_view_video": "ویڊیو",
+  "ar_video_could_not_play": "وڊیو ہلائی نہ پئی سگہجی پنھنجی انٽرنیٽ چیڪ ڪریو",
+  "ar_video_preparing": "ویڊیو تیار ڪری رھیو آھی"
 }

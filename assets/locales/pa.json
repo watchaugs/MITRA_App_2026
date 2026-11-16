@@ -446,5 +446,9 @@
   "ar_could_not_load_page_image": "ਸਫ਼ੇ ਦਾ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਿਆ। ਆਪਣੇ ਕੁਨੈਕਸ਼ਨ ਦੀ ਜਾਂਚ ਕਰੋ।",
   "ar_page_image_not_trackable": "ਏ. ਆਰ. ਸੀ. ਓ. ਆਰ. ਇਸ ਪੇਜ ਨੂੰ ਪਛਾਣ ਨਹੀਂ ਸਕਦਾ (ਬਹੁਤ ਘੱਟ ਵੇਰਵੇ)।",
   "ar_model_could_not_load": "3D ਮਾਡਲ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਿਆ।",
-  "ar_use_web_scanner": "ਵੈੱਬ ਸਕੈਨਰ ਦੀ ਵਰਤੋਂ ਕਰੋ"
+  "ar_use_web_scanner": "ਵੈੱਬ ਸਕੈਨਰ ਦੀ ਵਰਤੋਂ ਕਰੋ",
+  "ar_point_camera_page_video": "ਮਾਡਲ ਜਾਂ ਇਸ ਉੱਤੇ ਇੱਕ ਵੀਡੀਓ ਦੇਖਣ ਲਈ ਆਪਣੇ ਕੈਮਰੇ ਨੂੰ ਸਫ਼ੇ ਵੱਲ ਇਸ਼ਾਰਾ ਕਰੋ।",
+  "ar_view_video": "ਵੀਡੀਓ",
+  "ar_video_could_not_play": "ਵੀਡੀਓ ਚਲਾਇਆ ਨਹੀਂ ਜਾ ਸਕਿਆ। ਆਪਣੇ ਇੰਟਰਨੈੱਟ ਦੀ ਜਾਂਚ ਕਰੋ।",
+  "ar_video_preparing": "ਵੀਡੀਓ ਤਿਆਰ ਕੀਤਾ ਜਾ ਰਿਹਾ ਹੈ"
 }

@@ -446,5 +446,9 @@
   "ar_could_not_load_page_image": "صفحہ کی تصویر لوڈ نہیں کی جا سکی۔ اپنا کنکشن چیک کریں۔",
   "ar_page_image_not_trackable": "اے آر کور اس صفحہ کی تصویر کو نہیں پہچان سکتا (بہت کم تفصیلات)۔",
   "ar_model_could_not_load": "3D ماڈل کو لوڈ نہیں کیا جا سکا۔",
-  "ar_use_web_scanner": "ویب اسکینر کا استعمال کریں"
+  "ar_use_web_scanner": "ویب اسکینر کا استعمال کریں",
+  "ar_point_camera_page_video": "ماڈل یا ویڈیو دیکھنے کے لیے اپنے کیمرے کو صفحہ کی طرف اشارہ کریں۔",
+  "ar_view_video": "ویڈیو",
+  "ar_video_could_not_play": "ویڈیو نہیں چلائی جا سکی۔ اپنا انٹرنیٹ چیک کریں۔",
+  "ar_video_preparing": "ویڈیو تیار کیا جا رہا ہے"
 }

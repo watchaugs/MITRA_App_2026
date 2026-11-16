@@ -33,7 +33,10 @@ class ArEntryScreen extends ConsumerStatefulWidget {
   final Map<String, String>? audiosAac; // AAC fallback {lang: url}
   final String? targetsUrl;
   final String? targetImageUrl; // page image → native ARCore Scan page
-  final String? videoUrl;
+  final String? videoUrl; // page video (plays on the scanned page)
+  final String? videoRegion; // JSON {x,y,w,h} on the page, 0–1 from top-left
+  final String? videoSound; // 'video' | 'narration'
+  final String? videoView; // first view: '3d' | 'video'
   final String? chromaColor;
 
   const ArEntryScreen({
@@ -47,6 +50,9 @@ class ArEntryScreen extends ConsumerStatefulWidget {
     this.targetsUrl,
     this.targetImageUrl,
     this.videoUrl,
+    this.videoRegion,
+    this.videoSound,
+    this.videoView,
     this.chromaColor,
   });
 
@@ -119,17 +125,25 @@ class _ArEntryScreenState extends ConsumerState<ArEntryScreen> {
         (widget.nativeModelUrl != null && widget.nativeModelUrl!.isNotEmpty)
             ? widget.nativeModelUrl!
             : (widget.modelUrl ?? '');
-    final hasWebMarker = (widget.targetsUrl ?? '').isNotEmpty &&
-        (widget.modelUrl ?? '').isNotEmpty;
+    final hasModel = (widget.modelUrl ?? '').isNotEmpty;
+    // Page video: plays on the scanned page (web scanner only — the native
+    // ARCore path has no video yet), so it needs the compiled page target.
+    final hasVideo = (widget.videoUrl ?? '').isNotEmpty &&
+        (widget.targetsUrl ?? '').isNotEmpty;
+    final hasWebMarker =
+        (widget.targetsUrl ?? '').isNotEmpty && (hasModel || hasVideo);
     final hasNativeMarker = _arCapable &&
+        !hasVideo &&
         (widget.targetImageUrl ?? '').isNotEmpty &&
         nativeModel.isNotEmpty;
     // A textbook-page marker is available for this lesson?
     final hasMarker = hasWebMarker || hasNativeMarker;
+    // Video-only lesson: scanning the page is the only way to view it.
+    final chosen = (!hasModel && hasVideo) ? _ViewMode.marker : _chosen;
 
     // Marker AR chosen → native ARCore image tracking when possible, else the
     // MindAR WebView player (works on any camera phone).
-    if (_chosen == _ViewMode.marker && hasNativeMarker && !_forceWebMarker) {
+    if (chosen == _ViewMode.marker && hasNativeMarker && !_forceWebMarker) {
       return ArImageAnchorScreen(
         topicId: widget.topicId,
         imageUrl: widget.targetImageUrl!,
@@ -144,7 +158,7 @@ class _ArEntryScreenState extends ConsumerState<ArEntryScreen> {
             : null,
       );
     }
-    if (_chosen == _ViewMode.marker) {
+    if (chosen == _ViewMode.marker) {
       return ArMarkerScreen(
         topicId: widget.topicId,
         targetsUrl: widget.targetsUrl,
@@ -152,6 +166,11 @@ class _ArEntryScreenState extends ConsumerState<ArEntryScreen> {
         audioUrl: widget.audioUrl,
         audios: widget.audios,
         audiosAac: widget.audiosAac,
+        videoUrl: hasVideo ? widget.videoUrl : null,
+        videoRegion: widget.videoRegion,
+        videoSound: widget.videoSound,
+        videoView: widget.videoView,
+        chromaColor: widget.chromaColor,
       );
     }
 
@@ -162,6 +181,7 @@ class _ArEntryScreenState extends ConsumerState<ArEntryScreen> {
         topicId: widget.topicId,
         arCapable: _arCapable,
         hasMarker: hasMarker,
+        hasVideo: hasVideo,
         onPickAr: () => setState(() => _chosen = _ViewMode.ar),
         onPick3d: () => setState(() => _chosen = _ViewMode.viewer),
         onPickMarker: () => setState(() => _chosen = _ViewMode.marker),
@@ -205,6 +225,7 @@ class _ViewChooser extends ConsumerWidget {
   final String topicId;
   final bool arCapable;
   final bool hasMarker;
+  final bool hasVideo; // the page scan also plays a video
   final VoidCallback onPickAr;
   final VoidCallback onPick3d;
   final VoidCallback onPickMarker;
@@ -212,6 +233,7 @@ class _ViewChooser extends ConsumerWidget {
     required this.topicId,
     required this.arCapable,
     required this.hasMarker,
+    this.hasVideo = false,
     required this.onPickAr,
     required this.onPick3d,
     required this.onPickMarker,
@@ -298,10 +320,11 @@ class _ViewChooser extends ConsumerWidget {
                       icon: Icons.menu_book,
                       title: context.tr(
                           ref, 'ar_scan_textbook_page', 'Scan textbook page'),
-                      subtitle: context.tr(
-                          ref,
-                          'ar_point_your_camera_at_the_page',
-                          'Point your camera at the page to see the model on it.'),
+                      subtitle: hasVideo
+                          ? context.tr(ref, 'ar_point_camera_page_video',
+                              'Point your camera at the page to see the model or a video on it.')
+                          : context.tr(ref, 'ar_point_your_camera_at_the_page',
+                              'Point your camera at the page to see the model on it.'),
                       onTap: onPickMarker,
                       accent: accent,
                       textPrimary: textPrimary,

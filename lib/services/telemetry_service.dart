@@ -255,6 +255,14 @@ class TelemetryService {
     int? zoomCount,
     double? batteryDrainPercent,
     String? renderMode, // 'marker' | 'markerless' | 'basic3d' | 'interactive3d'
+    // Page-video branch of AR 3D (Scan page with a video). Stored in existing
+    // BigQuery columns, read together with event_type = 'ar_end':
+    //   completion_percent = furthest % of the video watched
+    //   time_spent_seconds = seconds in Video view (3D = duration − this)
+    //   interactions_count = 3D ⇄ Video switches
+    int? videoWatchedPct,
+    int? videoSeconds,
+    int? viewSwitches,
   }) async {
     await _write('ar_views', {
       ..._context.toBaseEventJson(),
@@ -273,6 +281,9 @@ class TelemetryService {
       'zoom_count': zoomCount,
       'battery_drain_pct': batteryDrainPercent,
       'render_mode': renderMode,
+      if (videoWatchedPct != null) 'completion_percent': videoWatchedPct,
+      if (videoSeconds != null) 'time_spent_seconds': videoSeconds,
+      if (viewSwitches != null) 'interactions_count': viewSwitches,
     });
   }
 

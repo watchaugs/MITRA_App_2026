@@ -327,6 +327,10 @@ final routerProvider = Provider<GoRouter>((ref) {
           // Page image for native ARCore image tracking (Scan page).
           targetImageUrl: state.uri.queryParameters['img'],
           videoUrl: state.uri.queryParameters['video'],
+          // Page video: box on the page (JSON), sound mode, first view.
+          videoRegion: state.uri.queryParameters['vregion'],
+          videoSound: state.uri.queryParameters['vsound'],
+          videoView: state.uri.queryParameters['vview'],
           chromaColor: state.uri.queryParameters['chroma'],
         ),
       ),

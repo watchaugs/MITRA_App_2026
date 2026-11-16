@@ -434,7 +434,7 @@
   "student_quiz_unlocks_at": "ꯀꯤꯖꯅ% {need} ꯗ ꯍꯥꯡꯗꯣꯛꯏ",
   "quiz_mastery_achieved_pct": "ꯃꯥꯏ ꯄꯥꯛꯄ ꯉꯝꯂꯦ! ({pct}%)",
   "quiz_you_must_score_pct_to_unlock": "ꯃꯊꯪꯒꯤ ꯃꯣꯗ ꯭ ꯌꯨꯜ ꯑꯗꯨ ꯍꯥꯡꯗꯣꯛꯅꯕ ꯅꯍꯥꯛꯅ {need}% ꯁ ꯭ ꯀꯣꯔ ꯇꯧꯕ ꯃꯊꯧ ꯇꯥꯏ ꯫ ꯆꯥꯟꯕꯤꯗꯨꯅ ꯑꯦ. ꯑꯥꯔ. ꯒꯤ ꯃꯍꯩ ꯑꯗꯨ ꯑꯃꯨꯛ ꯍꯟꯅ ꯌꯦꯡꯕꯤꯌꯨ ꯑꯃꯁꯨꯡ ꯑꯃꯨꯛ ꯍꯟꯅ ꯍꯣꯠꯅꯕꯤꯌꯨ ꯫",
-  "student_score_pct_on_the_previous_module": "ꯑꯣꯟꯂꯣꯛ ꯇꯧꯅꯕ ꯃꯃꯥꯡꯗ ꯇꯧꯔꯝꯕ ꯃꯣꯗꯨꯜ ꯑꯗꯨꯗ ꯁ ꯭ ꯀꯣꯔ {need}% ꯇꯧ ꯫",
+  "student_score_pct_on_the_previous_module": "ꯑꯣꯟꯂꯣꯛ ꯇꯧꯅꯕ ꯃꯃꯥꯡꯗ ꯇꯧꯔꯝꯕ ꯃꯣꯗꯨꯜ ꯑꯗꯨꯗ ꯁ ꯭ ꯀꯣꯔ {need}% ꯇꯧ",
   "student_mastered_pct": "ꯃꯥꯁꯇꯔꯗ {pct}%",
   "student_locked_title_score_pct_on_the": "ꯂꯣꯛ ꯇꯧꯔꯦ: {title} ꯫ ꯑꯣꯟꯂꯣꯛ ꯇꯧꯅꯕ ꯍꯥꯟꯅꯒꯤ ꯃꯣꯗ ꯭ ꯌꯨꯜ ꯑꯗꯨꯗ% {need} ꯁ ꯭ ꯀꯣꯔ ꯇꯧ ꯫",
   "ar_point_camera_at_page": "ꯇꯦꯛꯁꯕꯨꯛ ꯄꯦꯖ ꯑꯗꯨꯗ ꯀꯦꯃꯦꯔꯥ ꯑꯗꯨ ꯎꯠꯂꯛꯎ",
@@ -443,5 +443,9 @@
   "ar_could_not_load_page_image": "ꯄꯦꯖ ꯑꯗꯨꯒꯤ ꯃꯃꯤ ꯑꯗꯨ ꯂꯣꯗ ꯇꯧꯕ ꯉꯝꯈꯤꯗꯦ ꯫ ꯅꯍꯥꯛꯀꯤ ꯁꯝꯅꯕ ꯑꯗꯨ ꯌꯦꯡꯁꯤꯟꯕꯤꯌꯨ ꯫",
   "ar_page_image_not_trackable": "ꯑꯦ. ꯑꯥꯔ. ꯀꯣꯔꯅ ꯄꯦꯖ ꯑꯁꯤꯒꯤ ꯃꯃꯤ ꯑꯁꯤ ꯈꯪꯗꯣꯛꯄ ꯉꯝꯗꯦ (ꯑꯀꯨꯞꯄ ꯃꯔꯣꯜ ꯈꯔꯈꯛꯇꯃꯛ) ꯫",
   "ar_model_could_not_load": "3D ꯃꯣꯗꯦꯜ ꯑꯗꯨ ꯂꯣꯗ ꯇꯧꯕ ꯉꯝꯈꯤꯗꯦ ꯫",
-  "ar_use_web_scanner": "ꯋꯦꯕ ꯁ ꯭ ꯀꯦꯅꯔ ꯑꯗꯨ ꯁꯤꯖꯤꯟꯅꯧ"
+  "ar_use_web_scanner": "ꯋꯦꯕ ꯁ ꯭ ꯀꯦꯅꯔ ꯑꯗꯨ ꯁꯤꯖꯤꯟꯅꯧ",
+  "ar_point_camera_page_video": "ꯅꯍꯥꯛꯀꯤ ꯀꯦꯃꯦꯔꯥ ꯑꯗꯨ ꯄꯦꯖ ꯑꯗꯨꯗ ꯃꯣꯗꯦꯜ ꯅꯠꯇ ꯭ ꯔꯒ ꯚꯤꯗꯤꯑꯣ ꯑꯃ ꯌꯦꯡꯅꯕ ꯎꯠꯂꯨ ꯫",
+  "ar_view_video": "ꯚꯤꯗꯤꯑꯣ",
+  "ar_video_could_not_play": "ꯚꯤꯗꯤꯑꯣ ꯑꯗꯨ ꯁꯥꯟꯅꯕ ꯉꯝꯈꯤꯗꯦ ꯫ ꯅꯍꯥꯛꯀꯤ ꯏꯟꯇꯔꯅꯦꯠ ꯑꯗꯨ ꯌꯦꯡꯁꯤꯟꯕꯤꯌꯨ ꯫",
+  "ar_video_preparing": "ꯚꯤꯗꯤꯑꯣ ꯁꯦꯝ ꯁꯥꯔꯤ"
 }

@@ -11,6 +11,7 @@
       color: #fff; font-family: sans-serif; font-size: 14px; padding: 10px 16px;
       background: rgba(0,0,0,0.55); z-index: 10;
     }
+    #pv { position: fixed; width: 2px; height: 2px; opacity: 0; pointer-events: none; left: 0; top: 0; }
     #err {
       position: fixed; inset: 0; display: none; align-items: center; justify-content: center;
       color: #fff; font-family: sans-serif; font-size: 15px; text-align: center;
@@ -28,13 +29,144 @@
     function qp(k) { return new URLSearchParams(location.search).get(k); }
     var mindUrl  = qp('mind');
     var modelUrl = qp('model');
+    // Page video: a flat screen over the diagram, fixed to the page.
+    var videoUrl = qp('video');
+    // 'vpending': the video is still downloading to the phone; the app calls
+    // setVideoSrc() when it is ready (the scanner starts meanwhile).
+    var hasVideo = !!videoUrl || qp('vpending') === '1';
+    var view     = hasVideo ? (qp('view') || (modelUrl ? '3d' : 'video')) : '3d';
+    if (!modelUrl) view = 'video';
+    var region   = { x: 0, y: 0, w: 1, h: 1 };   // 0–1 of the page, from top-left
+    try { var r = JSON.parse(qp('vregion') || 'null'); if (r && r.w > 0 && r.h > 0) region = r; } catch (e) {}
+    var chroma   = qp('chroma');                  // '#00ff00' when green-screen is on
+    var tracking = false;
+    var vid = null, pageVideo = null;
+    var markerAspect = null;                      // page height / width, from MindAR
 
-    if (!mindUrl || !modelUrl) {
-      document.getElementById('err').style.display = 'flex';
-      document.getElementById('err').textContent = 'This lesson has no page target to scan.';
-    } else {
-      buildScene(mindUrl, modelUrl);
+    function toApp(m) { try { if (window.MitraAR) MitraAR.postMessage(m); } catch (e) {} }
+
+    // ── The <video> that feeds the screen (hidden; drawn as a texture) ──────
+    function setupVideo() {
+      vid = document.createElement('video');
+      vid.id = 'pv';
+      vid.crossOrigin = 'anonymous';           // needed to draw it in WebGL
+      vid.setAttribute('playsinline', '');
+      vid.setAttribute('webkit-playsinline', '');
+      vid.preload = 'auto';
+      vid.loop = true;
+      vid.muted = qp('vmute') === '1';         // muted when the narration is the voice
+      if (videoUrl) vid.src = videoUrl;
+      document.body.appendChild(vid);
+      if (!videoUrl) toApp('vwant');           // ask for it if it's already done
+      var best = 0, lastT = 0, lastSent = 0;
+      vid.addEventListener('timeupdate', function () {
+        var d = vid.duration;
+        if (!d || !isFinite(d)) return;
+        var t = vid.currentTime;
+        // Looped back to the start → the whole video was watched.
+        var pct = (lastT > d - 1.5 && t < 1) ? 100 : Math.floor(t / d * 100);
+        if (pct >= 99) pct = 100;
+        lastT = t;
+        if (pct > best) {
+          best = pct;
+          var now = Date.now();
+          if (pct === 100 || now - lastSent > 1000) { lastSent = now; toApp('vprog:' + best); }
+        }
+      });
+      vid.addEventListener('loadedmetadata', function () { if (pageVideo) pageVideo.layout(); });
+      vid.addEventListener('error', function () { toApp('verr'); });
     }
+
+    // Called by the app once the video is on the phone (or to stream it).
+    window.setVideoSrc = function (u) {
+      if (!vid || !u || vid.getAttribute('src') === u) return;
+      vid.src = u;
+      vid.load();
+      syncVideo();
+    };
+
+    function playVideo() {
+      if (!vid || !vid.getAttribute('src')) return;
+      var p = vid.play();
+      if (p && p.catch) p.catch(function (e) {
+        // Sound blocked by the browser → play muted rather than not at all.
+        if (e && e.name === 'NotAllowedError' && !vid.muted) { vid.muted = true; vid.play().catch(function () {}); toApp('vautomute'); }
+      });
+    }
+    function syncVideo() {
+      if (!vid) return;
+      if (pageVideo) pageVideo.group.visible = (view === 'video');
+      var m = document.getElementById('mdl-entity');
+      if (m) m.setAttribute('visible', view === '3d');
+      if (view === 'video' && tracking) playVideo(); else vid.pause();
+      if (tracking) document.getElementById('msg').textContent = view === 'video' ? 'Video locked to the page.' : 'Model locked to the page.';
+    }
+    // Called by the app's 3D / Video switch.
+    window.setView = function (v, muted) {
+      view = (v === 'video' && vid) ? 'video' : (modelUrl ? '3d' : 'video');
+      if (vid && typeof muted === 'boolean') vid.muted = muted;
+      syncVideo();
+    };
+
+    // Screen over the diagram. MindAR target space: page width = 1, height =
+    // page aspect, origin at the page centre, +y towards the top of the page.
+    AFRAME.registerComponent('page-video', {
+      init: function () {
+        var THREE = AFRAME.THREE;
+        this.group = new THREE.Group();
+        this.el.setObject3D('pv', this.group);
+        var tex = new THREE.VideoTexture(vid);
+        tex.minFilter = THREE.LinearFilter;
+        tex.magFilter = THREE.LinearFilter;
+        tex.generateMipmaps = false;
+        var key = new THREE.Color(chroma || '#00ff00');
+        // Raw pass-through shader: shows the video's own colours exactly and,
+        // with green-screen on, makes the key colour transparent.
+        this.material = new THREE.ShaderMaterial({
+          uniforms: {
+            map: { value: tex },
+            keyColor: { value: new THREE.Vector3(key.r, key.g, key.b) },
+            useKey: { value: chroma ? 1.0 : 0.0 },
+          },
+          vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+          fragmentShader: [
+            'uniform sampler2D map; uniform vec3 keyColor; uniform float useKey; varying vec2 vUv;',
+            'void main(){',
+            '  vec4 c = texture2D(map, vUv);',
+            '  float a = 1.0;',
+            '  if (useKey > 0.5) { float d = distance(c.rgb, keyColor); a = smoothstep(0.32, 0.45, d); }',
+            '  if (a < 0.02) discard;',
+            '  gl_FragColor = vec4(c.rgb, a);',
+            '}'].join('\n'),
+          transparent: !!chroma,
+        });
+        this.screen = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), this.material);
+        this.screen.position.z = 0.002;
+        // Black backing hides the printed diagram (not used for green-screen).
+        this.back = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ color: 0x000000 }));
+        this.back.position.z = 0.001;
+        this.back.visible = !chroma;
+        this.group.add(this.back);
+        this.group.add(this.screen);
+        pageVideo = this;
+        this.layout();
+        this.group.visible = (view === 'video');
+      },
+      layout: function () {
+        var pa = markerAspect || region.page_aspect || 1.414;
+        var rw = region.w, rh = region.h * pa;
+        var cx = region.x + region.w / 2 - 0.5;
+        var cy = (0.5 - (region.y + region.h / 2)) * pa;
+        this.back.scale.set(rw, rh, 1);
+        this.back.position.set(cx, cy, 0.001);
+        // Fit the video inside the box without stretching it.
+        var va = (vid.videoWidth && vid.videoHeight) ? vid.videoWidth / vid.videoHeight : 16 / 9;
+        var w = rw, h = rw / va;
+        if (h > rh) { h = rh; w = rh * va; }
+        this.screen.scale.set(w, h, 1);
+        this.screen.position.set(cx, cy, 0.002);
+      },
+    });
 
     function buildScene(mind, model) {
       var scene = document.createElement('a-scene');
@@ -44,12 +176,14 @@
       scene.setAttribute('vr-mode-ui', 'enabled: false');
       scene.setAttribute('device-orientation-permission-ui', 'enabled: false');
 
-      var assets = document.createElement('a-assets');
-      var gltf = document.createElement('a-asset-item');
-      gltf.setAttribute('id', 'mdl');
-      gltf.setAttribute('src', model);
-      assets.appendChild(gltf);
-      scene.appendChild(assets);
+      if (model) {
+        var assets = document.createElement('a-assets');
+        var gltf = document.createElement('a-asset-item');
+        gltf.setAttribute('id', 'mdl');
+        gltf.setAttribute('src', model);
+        assets.appendChild(gltf);
+        scene.appendChild(assets);
+      }
 
       var cam = document.createElement('a-camera');
       cam.setAttribute('position', '0 0 0');
@@ -58,30 +192,60 @@
 
       var anchor = document.createElement('a-entity');
       anchor.setAttribute('mindar-image-target', 'targetIndex: 0');
-      var entity = document.createElement('a-gltf-model');
-      entity.setAttribute('src', '#mdl');
-      entity.setAttribute('position', '0 0 0.1');
-      entity.setAttribute('scale', '0.5 0.5 0.5');
-      entity.setAttribute('rotation', '0 0 0');
-      anchor.appendChild(entity);
+      if (model) {
+        var entity = document.createElement('a-gltf-model');
+        entity.setAttribute('id', 'mdl-entity');
+        entity.setAttribute('src', '#mdl');
+        entity.setAttribute('position', '0 0 0.1');
+        entity.setAttribute('scale', '0.5 0.5 0.5');
+        entity.setAttribute('rotation', '0 0 0');
+        entity.setAttribute('visible', view === '3d' ? 'true' : 'false');
+        anchor.appendChild(entity);
+      }
+      if (vid) {
+        var screenEl = document.createElement('a-entity');
+        screenEl.setAttribute('page-video', '');
+        anchor.appendChild(screenEl);
+      }
       scene.appendChild(anchor);
 
       document.body.appendChild(scene);
 
+      // Real page proportions once the target is loaded (for the video box).
+      scene.addEventListener('arReady', function () {
+        try {
+          var c = scene.systems['mindar-image-system'].controller;
+          var d = c && c.markerDimensions && c.markerDimensions[0];
+          if (d && d[0] > 0) { markerAspect = d[1] / d[0]; if (pageVideo) pageVideo.layout(); }
+        } catch (e) {}
+      });
+
       // Tell the app so it can play/pause the narration (and count progress
-      // only while the model is actually on the page).
-      function toApp(m) { try { if (window.MitraAR) MitraAR.postMessage(m); } catch (e) {} }
+      // only while the page is actually in view).
       anchor.addEventListener('targetFound', function () {
-        document.getElementById('msg').textContent = 'Model locked to the page.';
+        tracking = true;
+        document.getElementById('msg').textContent = view === 'video' ? 'Video locked to the page.' : 'Model locked to the page.';
+        syncVideo();
         toApp('found');
       });
       anchor.addEventListener('targetLost', function () {
+        tracking = false;
         document.getElementById('msg').textContent = 'Point your camera at the textbook page…';
+        syncVideo();
         toApp('lost');
       });
       scene.addEventListener('arError', function () {
         document.getElementById('err').style.display = 'flex';
       });
+    }
+
+    // Start last, so the page-video component is registered before the scene.
+    if (!mindUrl || (!modelUrl && !hasVideo)) {
+      document.getElementById('err').style.display = 'flex';
+      document.getElementById('err').textContent = 'This lesson has no page target to scan.';
+    } else {
+      if (hasVideo) setupVideo();
+      buildScene(mindUrl, modelUrl);
     }
   </script>
 </body>

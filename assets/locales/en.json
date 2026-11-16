@@ -445,5 +445,10 @@
   "ar_could_not_load_page_image": "Couldn't load the page image. Check your connection.",
   "ar_page_image_not_trackable": "ARCore can't recognise this page image (too few details).",
   "ar_model_could_not_load": "The 3D model could not be loaded.",
-  "ar_use_web_scanner": "Use the web scanner"
+  "ar_use_web_scanner": "Use the web scanner",
+  "ar_point_camera_page_video": "Point your camera at the page to see the model or a video on it.",
+  "ar_view_3d": "3D",
+  "ar_view_video": "Video",
+  "ar_video_could_not_play": "The video could not be played. Check your internet.",
+  "ar_video_preparing": "Preparing video"
 }

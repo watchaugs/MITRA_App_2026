@@ -450,6 +450,11 @@ class ArCatalog {
   final Map<String, String> mindById;
   // The page image itself (JPG/PNG) → native ARCore image tracking.
   final Map<String, String> targetImageById;
+  // Page video settings: box on the page (JSON {x,y,w,h}), whose sound plays
+  // ('video' | 'narration') and which view opens first ('3d' | 'video').
+  final Map<String, String> videoRegionById;
+  final Map<String, String> videoSoundById;
+  final Map<String, String> videoViewById;
   // Quizzes linked to this lesson's topic in the dashboard's Curriculum tree
   // (manifest v3). These decide which quiz the AR watch-gate controls.
   final Map<String, List<String>> quizIdsByArId;
@@ -465,6 +470,9 @@ class ArCatalog {
     this.chromaById = const {},
     this.mindById = const {},
     this.targetImageById = const {},
+    this.videoRegionById = const {},
+    this.videoSoundById = const {},
+    this.videoViewById = const {},
     this.quizIdsByArId = const {},
     this.territorySupported = true,
   });
@@ -494,6 +502,22 @@ String _absMedia(String url) {
   return '$base$path';
 }
 
+// Page-video settings from a lesson / topic row into the three maps.
+void _readVideoMeta(
+  Map l,
+  String id,
+  Map<String, String> region,
+  Map<String, String> sound,
+  Map<String, String> view,
+) {
+  final r = l['video_region'];
+  if (r is Map && r.isNotEmpty) region[id] = jsonEncode(r);
+  final s = (l['video_sound'] ?? '').toString();
+  if (s == 'video' || s == 'narration') sound[id] = s;
+  final v = (l['video_default_view'] ?? '').toString();
+  if (v == '3d' || v == 'video') view[id] = v;
+}
+
 ArCatalog? _catalogFromManifest(dynamic data) {
   if (data is! Map) return null;
   final classes = data['classes'];
@@ -508,6 +532,9 @@ ArCatalog? _catalogFromManifest(dynamic data) {
   final chromaById = <String, String>{};
   final mindById = <String, String>{};
   final targetImageById = <String, String>{};
+  final videoRegionById = <String, String>{};
+  final videoSoundById = <String, String>{};
+  final videoViewById = <String, String>{};
   final quizIdsByArId = <String, List<String>>{};
   for (final c in classes) {
     if (c is! Map) continue;
@@ -574,6 +601,7 @@ ArCatalog? _catalogFromManifest(dynamic data) {
           if (mind.isNotEmpty) mindById[id] = mind;
           final img = _absMedia((l['target_image_url'] ?? '').toString());
           if (img.isNotEmpty) targetImageById[id] = img;
+          _readVideoMeta(l, id, videoRegionById, videoSoundById, videoViewById);
           final qids = l['quiz_ids'];
           if (qids is List && qids.isNotEmpty) {
             quizIdsByArId[id] = qids.map((e) => e.toString()).toList();
@@ -594,6 +622,9 @@ ArCatalog? _catalogFromManifest(dynamic data) {
     chromaById: chromaById,
     mindById: mindById,
     targetImageById: targetImageById,
+    videoRegionById: videoRegionById,
+    videoSoundById: videoSoundById,
+    videoViewById: videoViewById,
     quizIdsByArId: quizIdsByArId,
     territorySupported: true,
   );
@@ -641,6 +672,9 @@ final arCatalogProvider = FutureProvider<ArCatalog>((ref) async {
   final chromaById = <String, String>{};
   final mindById = <String, String>{};
   final targetImageById = <String, String>{};
+  final videoRegionById = <String, String>{};
+  final videoSoundById = <String, String>{};
+  final videoViewById = <String, String>{};
   final audiosByLangById = <String, Map<String, String>>{};
   final audiosAacByLangById = <String, Map<String, String>>{};
 
@@ -676,6 +710,7 @@ final arCatalogProvider = FutureProvider<ArCatalog>((ref) async {
       if (mind.isNotEmpty) mindById[id] = mind;
       final img = _absMedia((m['target_image_url'] ?? '').toString());
       if (img.isNotEmpty) targetImageById[id] = img;
+      _readVideoMeta(m, id, videoRegionById, videoSoundById, videoViewById);
       // Multi-language narration (now sent by /ar-topics too).
       for (final entry in [
         ('audios', audiosByLangById),
@@ -712,6 +747,9 @@ final arCatalogProvider = FutureProvider<ArCatalog>((ref) async {
     chromaById: chromaById,
     mindById: mindById,
     targetImageById: targetImageById,
+    videoRegionById: videoRegionById,
+    videoSoundById: videoSoundById,
+    videoViewById: videoViewById,
     territorySupported: territorySupported,
   );
 });
@@ -1088,7 +1126,12 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
                                   const <String, String>{};
                               final audio = arCatalog?.audioById ??
                                   const <String, String>{};
-                              if (models.isEmpty && audio.isEmpty) {
+                              // Page videos are saved with everything else.
+                              final videos = arCatalog?.videoById ??
+                                  const <String, String>{};
+                              if (models.isEmpty &&
+                                  audio.isEmpty &&
+                                  videos.isEmpty) {
                                 messenger.showSnackBar(SnackBar(
                                     content: Text(ref.trNow(
                                         'student_no_downloadable_lessons_for_your_sta',
@@ -1103,6 +1146,7 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
                               final n = await ArPackStore.instance.downloadPack(
                                 models: models,
                                 audios: audio,
+                                videos: videos,
                                 wifiOnly: true,
                               );
                               messenger.showSnackBar(SnackBar(
@@ -1279,10 +1323,13 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
                                   // Offline-first: prefer a cached on-device
                                   // file (downloaded over Wi-Fi) over the
                                   // network URL. Falls back to the URL.
-                                  final localGlb =
-                                      ArPackStore.instance.localModel(id);
-                                  final localAud =
-                                      ArPackStore.instance.localAudio(id);
+                                  // A saved copy is used only while it
+                                  // matches the current file (not replaced).
+                                  final localGlb = ArPackStore.instance
+                                      .localModel(id, url: arGlbById[id]);
+                                  final localAud = ArPackStore.instance
+                                      .localAudio(id,
+                                          url: arCatalog?.audioById[id]);
                                   final glb = localGlb ?? arGlbById[id];
                                   final nativeGlb =
                                       arCatalog?.nativeGlbById[id];
@@ -1333,6 +1380,19 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
                                   final img = arCatalog?.targetImageById[id];
                                   if (img != null && img.isNotEmpty) {
                                     qp.add('img=${Uri.encodeComponent(img)}');
+                                  }
+                                  // Page video: where it sits on the page,
+                                  // whose sound plays, which view opens.
+                                  final vr = arCatalog?.videoRegionById[id];
+                                  if (vid != null && vid.isNotEmpty) {
+                                    if (vr != null) {
+                                      qp.add(
+                                          'vregion=${Uri.encodeComponent(vr)}');
+                                    }
+                                    final vs = arCatalog?.videoSoundById[id];
+                                    if (vs != null) qp.add('vsound=$vs');
+                                    final vv = arCatalog?.videoViewById[id];
+                                    if (vv != null) qp.add('vview=$vv');
                                   }
                                   final query =
                                       qp.isEmpty ? '' : '?${qp.join('&')}';

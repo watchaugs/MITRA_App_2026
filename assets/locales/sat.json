@@ -436,15 +436,19 @@
   "student_quiz_unlocks_at": "ᱠᱩᱭᱤᱡ ᱫᱚ {need}% ᱨᱮ ᱚᱱᱚᱞᱚᱠᱚᱜᱼᱟ",
   "quiz_mastery_achieved_pct": "ᱫᱟᱲᱮᱭ ᱦᱟᱢᱮᱴ ᱟᱠᱟᱫᱟ ᱾ ({pct}%)",
   "quiz_you_must_score_pct_to_unlock": "ᱛᱟᱭᱚᱢ ᱫᱟᱨᱟᱢ ᱢᱳᱰᱤᱣᱚᱞ ᱫᱚ ᱚᱱᱚᱞᱚᱠ ᱠᱚᱨᱟᱣ ᱞᱟᱹᱜᱤᱫ ᱟᱢ ᱫᱚ {need}% ᱥᱠᱳ ᱠᱚᱨᱟᱣ ᱦᱩᱭᱩᱜ ᱛᱟᱢᱟ ᱾ ᱚᱱᱢᱟᱱ ᱠᱟᱛᱮ ᱮ ᱟᱨ ᱥᱮᱪᱮᱫ ᱫᱚ ᱟᱨᱦᱚᱸ ᱧᱮᱞ ᱢᱮ ᱟᱨ ᱟᱨᱦᱚᱸ ᱨᱤᱠᱟᱹᱭ ᱢᱮ ᱾",
-  "student_score_pct_on_the_previous_module": "ᱚᱱᱚᱞᱚᱠ ᱞᱟᱹᱜᱤᱫ ᱢᱟᱲᱟᱝ ᱨᱮᱭᱟᱜ ᱢᱳᱰᱤᱣᱚᱞ ᱨᱮ {need}% ᱥᱠᱳᱨ ᱢᱮ ᱾",
+  "student_score_pct_on_the_previous_module": "ᱚᱱᱚᱞᱚᱠ ᱞᱟᱹᱜᱤᱫ ᱢᱟᱲᱟᱝ ᱨᱮᱭᱟᱜ ᱢᱳᱰᱤᱣᱚᱞ ᱨᱮ {need}% ᱥᱠᱳᱨ ᱢᱮ",
   "student_mastered_pct": "ᱢᱩᱲᱩᱫ {pct}%",
   "student_coming_soon_title_not_yet_available": "ᱞᱚᱜᱚᱱ ᱦᱮᱡᱚᱜ ᱠᱟᱱᱟ ᱾ {title} ᱱᱤᱛᱦᱚᱸ ᱵᱟᱝ ᱧᱟᱢᱚᱜᱼᱟ ᱾",
   "student_locked_title_score_pct_on_the": "ᱞᱚᱠ ᱦᱩᱭ ᱟᱠᱟᱱᱟ ᱾ {title} ᱚᱱᱚᱞᱚᱠ ᱞᱟᱹᱜᱤᱫ ᱢᱟᱲᱟᱝ ᱨᱮᱭᱟᱜ ᱢᱳᱰᱤᱣᱚᱞ ᱨᱮ {need}% ᱥᱠᱳᱨ ᱢᱮ ᱾",
-  "ar_point_camera_at_page": "ᱠᱮᱢᱮᱨᱟ ᱫᱚ ᱛᱟᱹᱞᱤᱠᱟ ᱨᱮᱭᱟᱜ ᱯᱮᱡᱽ ᱨᱮ ᱩᱫᱩᱜ ᱢᱮ ᱾",
+  "ar_point_camera_at_page": "ᱠᱮᱢᱮᱨᱟ ᱫᱚ ᱛᱟᱹᱞᱤᱠᱟ ᱨᱮᱭᱟᱜ ᱯᱮᱡᱽ ᱨᱮ ᱩᱫᱩᱜ ᱢᱮ",
   "ar_page_found_placing": "ᱢᱮᱰᱮᱞ ᱫᱚᱦᱚ ᱠᱟᱛᱮ ᱯᱮᱡ ᱧᱟᱢ ᱟᱠᱟᱱᱟ ᱾",
-  "ar_keep_page_in_view": "ᱯᱮᱡ ᱫᱚ ᱧᱮᱞ ᱫᱚᱦᱚ ᱢᱮ ᱾",
+  "ar_keep_page_in_view": "ᱯᱮᱡ ᱫᱚ ᱧᱮᱞ ᱫᱚᱦᱚ ᱢᱮ",
   "ar_could_not_load_page_image": "ᱯᱮᱡ ᱨᱮᱭᱟᱜ ᱪᱤᱛᱟᱹᱨ ᱞᱳᱰ ᱵᱟᱝ ᱦᱩᱭ ᱟᱠᱟᱱᱟ ᱾ ᱟᱢᱟᱜ ᱡᱳᱜᱟᱡᱳᱜ ᱵᱤᱰᱟᱹᱣ ᱢᱮ ᱾",
   "ar_page_image_not_trackable": "ᱮ ᱟᱨ ᱠᱳᱨ ᱱᱚᱶᱟ ᱯᱮᱡ ᱨᱮᱭᱟᱜ ᱪᱤᱛᱟᱹᱨ ᱫᱚ ᱵᱟᱝ ᱵᱟᱰᱟᱭ ᱫᱟᱲᱮᱭᱟᱜᱼᱟ (ᱟᱹᱰᱤ ᱠᱚᱢ ᱵᱚᱨᱱᱚᱱ)",
   "ar_model_could_not_load": "3D ماڈل ᱫᱚ ᱞᱳᱰ ᱠᱚᱨᱟᱣ ᱵᱟᱝ ᱦᱩᱭ ᱟᱠᱟᱱᱟ ᱾",
-  "ar_use_web_scanner": "ᱳᱭᱮᱵ ᱥᱠᱮᱱᱟᱨ ᱵᱮᱣᱦᱟᱨ ᱢᱮ ᱾"
+  "ar_use_web_scanner": "ᱳᱭᱮᱵ ᱥᱠᱮᱱᱟᱨ ᱵᱮᱣᱦᱟᱨ ᱢᱮ",
+  "ar_point_camera_page_video": "ᱢᱳᱰᱮᱞ ᱥᱮ ᱵᱷᱤᱰᱤᱣ ᱧᱮᱞ ᱞᱟᱹᱜᱤᱫ ᱟᱢᱟᱜ ᱠᱮᱢᱮᱨᱟ ᱫᱚ ᱯᱮᱡ ᱨᱮ ᱩᱫᱩᱜ ᱢᱮ ᱾",
+  "ar_view_video": "ᱵᱷᱤᱰᱤᱣ",
+  "ar_video_could_not_play": "ᱵᱷᱤᱰᱤᱣ ᱫᱚ ᱪᱟᱞᱟᱣ ᱵᱟᱝ ᱦᱩᱭ ᱟᱠᱟᱱᱟ ᱾ ᱟᱢᱟᱜ ᱤᱱᱴᱟᱨᱱᱮᱴ ᱵᱤᱰᱟᱹᱣ ᱢᱮ ᱾",
+  "ar_video_preparing": "ᱵᱷᱤᱰᱤᱣ ᱵᱮᱱᱟᱣ ᱦᱩᱭᱩᱜ ᱠᱟᱱᱟ"
 }
