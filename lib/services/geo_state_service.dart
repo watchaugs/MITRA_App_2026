@@ -45,10 +45,12 @@ class GeoStateService {
     bool serviceOn;
     try {
       serviceOn = await Geolocator.isLocationServiceEnabled().timeout(_timeout);
-    } catch (_) {
+    } catch (e) {
+      debugPrint('📍 GeoState: location-service check failed: $e');
       serviceOn = false;
     }
     if (!serviceOn) {
+      debugPrint('📍 GeoState: location services OFF → gpsUnavailable');
       return const GeoState(GeoStatus.gpsUnavailable,
           message: 'Turn on location to access your state\'s lessons.');
     }
@@ -61,10 +63,12 @@ class GeoStateService {
       }
       if (perm == LocationPermission.denied ||
           perm == LocationPermission.deniedForever) {
+        debugPrint('📍 GeoState: permission $perm → gpsUnavailable');
         return const GeoState(GeoStatus.gpsUnavailable,
             message: 'Allow location access to continue.');
       }
-    } catch (_) {
+    } catch (e) {
+      debugPrint('📍 GeoState: permission request failed: $e');
       return const GeoState(GeoStatus.gpsUnavailable,
           message: 'Allow location access to continue.');
     }
@@ -82,7 +86,8 @@ class GeoStateService {
         pos = await Geolocator.getCurrentPosition(
           desiredAccuracy: LocationAccuracy.reduced,
         ).timeout(_timeout);
-      } catch (_) {
+      } catch (e) {
+        debugPrint('📍 GeoState: no GPS fix: $e');
         return const GeoState(GeoStatus.gpsUnavailable,
             message: 'Could not get your location. Try again outdoors.');
       }
@@ -94,6 +99,11 @@ class GeoStateService {
       final data = res.data;
       final insideAny = data['inside_any'] == true;
       final matches = (data['matches'] as List?) ?? const [];
+      // Coordinates are rounded to 2 decimals (~1 km) so logs never hold a
+      // precise location; debugPrint is silent in release builds anyway.
+      debugPrint('📍 GeoState: check-point '
+          '${pos.latitude.toStringAsFixed(2)},${pos.longitude.toStringAsFixed(2)} '
+          '→ inside_any=$insideAny, matches=${matches.map((m) => m['state']).toList()}');
       if (insideAny && matches.isNotEmpty) {
         final state = (matches.first['state'] ?? '').toString();
         if (state.isNotEmpty) {
@@ -103,7 +113,8 @@ class GeoStateService {
       // GPS is fine but the point is in no geofenced/licensed state.
       return const GeoState(GeoStatus.outsideTerritory,
           message: 'MITRA is not yet available in your location.');
-    } catch (_) {
+    } catch (e) {
+      debugPrint('📍 GeoState: check-point call failed: $e');
       // Backend/network error — treat as GPS-unavailable (fixable), not a block.
       return const GeoState(GeoStatus.gpsUnavailable,
           message: 'Could not verify your location. Check your connection.');

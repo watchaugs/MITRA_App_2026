@@ -13,6 +13,11 @@
 //    the English value's leading/trailing emoji is put back.
 // 4. auth_namaste (greeting screen) and student_notice: MT produced
 //    things like "ਐੱਨ. ਏ. ਐੱਮ. ਐੱਸ. ਟੀ. ਈ" or "notice karein"; set by hand.
+// 6. Context fixes: short labels translated without knowing where they sit
+//    ("Support" in Settings came out as political "support", "About" as a bare
+//    preposition, Tamil "Finish" as "hair"). Set by hand per language below.
+// 7. Labels that have no full stop in English lose the sentence terminator MT
+//    added (۔ ᱾ ꯫ । .) — Kashmiri and Santali ended almost every button with one.
 // 5. Removes student_watched_pct_quiz_unlocked / _need_for_quiz and
 //    student_highest_level_reached_gyani (replaced by shorter keys that
 //    translate_missing.js fills in next).
@@ -63,6 +68,27 @@ const NOTICE = {
   brx: 'नोटिस', gu: 'નોટિસ', mai: 'सूचना', sat: 'ᱱᱳᱴᱤᱥ', sd: 'اطلاع',
   ta: 'அறிவிப்பு', te: 'నోటీసు', ur: 'نوٹس',
 };
+// Context fixes: key -> { lang: value }. Only languages checked by hand.
+const CONTEXT = {
+  student_support: { hi: 'सहायता', mr: 'मदत', ne: 'सहायता', mai: 'सहायता', doi: 'मदद', sa: 'सहायता',
+    gu: 'મદદ', bn: 'সহায়তা', as: 'সহায়', or: 'ସହାୟତା', pa: 'ਸਹਾਇਤਾ', kn: 'ಸಹಾಯ', te: 'సహాయం',
+    ta: 'உதவி', ml: 'സഹായം', ur: 'مدد', ks: 'مدد', sd: 'مدد' },
+  student_about: { hi: 'ऐप के बारे में', mr: 'ॲपविषयी', ne: 'एपको बारेमा', mai: 'ऐपक बारेमे', doi: 'ऐप बारे',
+    sa: 'परिचयः', gu: 'એપ વિશે', bn: 'অ্যাপ সম্পর্কে', as: 'এপৰ বিষয়ে', or: 'ଆପ୍ ବିଷୟରେ', pa: 'ਐਪ ਬਾਰੇ',
+    kn: 'ಆ್ಯಪ್ ಬಗ್ಗೆ', te: 'యాప్ గురించి', ta: 'செயலி பற்றி', ml: 'ആപ്പിനെക്കുറിച്ച്', ur: 'ایپ کے بارے میں',
+    sd: 'ايپ بابت' },
+  ar_got_it: { gu: 'સમજાઈ ગયું', bn: 'বুঝেছি', as: 'বুজি পালোঁ', kn: 'ಅರ್ಥವಾಯಿತು', ne: 'बुझेँ', or: 'ବୁଝିଗଲି',
+    sa: 'अवगतम्', sd: 'سمجهي ويو', mr: 'समजले', mai: 'बुझलहुँ' },
+  quiz_finish: { ta: 'முடிக்கவும்', sd: 'ختم ڪريو' },
+  btn_retry: { ta: 'மீண்டும் முயல்க', ml: 'വീണ്ടും ശ്രമിക്കുക', ur: 'دوبارہ کوشش کریں' },
+  btn_back: { hi: '← वापस', ta: '← பின் செல்' },
+  home_topics: { hi: 'टॉपिक', gu: 'ટોપિક', mai: 'टॉपिक', ne: 'टपिक', doi: 'टॉपिक', as: 'টপিক', or: 'ଟପିକ୍' },
+  student_subject: { ta: 'பாடம்', ne: 'विषय' },
+  txt_all: { mr: 'सर्व', as: 'সকলো', bn: 'সব' },
+};
+const TERMINATOR = /[\s]*[۔᱾꯫।॥.]+\s*$/u;
+const TRAILING_DECOR = /[\p{Extended_Pictographic}\s→←\uFE0F\u200D]+$/u;
+
 const TIER_KEYS = ['tier_jigyasu', 'tier_anveshak', 'tier_vidwan', 'tier_acharya', 'tier_gyani'];
 
 const en = JSON.parse(fs.readFileSync(path.join(DIR, 'en.json'), 'utf8'));
@@ -92,6 +118,15 @@ for (const [lang, [tiers, viewed]] of Object.entries(FIX)) {
     if (lead && !v.startsWith(lead)) v = `${lead} ${v}`;
     if (trail && !v.endsWith(trail)) v = `${v} ${trail}`;
     set(k, v);
+  }
+
+  for (const [k, byLang] of Object.entries(CONTEXT)) if (byLang[lang] && k in pack) set(k, byLang[lang]);
+
+  // Strip a sentence terminator MT added to a label that has none in English.
+  for (const k of Object.keys(pack)) {
+    const src = String(en[k] || '').replace(TRAILING_DECOR, '');
+    if (typeof pack[k] !== 'string' || !src || /[.!?।:…]$/.test(src)) continue;
+    if (TERMINATOR.test(pack[k])) set(k, pack[k].replace(TERMINATOR, ''));
   }
 
   for (const k of DROP) if (k in pack) { changes.push(`${k}: removed`); delete pack[k]; }
