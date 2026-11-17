@@ -57,11 +57,11 @@ HeroRank? nextRank(int xp) {
   return null;
 }
 
-/// The student's lead hero: the most dressed-up subject hero.
-/// (subject, hero, costume level), or null before lessons load.
+/// The student's lead hero: the most dressed-up hero they have met.
+/// (subject, hero, costume level), or null before any hero is met.
 final leadHeroProvider = Provider<(String, HeroDef, int)?>((ref) {
   final prog = ref.watch(subjectHeroProgressProvider).valueOrNull;
-  final subjects = ref.watch(arCatalogProvider).valueOrNull?.bySubject.keys.toList() ?? const [];
+  final subjects = ref.watch(metSubjectsProvider);
   if (subjects.isEmpty) return null;
   String best = subjects.first;
   double bestShare = -1;
@@ -93,33 +93,54 @@ class HeroHqScreen extends ConsumerWidget {
     final rank = rankForXp(xp), next = nextRank(xp);
     final gender = heroGenderFor(ref.watch(currentUserProvider)?.gender);
     final lead = ref.watch(leadHeroProvider);
-    final subjects = ref.watch(arCatalogProvider).valueOrNull?.bySubject.keys.toList() ?? const <String>[];
+    final allSubjects =
+        ref.watch(arCatalogProvider).valueOrNull?.bySubject.keys.toList() ??
+            const <String>[];
+    final subjects = ref.watch(metSubjectsProvider);
+    final hidden = allSubjects.length - subjects.length;
     final prog = ref.watch(subjectHeroProgressProvider).valueOrNull ?? const {};
     final cards = ref.watch(albumCardsProvider);
     final gotCards = cards.where((c) => c.unlocked).length;
     final newCards = cards.where((c) => c.isNew).length;
-    final rankProgress = next == null ? 1.0 : ((xp - rank.minXp) / (next.minXp - rank.minXp)).clamp(0.0, 1.0);
-    String rankName(HeroRank r) => context.tr(ref, 'tier_${r.name.toLowerCase()}', r.name);
+    final rankProgress = next == null
+        ? 1.0
+        : ((xp - rank.minXp) / (next.minXp - rank.minXp)).clamp(0.0, 1.0);
+    String rankName(HeroRank r) =>
+        context.tr(ref, 'tier_${r.name.toLowerCase()}', r.name);
 
     BoxDecoration glass([Color? border]) => BoxDecoration(
           color: ThemeHelper.ctxGlassFill(context),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: border ?? ThemeHelper.ctxGlassBorder(context), width: border == null ? 1 : 2),
+          border: Border.all(
+              color: border ?? ThemeHelper.ctxGlassBorder(context),
+              width: border == null ? 1 : 2),
         );
 
     Widget section(String title) => Padding(
           padding: const EdgeInsets.fromLTRB(4, 18, 4, 8),
-          child: Text(title, style: TextStyle(fontFamily: 'Baloo2', fontWeight: FontWeight.w800, fontSize: 18, color: tp)),
+          child: Text(title,
+              style: TextStyle(
+                  fontFamily: 'Baloo2',
+                  fontWeight: FontWeight.w800,
+                  fontSize: 18,
+                  color: tp)),
         );
 
     final content = ListView(
-      padding: EdgeInsets.fromLTRB(16, standalone ? 72 : MediaQuery.paddingOf(context).top + 12, 16,
+      padding: EdgeInsets.fromLTRB(
+          16,
+          standalone ? 72 : MediaQuery.paddingOf(context).top + 12,
+          16,
           MediaQuery.paddingOf(context).bottom + 32),
       children: [
         Row(children: [
           Expanded(
             child: Text(context.tr(ref, 'fun_hq_title', 'Hero HQ'),
-                style: TextStyle(fontFamily: 'Baloo2', fontWeight: FontWeight.w800, fontSize: 30, color: tp)),
+                style: TextStyle(
+                    fontFamily: 'Baloo2',
+                    fontWeight: FontWeight.w800,
+                    fontSize: 30,
+                    color: tp)),
           ),
           const SizedBox(width: 80),
         ]),
@@ -130,56 +151,89 @@ class HeroHqScreen extends ConsumerWidget {
           decoration: glass(rank.color),
           child: Row(children: [
             if (lead != null)
-              MitraHeroView(hero: lead.$2, gender: gender, level: lead.$3, height: 170)
+              MitraHeroView(
+                  hero: lead.$2, gender: gender, level: lead.$3, height: 170)
             else
-              const SizedBox(width: 128, height: 170),
+              const MysteryHero(height: 170),
             const SizedBox(width: 12),
             Expanded(
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(context.tr(ref, 'fun_hq_rank', 'Hero rank'), style: TextStyle(fontFamily: 'Mukta', fontSize: 12, color: ts)),
-                Text('${rank.emoji} ${rankName(rank)}',
-                    style: TextStyle(fontFamily: 'Baloo2', fontWeight: FontWeight.w800, fontSize: 24, color: rank.color)),
-                if (lead != null)
-                  Text('${heroName(lead.$2, gender)} · ${lead.$1}',
-                      maxLines: 2, overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontFamily: 'Mukta', fontSize: 13, color: tp)),
-                const SizedBox(height: 8),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(6),
-                  child: LinearProgressIndicator(
-                    value: rankProgress, minHeight: 9, color: rank.color,
-                    backgroundColor: ThemeHelper.ctxGlassBorder(context)),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  next == null
-                      ? context.trp(ref, 'fun_hq_rank_max', '{xp} XP · top rank!', {'xp': '$xp'})
-                      : context.trp(ref, 'fun_hq_rank_next', '{xp} XP · {left} XP to {rank}',
-                          {'xp': '$xp', 'left': '${next.minXp - xp}', 'rank': rankName(next)}),
-                  style: TextStyle(fontFamily: 'Mukta', fontSize: 12, color: ts),
-                ),
-                const SizedBox(height: 6),
-                Row(children: [
-                  const Icon(Icons.bolt_rounded, color: Color(0xFFFFD43B), size: 20),
-                  Text(context.trp(ref, 'fun_power_level', 'Power level {n}!', {'n': '$streak'}),
-                      style: TextStyle(fontFamily: 'Mukta', fontWeight: FontWeight.w700, fontSize: 13, color: tp)),
-                ]),
-              ]),
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(context.tr(ref, 'fun_hq_rank', 'Hero rank'),
+                        style: TextStyle(
+                            fontFamily: 'Mukta', fontSize: 12, color: ts)),
+                    Text('${rank.emoji} ${rankName(rank)}',
+                        style: TextStyle(
+                            fontFamily: 'Baloo2',
+                            fontWeight: FontWeight.w800,
+                            fontSize: 24,
+                            color: rank.color)),
+                    if (lead != null)
+                      Text('${heroName(lead.$2, gender)} · ${lead.$1}',
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                              fontFamily: 'Mukta', fontSize: 13, color: tp)),
+                    const SizedBox(height: 8),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(6),
+                      child: LinearProgressIndicator(
+                          value: rankProgress,
+                          minHeight: 9,
+                          color: rank.color,
+                          backgroundColor: ThemeHelper.ctxGlassBorder(context)),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      next == null
+                          ? context.trp(ref, 'fun_hq_rank_max',
+                              '{xp} XP · top rank!', {'xp': '$xp'})
+                          : context.trp(ref, 'fun_hq_rank_next',
+                              '{xp} XP · {left} XP to {rank}', {
+                              'xp': '$xp',
+                              'left': '${next.minXp - xp}',
+                              'rank': rankName(next)
+                            }),
+                      style: TextStyle(
+                          fontFamily: 'Mukta', fontSize: 12, color: ts),
+                    ),
+                    const SizedBox(height: 6),
+                    Row(children: [
+                      const Icon(Icons.bolt_rounded,
+                          color: Color(0xFFFFD43B), size: 20),
+                      Text(
+                          context.trp(ref, 'fun_power_level',
+                              'Power level {n}!', {'n': '$streak'}),
+                          style: TextStyle(
+                              fontFamily: 'Mukta',
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13,
+                              color: tp)),
+                    ]),
+                  ]),
             ),
           ]),
         ),
 
         // ── Subject heroes ──
         section(context.tr(ref, 'fun_hq_subject_heroes', 'Subject heroes')),
-        if (subjects.isEmpty)
-          Text(context.tr(ref, 'fun_heroes_empty', 'Your heroes appear here when your lessons load.'),
+        if (allSubjects.isEmpty)
+          Text(
+              context.tr(ref, 'fun_heroes_empty',
+                  'Your heroes appear here when your lessons load.'),
               style: TextStyle(fontFamily: 'Mukta', color: ts))
+        else if (subjects.isEmpty)
+          HiddenHeroesNote(hidden: hidden, none: true)
         else
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3, mainAxisSpacing: 8, crossAxisSpacing: 8, childAspectRatio: 0.62),
+                crossAxisCount: 3,
+                mainAxisSpacing: 8,
+                crossAxisSpacing: 8,
+                childAspectRatio: 0.62),
             itemCount: subjects.length,
             itemBuilder: (ctx, i) {
               final s = subjects[i];
@@ -194,6 +248,7 @@ class HeroHqScreen extends ConsumerWidget {
               );
             },
           ),
+        if (subjects.isNotEmpty && hidden > 0) HiddenHeroesNote(hidden: hidden),
 
         // ── Hero cards + parent card ──
         section(context.tr(ref, 'fun_hq_more', 'Collect and share')),
@@ -202,7 +257,11 @@ class HeroHqScreen extends ConsumerWidget {
             child: _HqButton(
               icon: Icons.style_rounded,
               title: context.tr(ref, 'fun_hq_cards', 'Hero cards'),
-              sub: context.trp(ref, 'fun_hq_cards_sub', '{got} of {all} collected', {'got': '$gotCards', 'all': '${cards.length}'}),
+              sub: context.trp(
+                  ref,
+                  'fun_hq_cards_sub',
+                  '{got} of {all} collected',
+                  {'got': '$gotCards', 'all': '${cards.length}'}),
               badge: newCards > 0 ? '$newCards' : null,
               onTap: () => context.push('/student/cards').whenComplete(() {
                 ref.read(cardTickProvider.notifier).state++;
@@ -214,7 +273,8 @@ class HeroHqScreen extends ConsumerWidget {
             child: _HqButton(
               icon: Icons.family_restroom_rounded,
               title: context.tr(ref, 'fun_hq_parent', 'Parent card'),
-              sub: context.tr(ref, 'fun_hq_parent_sub', "Share this week's report"),
+              sub: context.tr(
+                  ref, 'fun_hq_parent_sub', "Share this week's report"),
               onTap: () => showParentCard(context, ref),
             ),
           ),
@@ -229,7 +289,11 @@ class HeroHqScreen extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               for (final r in kHeroRanks)
-                _Medal(rank: r, earned: badges.contains(r.badgeId) || xp >= r.minXp, label: rankName(r), hl: hl),
+                _Medal(
+                    rank: r,
+                    earned: badges.contains(r.badgeId) || xp >= r.minXp,
+                    label: rankName(r),
+                    hl: hl),
             ],
           ),
         ),
@@ -254,7 +318,9 @@ class HeroHqScreen extends ConsumerWidget {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(icon: Icon(Icons.arrow_back, color: tp), onPressed: () => context.pop()),
+        leading: IconButton(
+            icon: Icon(Icons.arrow_back, color: tp),
+            onPressed: () => context.pop()),
       ),
       body: body,
     );
@@ -266,7 +332,12 @@ class _HqButton extends StatelessWidget {
   final String title, sub;
   final String? badge;
   final VoidCallback onTap;
-  const _HqButton({required this.icon, required this.title, required this.sub, required this.onTap, this.badge});
+  const _HqButton(
+      {required this.icon,
+      required this.title,
+      required this.sub,
+      required this.onTap,
+      this.badge});
 
   @override
   Widget build(BuildContext context) {
@@ -291,18 +362,34 @@ class _HqButton extends StatelessWidget {
                 right: -8,
                 top: -6,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                  decoration: BoxDecoration(color: const Color(0xFFEF4444), borderRadius: BorderRadius.circular(8)),
-                  child: Text(badge!, style: const TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.w700)),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                  decoration: BoxDecoration(
+                      color: const Color(0xFFEF4444),
+                      borderRadius: BorderRadius.circular(8)),
+                  child: Text(badge!,
+                      style: const TextStyle(
+                          fontSize: 10,
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700)),
                 ),
               ),
           ]),
           const SizedBox(width: 10),
           Expanded(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(title, style: TextStyle(fontFamily: 'Mukta', fontWeight: FontWeight.w700, fontSize: 14, color: tp)),
-              Text(sub, maxLines: 2, overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontFamily: 'Mukta', fontSize: 11.5, color: ts)),
+            child:
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(title,
+                  style: TextStyle(
+                      fontFamily: 'Mukta',
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                      color: tp)),
+              Text(sub,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                      fontFamily: 'Mukta', fontSize: 11.5, color: ts)),
             ]),
           ),
         ]),
@@ -316,7 +403,11 @@ class _Medal extends StatelessWidget {
   final bool earned;
   final String label;
   final Color hl;
-  const _Medal({required this.rank, required this.earned, required this.label, required this.hl});
+  const _Medal(
+      {required this.rank,
+      required this.earned,
+      required this.label,
+      required this.hl});
 
   @override
   Widget build(BuildContext context) {
@@ -335,11 +426,14 @@ class _Medal extends StatelessWidget {
               color: rank.color.withValues(alpha: 0.18),
               border: Border.all(color: rank.color, width: 2),
             ),
-            child: Text(earned ? rank.emoji : '🔒', style: const TextStyle(fontSize: 20)),
+            child: Text(earned ? rank.emoji : '🔒',
+                style: const TextStyle(fontSize: 20)),
           ),
         ),
         const SizedBox(height: 4),
-        Text(label, style: TextStyle(fontFamily: 'Mukta', fontSize: 10.5, color: earned ? hl : ts)),
+        Text(label,
+            style: TextStyle(
+                fontFamily: 'Mukta', fontSize: 10.5, color: earned ? hl : ts)),
       ]),
     );
   }

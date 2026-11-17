@@ -44,6 +44,7 @@ import '../../services/geo_state_service.dart'; // effectiveStateProvider
 import '../../services/telemetry_batch_buffer.dart';
 import '../auth/state_language_map.dart'; // consentLangForState
 import '../../stores/auth_store.dart'; // currentUserProvider
+import '../../fun/fun_cards.dart'; // markEngaged (meets the subject hero)
 
 class ArRoomScreen extends ConsumerStatefulWidget {
   final String topicId;
@@ -113,6 +114,7 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
   @override
   void initState() {
     super.initState();
+    markEngaged(ref, widget.topicId);
     _arStart = DateTime.now();
     _telemetry = ref.read(telemetryServiceProvider);
     _telemetry?.logArStart(

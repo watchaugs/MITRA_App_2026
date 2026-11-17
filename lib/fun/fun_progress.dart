@@ -17,6 +17,8 @@
 //   grow on a day with no new content.
 //
 // HERO COSTUME (per subject)
+//   A subject's hero is hidden until the student opens one of its lessons or
+//   answers one of its quiz questions (fun_cards.dart markEngaged).
 //   subject XP = AR XP of its lessons + quiz XP of their linked quizzes.
 //   Share of the subject's possible XP → costume level:
 //   <20% → 0 (20% dressed), <40% → 1, <60% → 2, <80% → 3, else 4 (100%).
@@ -34,6 +36,7 @@ import '../screens/student/learn_screen.dart';
 import '../services/achievement_engine.dart';
 import '../stores/module_progress_store.dart';
 import '../theme/theme_provider.dart'; // sharedPreferencesProvider
+import 'fun_cards.dart'; // engagedIds, CardStore, cardTickProvider
 
 const int kGoalCap = 3;
 const int kArXp = 20, kQuizXp = 50; // per lesson / quiz (achievement engine)
@@ -43,7 +46,8 @@ int todayYmd() {
   return n.year * 10000 + n.month * 100 + n.day;
 }
 
-String _norm(String s) => s.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
+String _norm(String s) =>
+    s.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
 
 enum MissionKind { watch, quiz, revise }
 
@@ -107,8 +111,7 @@ List<Mission> openMissions({
           out.add(Mission(MissionKind.quiz, quiz.id, ar.title, subject));
         }
       }
-      prevMastered =
-          quiz != null ? progress.isMastered(quiz.id) : watched;
+      prevMastered = quiz != null ? progress.isMastered(quiz.id) : watched;
     }
   }
   return out;
@@ -137,8 +140,9 @@ final dailyGoalProvider = Provider<DailyGoal?>((ref) {
   final progress = ref.watch(moduleProgressStoreProvider);
   final catalog = ref.watch(arCatalogProvider).valueOrNull;
   if (catalog == null) return null;
-  final threshold =
-      ref.watch(arWatchThresholdProvider).maybeWhen(data: (v) => v, orElse: () => 85);
+  final threshold = ref
+      .watch(arWatchThresholdProvider)
+      .maybeWhen(data: (v) => v, orElse: () => 85);
   final lang = ref.watch(translationProvider).langCode;
   final quizzes = (ref
               .watch(quizFeedProvider(ref.watch(quizFilterParamsProvider)))
@@ -158,12 +162,16 @@ final dailyGoalProvider = Provider<DailyGoal?>((ref) {
     }
   } else {
     final open = openMissions(
-        catalog: catalog, quizzes: quizzes, progress: progress, threshold: threshold);
+        catalog: catalog,
+        quizzes: quizzes,
+        progress: progress,
+        threshold: threshold);
     missions = open.isEmpty
         ? const [Mission(MissionKind.revise, '', '', '')]
         : open.take(kGoalCap).toList();
     prefs.setInt(_kGoalDay, today);
-    prefs.setString(_kGoalItems, jsonEncode(missions.map((m) => m.toJson()).toList()));
+    prefs.setString(
+        _kGoalItems, jsonEncode(missions.map((m) => m.toJson()).toList()));
   }
 
   final activeToday = prefs.getInt(kLastActiveKey) == today;
@@ -192,7 +200,12 @@ bool takeGoalCelebration(SharedPreferences prefs, DailyGoal g) {
 class SubjectHeroProgress {
   final String subject;
   final int xp, maxXp;
-  const SubjectHeroProgress(this.subject, this.xp, this.maxXp);
+
+  /// false until the student opens a lesson or answers a quiz question in
+  /// this subject. A hidden hero is not shown anywhere.
+  final bool engaged;
+  const SubjectHeroProgress(this.subject, this.xp, this.maxXp,
+      {this.engaged = false});
 
   double get share => maxXp <= 0 ? 0 : (xp / maxXp).clamp(0.0, 1.0);
   int get level => share < .2
@@ -212,23 +225,55 @@ final subjectHeroProgressProvider =
   ref.watch(studentProfileProvider); // recompute whenever XP changes
   final catalog = ref.watch(arCatalogProvider).valueOrNull;
   if (catalog == null) return const {};
+  ref.watch(cardTickProvider); // a lesson opened / page scanned
+  ref.watch(moduleProgressTickProvider); // a quiz finished
+  final prefs = ref.watch(sharedPreferencesProvider);
+  final mps = ref.watch(moduleProgressStoreProvider);
+  final opened = engagedIds(prefs);
+  final scanned = CardStore(prefs).unlocked;
   final isar = ref.watch(isarProvider);
   final rows = await isar.collection<TopicProgress>().where().findAll();
   final byTopic = {for (final r in rows) r.topicId: r};
+  // Older activity counts too, so students who used the app before this
+  // update see their heroes straight away.
+  bool lessonTouched(String id) =>
+      opened.contains(id) ||
+      scanned.containsKey(id) ||
+      mps.arWatched(id) ||
+      mps.arWatchedPct(id) > 0 ||
+      (byTopic[id]?.arXpEarned ?? 0) > 0;
+  bool quizTouched(String id) =>
+      opened.contains(id) ||
+      mps.hasSavedAttempt(id) ||
+      mps.bestPct(id) > 0 ||
+      (byTopic[id]?.quizXpEarned ?? 0) > 0;
   final out = <String, SubjectHeroProgress>{};
   for (final e in catalog.bySubject.entries) {
     int xp = 0, max = 0;
-    for (final l in e.value.where((l) => !l.locked)) {
+    bool engaged = false;
+    for (final l in e.value) {
+      final qids = catalog.quizIdsByArId[l.id] ?? const <String>[];
+      if (!engaged) engaged = lessonTouched(l.id) || qids.any(quizTouched);
+      if (l.locked) continue;
       max += kArXp;
       xp += math.min(byTopic[l.id]?.arXpEarned ?? 0, kArXp);
-      for (final qid in catalog.quizIdsByArId[l.id] ?? const <String>[]) {
+      for (final qid in qids) {
         max += kQuizXp;
         xp += math.min(byTopic[qid]?.quizXpEarned ?? 0, kQuizXp);
       }
     }
-    out[e.key] = SubjectHeroProgress(e.key, xp, max);
+    out[e.key] = SubjectHeroProgress(e.key, xp, max, engaged: engaged);
   }
   return out;
+});
+
+/// Subjects whose hero the student has met (opened a lesson or answered a
+/// quiz question there), in catalog order. Other heroes stay hidden.
+final metSubjectsProvider = Provider<List<String>>((ref) {
+  final prog = ref.watch(subjectHeroProgressProvider).valueOrNull ?? const {};
+  final subjects = ref.watch(arCatalogProvider).valueOrNull?.bySubject.keys ??
+      const <String>[];
+  return subjects.where((s) => prog[s]?.engaged ?? false).toList();
 });
 
 /// Streak milestones for the power meter: 7, 30, 100, then every 100.

@@ -40,9 +40,11 @@ class HeroGalleryScreen extends ConsumerWidget {
     final tp = ThemeHelper.ctxTextPrimary(context);
     final ts = ThemeHelper.ctxTextSecondary(context);
     final gender = heroGenderFor(ref.watch(currentUserProvider)?.gender);
-    final subjects =
+    final allSubjects =
         ref.watch(arCatalogProvider).valueOrNull?.bySubject.keys.toList() ??
             const <String>[];
+    final subjects = ref.watch(metSubjectsProvider);
+    final hidden = allSubjects.length - subjects.length;
     final prog = ref.watch(subjectHeroProgressProvider).valueOrNull ?? const {};
 
     return MitraScaffold(
@@ -57,7 +59,7 @@ class HeroGalleryScreen extends ConsumerWidget {
                 fontFamily: 'Baloo2', fontWeight: FontWeight.w800, color: tp)),
       ),
       body: Stack(children: [
-        subjects.isEmpty
+        allSubjects.isEmpty
             ? Center(
                 child: Padding(
                   padding: const EdgeInsets.all(28),
@@ -69,30 +71,49 @@ class HeroGalleryScreen extends ConsumerWidget {
                   ),
                 ),
               )
-            : GridView.builder(
-                padding: const EdgeInsets.fromLTRB(12, 96, 12, 24),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  mainAxisSpacing: 10,
-                  crossAxisSpacing: 10,
-                  childAspectRatio: 0.72,
-                ),
-                itemCount: subjects.length,
-                itemBuilder: (ctx, i) {
-                  final subj = subjects[i];
-                  final hero = heroForSubject(subj);
-                  final p = prog[subj];
-                  final level = p?.level ?? 0;
-                  return HeroTile(
-                    subject: subj,
-                    hero: hero,
-                    gender: gender,
-                    level: level,
-                    onTap: () =>
-                        _openHero(context, ref, subj, hero, gender, level),
-                  );
-                },
-              ),
+            : subjects.isEmpty
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(28),
+                      child: Column(mainAxisSize: MainAxisSize.min, children: [
+                        const MysteryHero(height: 200),
+                        HiddenHeroesNote(hidden: hidden, none: true),
+                      ]),
+                    ),
+                  )
+                : GridView.builder(
+                    padding:
+                        EdgeInsets.fromLTRB(12, 96, 12, hidden > 0 ? 72 : 24),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      mainAxisSpacing: 10,
+                      crossAxisSpacing: 10,
+                      childAspectRatio: 0.72,
+                    ),
+                    itemCount: subjects.length,
+                    itemBuilder: (ctx, i) {
+                      final subj = subjects[i];
+                      final hero = heroForSubject(subj);
+                      final p = prog[subj];
+                      final level = p?.level ?? 0;
+                      return HeroTile(
+                        subject: subj,
+                        hero: hero,
+                        gender: gender,
+                        level: level,
+                        onTap: () =>
+                            _openHero(context, ref, subj, hero, gender, level),
+                      );
+                    },
+                  ),
+        if (subjects.isNotEmpty && hidden > 0)
+          Positioned(
+            left: 12,
+            right: 12,
+            bottom: MediaQuery.paddingOf(context).bottom + 8,
+            child: HiddenHeroesNote(hidden: hidden),
+          ),
         const Positioned(top: 4, right: 10, child: ChikuCorner(size: 88)),
       ]),
     );
@@ -270,6 +291,68 @@ class HeroTile extends ConsumerWidget {
           ]),
         ),
       ),
+    );
+  }
+}
+
+/// Stand-in for a hero the student has not met yet: a dim shield with "?".
+class MysteryHero extends StatelessWidget {
+  final double height;
+  const MysteryHero({super.key, this.height = 170});
+
+  @override
+  Widget build(BuildContext context) {
+    final ts = ThemeHelper.ctxTextSecondary(context);
+    return SizedBox(
+      width: height * 0.75,
+      height: height,
+      child: Stack(alignment: Alignment.center, children: [
+        Icon(Icons.shield_rounded,
+            size: height * 0.72, color: ts.withValues(alpha: 0.22)),
+        Text('?',
+            style: TextStyle(
+                fontFamily: 'Baloo2',
+                fontWeight: FontWeight.w800,
+                fontSize: height * 0.3,
+                color: ts.withValues(alpha: 0.75))),
+      ]),
+    );
+  }
+}
+
+/// "Heroes are hiding" line under the hero grid (or alone when none met).
+class HiddenHeroesNote extends ConsumerWidget {
+  final int hidden;
+  final bool none;
+  const HiddenHeroesNote({super.key, required this.hidden, this.none = false});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final ts = ThemeHelper.ctxTextSecondary(context);
+    final text = none
+        ? context.tr(ref, 'fun_heroes_none',
+            "Your heroes are hiding! Open any lesson to meet that subject's hero.")
+        : context.trp(
+            ref,
+            'fun_heroes_hidden',
+            '{n} more heroes are hiding. Open a lesson in a new subject to meet one.',
+            {'n': '$hidden'});
+    return Container(
+      margin: const EdgeInsets.only(top: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: ThemeHelper.ctxGlassFill(context),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: ThemeHelper.ctxGlassBorder(context)),
+      ),
+      child: Row(children: [
+        Icon(Icons.lock_outline_rounded, size: 18, color: ts),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(text,
+              style: TextStyle(fontFamily: 'Mukta', fontSize: 13, color: ts)),
+        ),
+      ]),
     );
   }
 }

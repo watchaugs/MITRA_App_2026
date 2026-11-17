@@ -167,6 +167,7 @@ class _ArImageAnchorScreenState extends ConsumerState<ArImageAnchorScreen> {
   void initState() {
     super.initState();
     _xpEngine = ref.read(achievementEngineProvider);
+    markEngaged(ref, widget.topicId);
     _hint = ref.trNow(
         'ar_point_camera_at_page', 'Point the camera at the textbook page');
     _arStart = DateTime.now();

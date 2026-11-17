@@ -23,6 +23,7 @@ import '../../stores/auth_store.dart';
 import '../../services/geo_state_service.dart';
 import '../../services/achievement_engine.dart'; // ✨ Added Engine Import
 import '../../providers/tr_ext.dart';
+import '../../fun/fun_cards.dart'; // markEngaged (meets the subject hero)
 
 class QuizScreen extends ConsumerStatefulWidget {
   final String quizId;
@@ -150,6 +151,7 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
     if (_answered) return;
     final timeMs = DateTime.now().difference(_questionStartTime).inMilliseconds;
     final isCorrect = idx == _questions[_current].correctAnswerIndex;
+    if (_current == 0) markEngaged(ref, widget.quizId);
     setState(() {
       _selected = idx;
       _answered = true;
@@ -666,7 +668,8 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
                                               style: TextStyle(fontSize: 80)),
                                           SizedBox(height: 16),
                                           Text(
-                                            context.tr(ref, 'quiz_wrong_answer', 'WRONG ANSWER!'),
+                                            context.tr(ref, 'quiz_wrong_answer',
+                                                'WRONG ANSWER!'),
                                             style: TextStyle(
                                               fontFamily: 'Baloo2',
                                               fontSize: 42,
@@ -705,9 +708,14 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
                       child: Text(
                         _canAdvance
                             ? (_current < _questions.length - 1
-                                ? context.tr(ref, 'quiz_next_question', 'Next Question →')
-                                : context.tr(ref, 'quiz_see_results', 'See Results →'))
-                            : context.tr(ref, 'quiz_read_explanation_to_continue', 'Read explanation to continue...'),
+                                ? context.tr(ref, 'quiz_next_question',
+                                    'Next Question →')
+                                : context.tr(
+                                    ref, 'quiz_see_results', 'See Results →'))
+                            : context.tr(
+                                ref,
+                                'quiz_read_explanation_to_continue',
+                                'Read explanation to continue...'),
                         style: TextStyle(
                             fontFamily: 'Baloo2',
                             fontWeight: FontWeight.w700,
@@ -732,7 +740,8 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
                     ),
                     alignment: Alignment.center,
                     child: Text(
-                      context.tr(ref, 'quiz_select_an_answer', 'Select an answer'),
+                      context.tr(
+                          ref, 'quiz_select_an_answer', 'Select an answer'),
                       style: TextStyle(
                           fontFamily: 'Baloo2',
                           fontWeight: FontWeight.w600,

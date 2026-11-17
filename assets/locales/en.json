@@ -500,5 +500,7 @@
   "fun_parent_lessons": "lessons this week",
   "fun_parent_quizzes": "quizzes this week",
   "fun_parent_cards": "new hero cards",
-  "fun_parent_footer": "Learning with MITRA — ask me what I learnt!"
+  "fun_parent_footer": "Learning with MITRA — ask me what I learnt!",
+  "fun_heroes_none": "Your heroes are hiding! Open any lesson to meet that subject's hero.",
+  "fun_heroes_hidden": "{n} more heroes are hiding. Open a lesson in a new subject to meet one."
 }

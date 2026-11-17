@@ -36,6 +36,7 @@ import '../../providers/telemetry_provider.dart';
 import '../../services/telemetry_service.dart';
 import '../auth/state_language_map.dart';
 import '../../stores/auth_store.dart';
+import '../../fun/fun_cards.dart'; // markEngaged (meets the subject hero)
 
 import '../../providers/tr_ext.dart';
 
@@ -219,6 +220,7 @@ class _ArViewerScreenState extends ConsumerState<ArViewerScreen> {
   void initState() {
     super.initState();
     _xpEngine = ref.read(achievementEngineProvider);
+    markEngaged(ref, widget.topicId);
     _arStart = DateTime.now();
     _telemetry = ref.read(telemetryServiceProvider);
     _telemetry?.logArStart(

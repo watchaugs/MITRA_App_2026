@@ -27,7 +27,8 @@ int _ymd(DateTime d) => d.year * 10000 + d.month * 100 + d.day;
 /// Monday of the current week, as yyyymmdd.
 int weekStartYmd([DateTime? now]) {
   final n = now ?? DateTime.now();
-  final d = DateTime(n.year, n.month, n.day).subtract(Duration(days: n.weekday - 1));
+  final d =
+      DateTime(n.year, n.month, n.day).subtract(Duration(days: n.weekday - 1));
   return _ymd(d);
 }
 
@@ -45,7 +46,8 @@ class CardStore {
     }
   }
 
-  Set<String> get seen => (_prefs.getStringList(_kCardsSeen) ?? const []).toSet();
+  Set<String> get seen =>
+      (_prefs.getStringList(_kCardsSeen) ?? const []).toSet();
 
   bool has(String id) => unlocked.containsKey(id);
 
@@ -98,6 +100,25 @@ class WeekCounts {
 
 /// Bumped when a card is unlocked or viewed, so the album/HQ rebuild.
 final cardTickProvider = StateProvider<int>((ref) => 0);
+
+// ── Hero visibility ──
+// A subject's hero stays hidden until the student opens one of its lessons
+// or answers one of its quiz questions. The ids opened are kept here.
+const _kEngaged = 'fun_engaged';
+
+Set<String> engagedIds(SharedPreferences prefs) =>
+    (prefs.getStringList(_kEngaged) ?? const <String>[]).toSet();
+
+/// Marks a lesson or quiz id as opened. Safe to call from initState.
+Future<void> markEngaged(WidgetRef ref, String id) async {
+  if (id.isEmpty) return;
+  final prefs = ref.read(sharedPreferencesProvider);
+  final tick = ref.read(cardTickProvider.notifier);
+  final ids = engagedIds(prefs);
+  if (!ids.add(id)) return;
+  await prefs.setStringList(_kEngaged, ids.toList());
+  tick.state++;
+}
 
 final cardStoreProvider = Provider<CardStore>((ref) {
   ref.watch(cardTickProvider);

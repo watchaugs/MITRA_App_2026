@@ -222,6 +222,7 @@ class _ArMarkerScreenState extends ConsumerState<ArMarkerScreen> {
   void initState() {
     super.initState();
     _xpEngine = ref.read(achievementEngineProvider);
+    markEngaged(ref, widget.topicId);
     _view = !_hasModel
         ? 'video'
         : (_hasVideo && widget.videoView == 'video' ? 'video' : '3d');
