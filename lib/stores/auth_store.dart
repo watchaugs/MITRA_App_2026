@@ -203,6 +203,17 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
+  /// Called whenever the location check finishes. Back in the home state →
+  /// run the cloud progress merge/push that was held (e.g. at sign-in, before
+  /// the check had finished, the merge was skipped).
+  void onTerritoryResolved() {
+    final user = state.user;
+    if (user == null || !user.isStudent || !TerritoryGate.syncAllowed) return;
+    try {
+      unawaited(ref.read(progressSyncServiceProvider).pushIfDue(user.id));
+    } catch (_) {/* Isar unavailable → no progress sync */}
+  }
+
   /// FCM topics follow the home-state rule: unsubscribed while the student
   /// is locked out (nothing shows up outside the home state), back on return.
   Future<void> syncTopicsWithTerritory() async {

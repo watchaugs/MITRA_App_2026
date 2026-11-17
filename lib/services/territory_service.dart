@@ -30,6 +30,7 @@ import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -48,6 +49,7 @@ class TerritoryGate {
   TerritoryGate._();
 
   static bool _enforce = false;
+  static String? _uid; // the student being enforced
   static TerritoryStatus _status = TerritoryStatus.unverified;
   static DateTime? _lastHomeCheck;
 
@@ -68,7 +70,8 @@ class TerritoryGate {
     if (!_enforce) return false;
     if (_status != TerritoryStatus.home) return true;
     final t = _lastHomeCheck;
-    return t == null || DateTime.now().difference(t) >= TerritoryService.recheckAfter;
+    return t == null ||
+        DateTime.now().difference(t) >= TerritoryService.recheckAfter;
   }
 
   /// MITRA API paths that stay open when locked: sign-in, consent (DPDP
@@ -84,7 +87,11 @@ class TerritoryGate {
   /// A student signed in: start enforcing from the last saved result (so
   /// nothing syncs before today's check finishes).
   static void begin(SharedPreferences prefs, String uid, String homeState) {
+    // Sign-in code runs more than once at startup (cached session, splash,
+    // auth listener). For the same student, keep what today's check found.
+    if (_enforce && _uid == uid) return;
     _enforce = true;
+    _uid = uid;
     final last = TerritoryService._readResult(prefs, uid);
     if (last != null &&
         last.result == 'home' &&
@@ -101,6 +108,7 @@ class TerritoryGate {
   /// Signed out (or not a student): stop enforcing.
   static void end() {
     _enforce = false;
+    _uid = null;
     _status = TerritoryStatus.unverified;
     _lastHomeCheck = null;
   }
@@ -149,8 +157,12 @@ class TerritoryService {
       final raw = prefs.getString(_resultKey(uid));
       if (raw == null) return null;
       final m = jsonDecode(raw) as Map;
-      return _Saved('${m['r']}', '${m['s']}',
-          DateTime.fromMillisecondsSinceEpoch((m['t'] as num).toInt()));
+      final at = DateTime.fromMillisecondsSinceEpoch((m['t'] as num).toInt());
+      // Saved "in the future" = the phone clock was moved back → don't trust.
+      if (at.isAfter(DateTime.now().add(const Duration(minutes: 5)))) {
+        return null;
+      }
+      return _Saved('${m['r']}', '${m['s']}', at);
     } catch (_) {
       return null;
     }
@@ -183,7 +195,9 @@ class TerritoryService {
     }
     final last = _readResult(prefs, uid);
     final lastHome =
-        (last != null && last.result == 'home' && last.state == home) ? last : null;
+        (last != null && last.result == 'home' && last.state == home)
+            ? last
+            : null;
 
     // Once a day while at home: reuse today's confirmation, no GPS.
     if (!force &&
@@ -224,6 +238,21 @@ class TerritoryService {
         message: 'Turn on location to confirm you are in $homeState.');
   }
 
+  // MITRA API calls need the sign-in token. Right after sign-in it is saved a
+  // moment later; calling before that would get a 401, and a 401 signs the
+  // student out. So wait for it (up to 15 s); without it, skip the server.
+  static Future<bool> _apiReady() async {
+    const storage = FlutterSecureStorage();
+    for (int i = 0; i < 30; i++) {
+      try {
+        final t = await storage.read(key: 'mitra_access_token');
+        if (t != null && t.isNotEmpty) return true;
+      } catch (_) {}
+      await Future<void>.delayed(const Duration(milliseconds: 500));
+    }
+    return false;
+  }
+
   // true = inside home, false = outside, null = couldn't tell.
   static Future<bool?> _checkNow(
       String home, String homeState, _Boundary? boundary) async {
@@ -233,11 +262,13 @@ class TerritoryService {
       return boundary.contains(pos.latitude, pos.longitude);
     }
     // No saved boundary yet → ask the server once (point is not stored).
+    if (!await _apiReady()) return null;
     try {
       final res = await GeofenceAPI.checkPoint(pos.latitude, pos.longitude);
-      final matches = (res.data is Map ? res.data['matches'] as List? : null) ??
-          const [];
-      return matches.any((m) => m is Map && norm('${m['state'] ?? ''}') == home);
+      final matches =
+          (res.data is Map ? res.data['matches'] as List? : null) ?? const [];
+      return matches
+          .any((m) => m is Map && norm('${m['state'] ?? ''}') == home);
     } catch (e) {
       debugPrint('📍 Territory: server check failed: $e');
       return null;
@@ -294,7 +325,7 @@ class TerritoryService {
     final savedAt = DateTime.tryParse('${saved?['saved_at'] ?? ''}');
     final stale = savedAt == null ||
         DateTime.now().difference(savedAt) >= _boundaryMaxAge;
-    if (stale) {
+    if (stale && await _apiReady()) {
       try {
         final res = await GeofenceAPI.territory(homeState);
         if (res.data is Map) {
@@ -386,7 +417,9 @@ class _Circle {
     double rad(double d) => d * math.pi / 180;
     final dLat = rad(la - lat), dLng = rad(ln - lng);
     final a = math.pow(math.sin(dLat / 2), 2) +
-        math.cos(rad(lat)) * math.cos(rad(la)) * math.pow(math.sin(dLng / 2), 2);
+        math.cos(rad(lat)) *
+            math.cos(rad(la)) *
+            math.pow(math.sin(dLng / 2), 2);
     final c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
     return r * c <= radiusKm;
   }

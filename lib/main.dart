@@ -444,6 +444,7 @@ class _MitraAppState extends ConsumerState<MitraApp>
     ref.listen(geoStateProvider, (prev, next) {
       if (next.hasValue) {
         ref.read(authProvider.notifier).syncTopicsWithTerritory();
+        ref.read(authProvider.notifier).onTerritoryResolved();
       }
     });
 

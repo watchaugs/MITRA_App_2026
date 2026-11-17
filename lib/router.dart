@@ -44,6 +44,7 @@ import 'services/geo_state_service.dart'; // geoStateProvider
 import 'services/territory_service.dart'; // TerritoryGate (home-state rule)
 import 'stores/ar_pack_store.dart';
 import 'screens/student/territory_lock_screen.dart';
+import 'demo/demo_data.dart' show kPresentationMode;
 import 'package:mitra_student/services/telemetry_service.dart';
 
 /// Fires a screen_view telemetry event on every route push/replace, so the
@@ -168,7 +169,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       // Outside the registered state, or not confirmed with no grace left →
       // only the lock screen (data rights + sign-out). In grace → only
       // lessons saved on this phone open.
-      if (loggedIn && user?.isStudent == true && TerritoryGate.enforced) {
+      if (!kPresentationMode &&
+          loggedIn &&
+          user?.isStudent == true &&
+          TerritoryGate.enforced) {
         if (!TerritoryGate.contentAllowed) {
           return _openWhenLocked(path, user) ? null : '/student/locked';
         }
