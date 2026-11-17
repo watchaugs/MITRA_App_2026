@@ -36,6 +36,7 @@ import 'package:path_provider/path_provider.dart';
 
 import '../models/quiz_model.dart';
 import '../services/api_service.dart';
+import '../services/territory_service.dart'; // TerritoryGate (home-state rule)
 
 class QuizPackStore {
   QuizPackStore._();
@@ -142,6 +143,7 @@ class QuizPackStore {
   String imageUrl(String url) => _abs(url);
 
   Future<void> _cacheImages(Map<String, dynamic> pack) async {
+    if (!TerritoryGate.syncAllowed) return; // downloads only from home state
     try {
       await _file(); // sets _imgDir
       final dir = Directory(_imgDir!);

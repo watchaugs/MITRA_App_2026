@@ -30,6 +30,7 @@ import '../fun/fun_cards.dart'; // cardTickProvider
 import '../services/achievement_engine.dart'; // isarProvider
 import '../services/progress_sync_service.dart';
 import '../services/telemetry_batch_buffer.dart';
+import '../services/territory_service.dart'; // TerritoryGate (home-state rule)
 import '../theme/theme_provider.dart'; // sharedPreferencesProvider
 import 'device_owner.dart';
 import 'module_progress_store.dart'; // moduleProgressTickProvider
@@ -98,6 +99,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         final cached = MitraUser.fromJson(map);
         // Only use the cache if it belongs to the signed-in Firebase user.
         if (cached.id == firebaseUser.uid) {
+          _beginTerritory(cached); // before any screen or sync runs
           state =
               state.copyWith(user: cached, isLoggedIn: true, isLoading: false);
         }
@@ -179,14 +181,55 @@ class AuthNotifier extends StateNotifier<AuthState> {
     // Shared phones: make THIS student's progress the live set before any
     // screen shows it or any sync runs (stores/device_owner.dart).
     await _switchProgressOwner(user.id);
+    _beginTerritory(user); // home-state rule, before any screen or sync runs
     state = state.copyWith(user: user, isLoggedIn: true, isLoading: false);
     await _cacheUser(user); // persist so the next launch restores instantly
     await _initializeTelemetry();
-    _subscribeFCMTopics(user);
+    unawaited(syncTopicsWithTerritory()); // topics only while allowed
     // Cloud copy of progress: every 10 days (and first merge if never done).
     try {
       unawaited(ref.read(progressSyncServiceProvider).pushIfDue(user.id));
     } catch (_) {/* Isar unavailable → no progress sync */}
+  }
+
+  // Students: enforce the home-state rule from the last saved check until
+  // today's check finishes (territory_service.dart). Others: no rule.
+  void _beginTerritory(MitraUser user) {
+    if (user.isStudent) {
+      TerritoryGate.begin(ref.read(sharedPreferencesProvider), user.id,
+          user.assignedState ?? '');
+    } else {
+      TerritoryGate.end();
+    }
+  }
+
+  /// FCM topics follow the home-state rule: unsubscribed while the student
+  /// is locked out (nothing shows up outside the home state), back on return.
+  Future<void> syncTopicsWithTerritory() async {
+    final user = state.user;
+    if (user == null) return;
+    if (!user.isStudent || TerritoryGate.contentAllowed) {
+      _subscribeFCMTopics(user);
+    } else {
+      await _unsubscribeFCMTopics(user);
+    }
+  }
+
+  Future<void> _unsubscribeFCMTopics(MitraUser user) async {
+    final st = user.assignedState?.toLowerCase().replaceAll(' ', '_') ?? '';
+    final cls = user.classGrade?.toLowerCase().replaceAll(' ', '_') ?? '';
+    try {
+      await FirebaseMessaging.instance.unsubscribeFromTopic('mitra_all');
+      if (st.isNotEmpty) {
+        await FirebaseMessaging.instance.unsubscribeFromTopic('mitra_$st');
+        if (cls.isNotEmpty) {
+          await FirebaseMessaging.instance
+              .unsubscribeFromTopic('mitra_${st}_$cls');
+        }
+      }
+    } catch (e) {
+      debugPrint('⚠️ FCM unsubscribe: $e');
+    }
   }
 
   Future<void> _switchProgressOwner(String uid) async {
@@ -297,6 +340,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     await FirebaseAuth.instance.signOut();
     // Stop tagging events with the student who just left.
     TelemetryService.current = null;
+    TerritoryGate.end();
     ref.read(telemetryServiceProvider.notifier).state = null;
     state = const AuthState(isLoggedIn: false, isLoading: false);
   }

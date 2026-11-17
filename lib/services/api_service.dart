@@ -9,6 +9,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
 import '../router.dart';
+import 'territory_service.dart'; // TerritoryGate (home-state rule)
 import 'dart:convert';
 import 'dart:io';
 
@@ -52,6 +53,16 @@ class ApiService {
     // ── Request interceptor: attach JWT & Compress Payload ──────────────
     _dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) async {
+        // Home-state rule: while a student is outside their home state (or
+        // it can't be confirmed), nothing goes to or comes from MITRA except
+        // sign-in, consent/data-rights and the location check itself.
+        if (!TerritoryGate.apiAllowed(options.path)) {
+          return handler.reject(DioException(
+            requestOptions: options,
+            type: DioExceptionType.cancel,
+            error: 'outside_home_state',
+          ));
+        }
         final token = await _storage.read(key: 'mitra_access_token');
         if (token != null) {
           options.headers['Authorization'] = 'Bearer $token';
@@ -242,6 +253,11 @@ class GeofenceAPI {
   static Future<Response> checkPoint(double lat, double lng) =>
       api.get('/api/geofence/check-point',
           queryParameters: {'lat': lat, 'lng': lng});
+
+  // The home state's active geofence boundaries + offline grace days, for
+  // the on-phone location check (territory_service.dart). No location sent.
+  static Future<Response> territory(String state) =>
+      api.get('/api/geofence/territory', queryParameters: {'state': state});
 }
 
 /// Quiz data access. This is now an INJECTABLE INSTANCE class (it takes its Dio

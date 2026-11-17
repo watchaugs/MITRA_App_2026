@@ -17,6 +17,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'territory_service.dart'; // TerritoryGate (home-state rule)
 
 // ── Configuration ──────────────────────────────────────
 // TWO TIERS, matching the consolidation policy:
@@ -229,6 +230,9 @@ class TelemetryBatchBuffer {
     // next sign-in on this phone (logout sends the leaving student's first).
     final me = FirebaseAuth.instance.currentUser?.uid;
     if (me == null || me.isEmpty) return;
+    // Home-state rule: events stay on the phone until the student is
+    // confirmed back in their home state.
+    if (!TerritoryGate.syncAllowed) return;
     _isFlushing = true;
 
     try {

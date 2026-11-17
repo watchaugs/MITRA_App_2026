@@ -39,6 +39,11 @@ import 'screens/student/edit_profile_screen.dart';
 import 'screens/legal/policy_screen.dart';
 import 'config/legal_config.dart';
 import 'screens/legal/grievance_screen.dart';
+import 'models/user.dart';
+import 'services/geo_state_service.dart'; // geoStateProvider
+import 'services/territory_service.dart'; // TerritoryGate (home-state rule)
+import 'stores/ar_pack_store.dart';
+import 'screens/student/territory_lock_screen.dart';
 import 'package:mitra_student/services/telemetry_service.dart';
 
 /// Fires a screen_view telemetry event on every route push/replace, so the
@@ -96,7 +101,23 @@ final _teacherKey = GlobalKey<NavigatorState>();
 class _AuthRefresh extends ChangeNotifier {
   _AuthRefresh(Ref ref) {
     ref.listen(authProvider, (_, __) => notifyListeners());
+    // Home-state rule: re-route when the location check result changes.
+    ref.listen(geoStateProvider, (_, __) => notifyListeners());
   }
+}
+
+// Routes a locked student may still open: data rights / legal pages, the lock
+// screen, and first-time setup (home state not chosen yet).
+// The language → consent steps after sign-in stay reachable, so consent is
+// never skipped while the location check is still running.
+bool _openWhenLocked(String path, MitraUser? user) {
+  if (path == '/student/locked' || path.startsWith('/legal/')) return true;
+  if (path == '/consent' || path == '/language') return true;
+  // First-time setup only: an existing home state can't be changed here
+  // (moving state = re-register).
+  final noHomeYet = (user?.assignedState ?? '').trim().isEmpty;
+  return noHomeYet &&
+      (path == '/setup' || path == '/setup/class' || path == '/location');
 }
 
 Map<String, String>? _parseAudios(String? raw) {
@@ -143,6 +164,27 @@ final routerProvider = Provider<GoRouter>((ref) {
         return '/setup';
       }
 
+      // ── Home-state rule (territory_service.dart) ──────────────────────────
+      // Outside the registered state, or not confirmed with no grace left →
+      // only the lock screen (data rights + sign-out). In grace → only
+      // lessons saved on this phone open.
+      if (loggedIn && user?.isStudent == true && TerritoryGate.enforced) {
+        if (!TerritoryGate.contentAllowed) {
+          return _openWhenLocked(path, user) ? null : '/student/locked';
+        }
+        if (path == '/student/locked' &&
+            state.uri.queryParameters['reason'] != 'unsaved') {
+          return '/student/home';
+        }
+        if (TerritoryGate.status == TerritoryStatus.grace &&
+            path.startsWith('/student/ar/')) {
+          final id = path.substring('/student/ar/'.length);
+          if (!ArPackStore.instance.hasLesson(id)) {
+            return '/student/locked?reason=unsaved';
+          }
+        }
+      }
+
       // ── Teacher flow hidden for launch ────────────────────────────────────
       // The teacher screens (Students/Analytics/Assign) are not wired to live
       // data yet, so we don't expose them. Anyone landing on /teacher/* is sent
@@ -157,6 +199,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/',
         builder: (context, state) => const SplashScreen(),
+      ),
+      GoRoute(
+        path: '/student/locked',
+        builder: (context, state) => TerritoryLockScreen(
+            reason: state.uri.queryParameters['reason'] ?? ''),
       ),
       GoRoute(
         path: '/legal/grievance',

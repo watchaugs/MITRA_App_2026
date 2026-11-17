@@ -23,6 +23,9 @@ import 'router.dart';
 import 'services/api_service.dart';
 import 'services/quiz_offline_service.dart';
 import 'stores/ar_pack_store.dart';
+import 'stores/auth_store.dart';
+import 'services/geo_state_service.dart';
+import 'services/territory_service.dart'; // TerritoryGate (home-state rule)
 import 'services/telemetry_batch_buffer.dart';
 import 'services/telemetry_service.dart';
 import 'services/telemetry_enums.dart' show ConnectivityType;
@@ -238,6 +241,11 @@ class _MitraAppState extends ConsumerState<MitraApp>
     } else if (state == AppLifecycleState.resumed && _sessionStart == null) {
       _beginSession(); // returning to foreground starts a fresh session
     }
+    // Home-state rule: back in the foreground → re-check location if the
+    // daily check is due (or the student isn't confirmed at home).
+    if (state == AppLifecycleState.resumed && TerritoryGate.checkDue) {
+      ref.invalidate(geoStateProvider);
+    }
     super.didChangeAppLifecycleState(state);
   }
 
@@ -340,6 +348,8 @@ class _MitraAppState extends ConsumerState<MitraApp>
     });
     try {
       FirebaseMessaging.onMessage.listen((msg) {
+        // Home-state rule: nothing shows while the student is locked out.
+        if (!TerritoryGate.contentAllowed) return;
         // Foreground: show BOTH the in-app card (rich, styled) and a tray
         // notification, so the student sees it whether or not they're looking.
         _showInAppCard(msg);
@@ -429,6 +439,13 @@ class _MitraAppState extends ConsumerState<MitraApp>
     final router = ref.watch(routerProvider);
     final activeTheme = ref.watch(themeProvider);
     ref.watch(quizSyncProvider);
+    // Home-state rule: notification topics follow the location check
+    // (unsubscribed while locked out, back on return home).
+    ref.listen(geoStateProvider, (prev, next) {
+      if (next.hasValue) {
+        ref.read(authProvider.notifier).syncTopicsWithTerritory();
+      }
+    });
 
     return MaterialApp.router(
       title: 'MITRA',

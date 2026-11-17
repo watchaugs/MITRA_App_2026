@@ -33,6 +33,7 @@
 
 import 'dart:convert';
 import 'dart:developer' as developer;
+import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
@@ -49,6 +50,7 @@ import '../../widgets/orbit_explorer.dart';
 import '../../stores/module_progress_store.dart';
 import '../../stores/ar_pack_store.dart';
 import '../../models/quiz_model.dart';
+import 'package:path_provider/path_provider.dart';
 
 // ═══════════════════════════════════════════════════════════
 // DOMAIN: Failures
@@ -630,6 +632,37 @@ ArCatalog? _catalogFromManifest(dynamic data) {
   );
 }
 
+// ── Saved copy of the lesson list (per state + language) ───────────────────
+// Lets saved lessons open offline and during the home-state grace period.
+Future<File> _catalogCopyFile(String state, String lang) async {
+  final dir = await getApplicationDocumentsDirectory();
+  final d = Directory('${dir.path}/catalog_copy');
+  if (!d.existsSync()) d.createSync(recursive: true);
+  final key =
+      '${state}_$lang'.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), '_');
+  return File('${d.path}/$key.json');
+}
+
+Future<void> _saveCatalogCopy(
+    String state, String lang, String kind, dynamic data) async {
+  try {
+    final f = await _catalogCopyFile(state, lang);
+    await f.writeAsString(jsonEncode({'k': kind, 'd': data}));
+  } catch (_) {/* best-effort */}
+}
+
+Future<(String, dynamic)?> _readCatalogCopy(String state, String lang) async {
+  try {
+    final f = await _catalogCopyFile(state, lang);
+    if (!f.existsSync()) return null;
+    final m = jsonDecode(await f.readAsString());
+    if (m is! Map) return null;
+    return ('${m['k']}', m['d']);
+  } catch (_) {
+    return null;
+  }
+}
+
 final arCatalogProvider = FutureProvider<ArCatalog>((ref) async {
   if (kPresentationMode) {
     return const ArCatalog(
@@ -650,20 +683,39 @@ final arCatalogProvider = FutureProvider<ArCatalog>((ref) async {
     try {
       final mres = await CurriculumAPI.manifest(state, stateName: state);
       final mcat = _catalogFromManifest(mres.data);
-      if (mcat != null && mcat.bySubject.isNotEmpty) return mcat;
+      if (mcat != null && mcat.bySubject.isNotEmpty) {
+        await _saveCatalogCopy(state, lang, 'manifest', mres.data);
+        return mcat;
+      }
     } catch (_) {
       // ignore and fall back to /ar-topics
     }
   }
 
-  final res = await CurriculumAPI.arTopics({
-    if (state.isNotEmpty) 'state': state,
-    if (lang.isNotEmpty) 'lang': lang,
-  });
+  dynamic topicsData;
+  try {
+    final res = await CurriculumAPI.arTopics({
+      if (state.isNotEmpty) 'state': state,
+      if (lang.isNotEmpty) 'lang': lang,
+    });
+    topicsData = res.data;
+    await _saveCatalogCopy(state, lang, 'topics', topicsData);
+  } catch (_) {
+    // Offline, or held by the home-state rule (grace): use the copy saved
+    // the last time the lesson list loaded in the home state.
+    final copy = await _readCatalogCopy(state, lang);
+    if (copy == null) rethrow;
+    if (copy.$1 == 'manifest') {
+      final mcat = _catalogFromManifest(copy.$2);
+      if (mcat != null) return mcat;
+      rethrow;
+    }
+    topicsData = copy.$2;
+  }
 
-  final raw = res.data is Map ? res.data['data'] : null;
+  final raw = topicsData is Map ? topicsData['data'] : null;
   final territorySupported =
-      res.data is Map ? (res.data['territory_supported'] != false) : true;
+      topicsData is Map ? (topicsData['territory_supported'] != false) : true;
   final bySubject = <String, List<ArLessonRec>>{};
   final glbById = <String, String>{};
   final nativeGlbById = <String, String>{};

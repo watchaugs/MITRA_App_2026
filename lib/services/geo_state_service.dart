@@ -1,6 +1,10 @@
 // ═══════════════════════════════════════════════════════════════════════════
 // geo_state_service.dart — GPS-primary state detection + territory licensing.
 //
+// NOW: students are checked against their HOME state only — see
+// territory_service.dart (geoStateProvider below calls it). The server-based
+// GeoStateService.resolve() further down is no longer used by the app.
+//
 // The dashboard geofences entire states (real boundaries). On the app we:
 //   1. read the device GPS,
 //   2. ask the backend /geofence/check-point which licensed state the point is in,
@@ -18,6 +22,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'api_service.dart';
+import 'territory_service.dart';
 import '../stores/auth_store.dart';
 
 enum GeoStatus {
@@ -31,7 +36,13 @@ class GeoState {
   final GeoStatus status;
   final String? detectedState; // e.g. "Gujarat" (null unless insideTerritory)
   final String? message;
-  const GeoState(this.status, {this.detectedState, this.message});
+  final bool inGrace; // location not confirmed now; saved lessons only
+  final int? graceDaysLeft;
+  const GeoState(this.status,
+      {this.detectedState,
+      this.message,
+      this.inGrace = false,
+      this.graceDaysLeft});
 
   bool get allowed => status == GeoStatus.insideTerritory;
 }
@@ -122,24 +133,51 @@ class GeoStateService {
   }
 }
 
-// One resolution per launch (refreshable). Content providers watch this.
+bool _forceTerritoryCheck = false;
+
+/// "Check again": re-reads location now, ignoring today's saved result.
+void recheckTerritory(WidgetRef ref) {
+  _forceTerritoryCheck = true;
+  ref.invalidate(geoStateProvider);
+}
+
+// Home-state check (territory_service.dart). Re-runs when the signed-in
+// student changes, on "Check again", and when the app returns after 24 h.
 final geoStateProvider = FutureProvider<GeoState>((ref) async {
-  return GeoStateService.resolve();
+  final who = ref.watch(currentUserProvider.select(
+      (u) => (u?.id ?? '', u?.assignedState ?? '', u?.isStudent ?? false)));
+  if (who.$1.isEmpty || !who.$3) {
+    // Not a signed-in student: the home-state rule doesn't apply.
+    TerritoryGate.end();
+    return GeoState(GeoStatus.insideTerritory, detectedState: who.$2);
+  }
+  final force = _forceTerritoryCheck;
+  _forceTerritoryCheck = false;
+  final r = await TerritoryService.resolve(
+      uid: who.$1, homeState: who.$2, force: force);
+  switch (r.status) {
+    case TerritoryStatus.home:
+      return GeoState(GeoStatus.insideTerritory, detectedState: r.homeState);
+    case TerritoryStatus.grace:
+      return GeoState(GeoStatus.insideTerritory,
+          detectedState: r.homeState,
+          inGrace: true,
+          graceDaysLeft: r.graceDaysLeft);
+    case TerritoryStatus.outside:
+      return GeoState(GeoStatus.outsideTerritory, message: r.message);
+    case TerritoryStatus.unverified:
+      return GeoState(GeoStatus.gpsUnavailable, message: r.message);
+  }
 });
 
-// Effective state for content/quiz scoping, shared across the app: GPS-detected
-// licensed state is PRIMARY; the onboarding assigned_state is used only when GPS
-// is unavailable (never to widen access). Outside every licensed state → ''.
+// Effective state for content/quiz scoping: the student's HOME state while
+// they are confirmed there (or in grace); '' when locked, so nothing loads.
 final effectiveStateProvider = Provider<String>((ref) {
   final geo = ref.watch(geoStateProvider).valueOrNull;
-  final profileState = ref.watch(currentUserProvider)?.assignedState ?? '';
-  if (geo == null) return profileState;
-  switch (geo.status) {
-    case GeoStatus.insideTerritory:
-      return geo.detectedState ?? profileState;
-    case GeoStatus.outsideTerritory:
-      return '';
-    case GeoStatus.gpsUnavailable:
-      return profileState;
-  }
+  final profileState =
+      ref.watch(currentUserProvider.select((u) => u?.assignedState ?? ''));
+  if (geo == null) return TerritoryGate.contentAllowed ? profileState : '';
+  return geo.status == GeoStatus.insideTerritory
+      ? (geo.detectedState ?? profileState)
+      : '';
 });

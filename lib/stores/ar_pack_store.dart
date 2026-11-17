@@ -5,6 +5,8 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
 
+import '../services/territory_service.dart'; // TerritoryGate (home-state rule)
+
 class ArPackStore {
   ArPackStore._();
   static final ArPackStore instance = ArPackStore._();
@@ -56,6 +58,10 @@ class ArPackStore {
   String? localVideo(String id, {String? url}) =>
       _fresh('mp4', id, _localVideo, url);
 
+  /// The lesson has a 3D model or page video saved on this phone.
+  bool hasLesson(String id) =>
+      _localModel.containsKey(id) || _localVideo.containsKey(id);
+
   Future<void> _saveSrcIndex(Directory d) async {
     try {
       await File('${d.path}/index.json').writeAsString(jsonEncode(_srcUrl));
@@ -101,6 +107,7 @@ class ArPackStore {
     bool wifiOnly = true,
   }) async {
     if (wifiOnly && !(await onWifi())) return 0;
+    if (!TerritoryGate.syncAllowed) return 0; // downloads only from home state
     final d = await _dir();
     int cached = 0;
 

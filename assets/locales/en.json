@@ -507,5 +507,18 @@
   "quiz_seq_hint": "Tap the steps in the right order · {n} left",
   "quiz_seq_ready": "All set! Now check your order.",
   "quiz_seq_clear": "Clear",
-  "quiz_seq_check": "Check my order"
+  "quiz_seq_check": "Check my order",
+  "terr_checking": "Checking your location…",
+  "terr_outside_title": "MITRA works only in {state}",
+  "terr_outside_body": "You are outside {state}, your registered state. Lessons, quizzes and syncing stay paused until you are back. Your progress is safe on this phone.",
+  "terr_need_location": "Turn on location",
+  "terr_need_location_body": "MITRA needs to confirm you are in {state} before lessons open. Turn on location and tap Check again.",
+  "terr_unsaved_title": "Saved lessons only",
+  "terr_unsaved_body": "Your location is not confirmed, so only lessons saved on this phone open. Turn on location in {state} to open this one.",
+  "terr_check_again": "Check again",
+  "terr_back": "Back to lessons",
+  "terr_rights": "Your data rights",
+  "terr_grievance": "Grievance officer",
+  "terr_privacy": "Privacy policy",
+  "terr_terms": "Terms of use"
 }

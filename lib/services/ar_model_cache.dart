@@ -21,6 +21,7 @@ import 'dart:async';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'territory_service.dart'; // TerritoryGate (home-state rule)
 
 class ArModelCache {
   ArModelCache._();
@@ -75,6 +76,7 @@ class ArModelCache {
   }
 
   Future<bool> _download(String url, File dest) async {
+    if (!TerritoryGate.syncAllowed) return false; // only from home state
     HttpClient? client;
     try {
       client = HttpClient();

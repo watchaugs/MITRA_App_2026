@@ -24,6 +24,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'territory_service.dart'; // TerritoryGate (home-state rule)
 
 class ArVideoCache {
   ArVideoCache._();
@@ -107,6 +108,7 @@ class ArVideoCache {
 
   Future<bool> _download(
       String url, File dest, void Function(double) onProgress) async {
+    if (!TerritoryGate.syncAllowed) return false; // only from home state
     HttpClient? client;
     final part = File('${dest.path}.part');
     try {

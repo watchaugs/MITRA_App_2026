@@ -26,6 +26,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'achievement_engine.dart';
 import '../stores/device_owner.dart';
+import 'territory_service.dart'; // TerritoryGate (home-state rule)
 import '../stores/module_progress_store.dart';
 import '../theme/theme_provider.dart'; // sharedPreferencesProvider
 
@@ -59,6 +60,7 @@ class ProgressSyncService {
     // Never upload the live set as someone else's, and never before this
     // student's cloud copy has been merged in (that could lower cloud XP).
     if (!_isLiveOwner(uid) || _prefs.getBool(_mergedKey(uid)) != true) return;
+    if (!TerritoryGate.syncAllowed) return; // only from the home state
     try {
       final profile = await _engine.exportProfile();
       final modules = _modules.exportProgress();
@@ -106,6 +108,7 @@ class ProgressSyncService {
     // Wait for the sign-in switch so we merge into THIS student's set.
     await DeviceOwner.settled();
     if (!_isLiveOwner(uid)) return;
+    if (!TerritoryGate.syncAllowed) return; // merged later, back home
     try {
       final snap = await _col.doc(uid).get();
       if (snap.exists) {
