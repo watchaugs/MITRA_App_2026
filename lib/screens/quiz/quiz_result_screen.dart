@@ -13,6 +13,7 @@ import '../../constants/colors.dart';
 import '../../models/quiz_model.dart';
 import '../../stores/module_progress_store.dart';
 import 'package:lottie/lottie.dart';
+import 'quiz_rounds.dart'; // QuizImage for picture-round answers
 
 class QuizResultScreen extends ConsumerWidget {
   final int score;
@@ -428,9 +429,14 @@ class _ReviewItemState extends ConsumerState<_ReviewItem> {
                     // Correct answer → reveal the answer AND the explanation.
                     _ReviewAnswerRow(
                       label: context.tr(ref, 'quiz_correct', 'Correct'),
-                      answer: q.options[q.correctAnswerIndex],
+                      answer: q.answerText(q.correctAnswerIndex,
+                          pictureWord:
+                              context.tr(ref, 'quiz_picture', 'Picture')),
                       color: MitraColors.emerald,
                     ),
+                    if (q.isPicture &&
+                        q.correctAnswerIndex < q.optionImages.length)
+                      _ReviewPicture(url: q.optionImages[q.correctAnswerIndex]),
                     if (q.explanation != null) ...[
                       const SizedBox(height: 8),
                       Row(
@@ -460,9 +466,16 @@ class _ReviewItemState extends ConsumerState<_ReviewItem> {
                       _ReviewAnswerRow(
                         label:
                             context.tr(ref, 'quiz_your_answer', 'Your answer'),
-                        answer: q.options[widget.studentAnswer!],
+                        answer: q.answerText(widget.studentAnswer!,
+                            pictureWord:
+                                context.tr(ref, 'quiz_picture', 'Picture')),
                         color: MitraColors.crimson,
                       ),
+                    if (widget.studentAnswer != null &&
+                        q.isPicture &&
+                        widget.studentAnswer! < q.optionImages.length)
+                      _ReviewPicture(
+                          url: q.optionImages[widget.studentAnswer!]),
                     const SizedBox(height: 8),
                     Row(
                       children: [
@@ -484,6 +497,31 @@ class _ReviewItemState extends ConsumerState<_ReviewItem> {
                 ],
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// Small picture under a picture-round answer.
+class _ReviewPicture extends StatelessWidget {
+  final String url;
+  const _ReviewPicture({required this.url});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 6),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(MitraRadius.sm),
+          child: Container(
+            color: Colors.white,
+            width: 110,
+            height: 90,
+            child: QuizImage(url: url, height: 90),
           ),
         ),
       ),

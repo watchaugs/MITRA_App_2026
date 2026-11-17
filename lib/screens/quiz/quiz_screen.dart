@@ -24,6 +24,7 @@ import '../../services/geo_state_service.dart';
 import '../../services/achievement_engine.dart'; // ✨ Added Engine Import
 import '../../providers/tr_ext.dart';
 import '../../fun/fun_cards.dart'; // markEngaged (meets the subject hero)
+import 'quiz_rounds.dart'; // picture + sequence rounds
 
 class QuizScreen extends ConsumerStatefulWidget {
   final String quizId;
@@ -47,6 +48,8 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
 
   final List<int?> _studentAnswers = [];
   final List<Map<String, dynamic>> _mcqResponses = [];
+  List<int>?
+      _seqOrder; // sequence round: the order tapped so far (complete) or null
 
   // ✨ Flash Animation Controllers
   late AnimationController _flashCtrl;
@@ -150,7 +153,8 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
   void _selectAnswer(int idx) {
     if (_answered) return;
     final timeMs = DateTime.now().difference(_questionStartTime).inMilliseconds;
-    final isCorrect = idx == _questions[_current].correctAnswerIndex;
+    final q = _questions[_current];
+    final isCorrect = idx == q.correctAnswerIndex;
     if (_current == 0) markEngaged(ref, widget.quizId);
     setState(() {
       _selected = idx;
@@ -161,7 +165,12 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
       if (isCorrect) _score++;
       _mcqResponses.add({
         'question_id': 'q${_current + 1}',
-        'answer': ['A', 'B', 'C', 'D'][idx],
+        // A–D for normal and picture questions; for a sequence, the steps in
+        // the order chosen (1 = first right step), e.g. "2-1-3-4".
+        'answer': q.isSequence
+            ? decodeOrder(idx, q.options.length).map((i) => i + 1).join('-')
+            : String.fromCharCode(65 + idx),
+        if (q.kind != QuizKind.mcq) 'type': q.kind.name,
         'correct': isCorrect,
         'time_ms': timeMs,
       });
@@ -189,6 +198,7 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
       setState(() {
         _current++;
         _selected = null;
+        _seqOrder = null;
         _answered = false;
         _questionStartTime = DateTime.now();
       });
@@ -243,6 +253,7 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
         questionTexts: _questions.map((q) => q.questionText).toList(),
         options: _questions.map((q) => q.options).toList(),
         explanations: _questions.map((q) => q.explanation).toList(),
+        meta: _questions.map((q) => q.meta()).toList(),
       ));
       ref.read(moduleProgressTickProvider.notifier).state++;
 
@@ -442,148 +453,196 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
                                     color: MitraColors.border
                                         .withValues(alpha: 0.2)),
                               ),
-                              child: Text(
-                                q.questionText,
-                                style: const TextStyle(
-                                    fontFamily: 'Baloo2',
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 18,
-                                    color: Colors.white,
-                                    height: 1.4),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  if (q.questionImage != null)
+                                    Padding(
+                                      padding:
+                                          const EdgeInsets.only(bottom: 12),
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(
+                                            MitraRadius.sm),
+                                        child: Container(
+                                          width: double.infinity,
+                                          color: Colors.white,
+                                          child: QuizImage(
+                                              url: q.questionImage!,
+                                              height: 170),
+                                        ),
+                                      ),
+                                    ),
+                                  Text(
+                                    q.questionText,
+                                    style: const TextStyle(
+                                        fontFamily: 'Baloo2',
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 18,
+                                        color: Colors.white,
+                                        height: 1.4),
+                                  ),
+                                ],
                               ),
                             ),
 
                             const SizedBox(height: MitraSpacing.lg),
 
                             // ── Options ───────────────────────
-                            ...List.generate(q.options.length, (i) {
-                              final isSelected = _selected == i;
-                              final isCorrect = i == q.correctAnswerIndex;
-                              final showResult = _answered;
+                            if (q.isPicture)
+                              PictureOptions(
+                                question: q,
+                                selected: _selected,
+                                answered: _answered,
+                                onTap: _selectAnswer,
+                                highlight: themeHighlight,
+                                isDark: isDark,
+                              )
+                            else if (q.isSequence)
+                              SequenceBoard(
+                                key: ValueKey('seq_$_current'),
+                                question: q,
+                                result: _answered && _selected != null
+                                    ? decodeOrder(_selected!, q.options.length)
+                                    : null,
+                                onOrder: (o) => setState(() => _seqOrder = o),
+                                highlight: themeHighlight,
+                                isDark: isDark,
+                              )
+                            else
+                              ...List.generate(q.options.length, (i) {
+                                final isSelected = _selected == i;
+                                final isCorrect = i == q.correctAnswerIndex;
+                                final showResult = _answered;
 
-                              Color borderColor;
-                              Color bgColor;
-                              Color textColor;
-                              Color letterBg;
-                              Color letterText;
+                                Color borderColor;
+                                Color bgColor;
+                                Color textColor;
+                                Color letterBg;
+                                Color letterText;
 
-                              if (!showResult) {
-                                borderColor = isSelected
-                                    ? themeHighlight
-                                    : MitraColors.border.withValues(alpha: 0.2);
-                                bgColor = isSelected
-                                    ? themeHighlight.withValues(alpha: 0.15)
-                                    : MitraColors.bgCard.withValues(alpha: 0.5);
-                                textColor = isSelected
-                                    ? themeHighlight
-                                    : (isDark
-                                        ? Colors.white
-                                        : const Color(0xFF1A1A2E));
-                                letterBg = isSelected
-                                    ? themeHighlight
-                                    : MitraColors.bgSurface;
-                                letterText = isSelected
-                                    ? Colors.black
-                                    : (isDark
-                                        ? Colors.white70
-                                        : const Color(0xB31A1A2E));
-                              } else if (isSelected && isCorrect) {
-                                borderColor = MitraColors.emerald;
-                                bgColor =
-                                    MitraColors.emerald.withValues(alpha: 0.15);
-                                textColor = MitraColors.emerald;
-                                letterBg = MitraColors.emerald;
-                                letterText = Colors.white;
-                              } else if (isSelected && !isCorrect) {
-                                borderColor = MitraColors.crimson;
-                                bgColor =
-                                    MitraColors.crimson.withValues(alpha: 0.12);
-                                textColor = MitraColors.crimson;
-                                letterBg = MitraColors.crimson;
-                                letterText = Colors.white;
-                              } else {
-                                borderColor =
-                                    MitraColors.border.withValues(alpha: 0.1);
-                                bgColor =
-                                    MitraColors.bgCard.withValues(alpha: 0.2);
-                                textColor = Colors.white.withValues(alpha: 0.3);
-                                letterBg = Colors.white.withValues(alpha: 0.05);
-                                letterText =
-                                    Colors.white.withValues(alpha: 0.3);
-                              }
+                                if (!showResult) {
+                                  borderColor = isSelected
+                                      ? themeHighlight
+                                      : MitraColors.border
+                                          .withValues(alpha: 0.2);
+                                  bgColor = isSelected
+                                      ? themeHighlight.withValues(alpha: 0.15)
+                                      : MitraColors.bgCard
+                                          .withValues(alpha: 0.5);
+                                  textColor = isSelected
+                                      ? themeHighlight
+                                      : (isDark
+                                          ? Colors.white
+                                          : const Color(0xFF1A1A2E));
+                                  letterBg = isSelected
+                                      ? themeHighlight
+                                      : MitraColors.bgSurface;
+                                  letterText = isSelected
+                                      ? Colors.black
+                                      : (isDark
+                                          ? Colors.white70
+                                          : const Color(0xB31A1A2E));
+                                } else if (isSelected && isCorrect) {
+                                  borderColor = MitraColors.emerald;
+                                  bgColor = MitraColors.emerald
+                                      .withValues(alpha: 0.15);
+                                  textColor = MitraColors.emerald;
+                                  letterBg = MitraColors.emerald;
+                                  letterText = Colors.white;
+                                } else if (isSelected && !isCorrect) {
+                                  borderColor = MitraColors.crimson;
+                                  bgColor = MitraColors.crimson
+                                      .withValues(alpha: 0.12);
+                                  textColor = MitraColors.crimson;
+                                  letterBg = MitraColors.crimson;
+                                  letterText = Colors.white;
+                                } else {
+                                  borderColor =
+                                      MitraColors.border.withValues(alpha: 0.1);
+                                  bgColor =
+                                      MitraColors.bgCard.withValues(alpha: 0.2);
+                                  textColor =
+                                      Colors.white.withValues(alpha: 0.3);
+                                  letterBg =
+                                      Colors.white.withValues(alpha: 0.05);
+                                  letterText =
+                                      Colors.white.withValues(alpha: 0.3);
+                                }
 
-                              return Padding(
-                                padding: const EdgeInsets.only(bottom: 10),
-                                child: GestureDetector(
-                                  onTap: () => _selectAnswer(i),
-                                  child: AnimatedContainer(
-                                    duration: const Duration(milliseconds: 250),
-                                    width: double.infinity,
-                                    padding:
-                                        const EdgeInsets.all(MitraSpacing.lg),
-                                    decoration: BoxDecoration(
-                                      color: bgColor,
-                                      borderRadius:
-                                          BorderRadius.circular(MitraRadius.md),
-                                      border: Border.all(
-                                          color: borderColor,
-                                          width: showResult &&
-                                                  (isCorrect || isSelected)
-                                              ? 1.5
-                                              : 1),
-                                    ),
-                                    child: Row(children: [
-                                      AnimatedContainer(
-                                        duration:
-                                            const Duration(milliseconds: 250),
-                                        width: 28,
-                                        height: 28,
-                                        decoration: BoxDecoration(
-                                          shape: BoxShape.circle,
-                                          color: letterBg,
-                                          border: Border.all(
-                                              color: borderColor.withValues(
-                                                  alpha: 0.5)),
-                                        ),
-                                        alignment: Alignment.center,
-                                        child: showResult &&
-                                                isSelected &&
-                                                isCorrect
-                                            ? const Icon(Icons.check,
-                                                size: 14, color: Colors.white)
-                                            : showResult &&
-                                                    isSelected &&
-                                                    !isCorrect
-                                                ? const Icon(Icons.close,
-                                                    size: 14,
-                                                    color: Colors.white)
-                                                : Text(
-                                                    ['A', 'B', 'C', 'D'][i],
-                                                    style: TextStyle(
-                                                        fontFamily: 'SpaceMono',
-                                                        fontWeight:
-                                                            FontWeight.w700,
-                                                        fontSize: 12,
-                                                        color: letterText),
-                                                  ),
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 10),
+                                  child: GestureDetector(
+                                    onTap: () => _selectAnswer(i),
+                                    child: AnimatedContainer(
+                                      duration:
+                                          const Duration(milliseconds: 250),
+                                      width: double.infinity,
+                                      padding:
+                                          const EdgeInsets.all(MitraSpacing.lg),
+                                      decoration: BoxDecoration(
+                                        color: bgColor,
+                                        borderRadius: BorderRadius.circular(
+                                            MitraRadius.md),
+                                        border: Border.all(
+                                            color: borderColor,
+                                            width: showResult &&
+                                                    (isCorrect || isSelected)
+                                                ? 1.5
+                                                : 1),
                                       ),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: Text(
-                                          q.options[i],
-                                          style: TextStyle(
-                                            fontFamily: 'Mukta',
-                                            fontWeight: FontWeight.w500,
-                                            fontSize: 15,
-                                            color: textColor,
+                                      child: Row(children: [
+                                        AnimatedContainer(
+                                          duration:
+                                              const Duration(milliseconds: 250),
+                                          width: 28,
+                                          height: 28,
+                                          decoration: BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            color: letterBg,
+                                            border: Border.all(
+                                                color: borderColor.withValues(
+                                                    alpha: 0.5)),
+                                          ),
+                                          alignment: Alignment.center,
+                                          child: showResult &&
+                                                  isSelected &&
+                                                  isCorrect
+                                              ? const Icon(Icons.check,
+                                                  size: 14, color: Colors.white)
+                                              : showResult &&
+                                                      isSelected &&
+                                                      !isCorrect
+                                                  ? const Icon(Icons.close,
+                                                      size: 14,
+                                                      color: Colors.white)
+                                                  : Text(
+                                                      ['A', 'B', 'C', 'D'][i],
+                                                      style: TextStyle(
+                                                          fontFamily:
+                                                              'SpaceMono',
+                                                          fontWeight:
+                                                              FontWeight.w700,
+                                                          fontSize: 12,
+                                                          color: letterText),
+                                                    ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Text(
+                                            q.options[i],
+                                            style: TextStyle(
+                                              fontFamily: 'Mukta',
+                                              fontWeight: FontWeight.w500,
+                                              fontSize: 15,
+                                              color: textColor,
+                                            ),
                                           ),
                                         ),
-                                      ),
-                                    ]),
+                                      ]),
+                                    ),
                                   ),
-                                ),
-                              );
-                            }),
+                                );
+                              }),
                           ],
                         ),
                       ),
@@ -725,6 +784,37 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
                                 : (isDark
                                     ? Colors.white54
                                     : const Color(0x8A1A1A2E))),
+                      ),
+                    ),
+                  )
+                else if (q.isSequence)
+                  // Sequence round: check once every step has a number.
+                  GestureDetector(
+                    onTap: _seqOrder == null
+                        ? null
+                        : () => _selectAnswer(encodeOrder(_seqOrder!)),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 300),
+                      width: double.infinity,
+                      height: 52,
+                      decoration: BoxDecoration(
+                        color: _seqOrder != null
+                            ? themeHighlight
+                            : MitraColors.bgSurface.withValues(alpha: 0.4),
+                        borderRadius: BorderRadius.circular(MitraRadius.pill),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        context.tr(ref, 'quiz_seq_check', 'Check my order'),
+                        style: TextStyle(
+                            fontFamily: 'Baloo2',
+                            fontWeight: FontWeight.w700,
+                            fontSize: 16,
+                            color: _seqOrder != null
+                                ? Colors.black
+                                : (isDark
+                                    ? Colors.white38
+                                    : const Color(0x991A1A2E))),
                       ),
                     ),
                   )

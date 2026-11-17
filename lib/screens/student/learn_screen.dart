@@ -887,6 +887,7 @@ class LearnScreen extends ConsumerStatefulWidget {
       final correct = (a['correct'] as List).cast<int>();
       final expl = (a['explanations'] as List).cast<String>();
       final answers = (a['answers'] as List).cast<int?>();
+      final meta = (a['meta'] as List?) ?? const []; // picture / sequence info
       final questions = <QuizQuestion>[
         for (int i = 0; i < qtexts.length; i++)
           QuizQuestion(
@@ -894,7 +895,7 @@ class LearnScreen extends ConsumerStatefulWidget {
             options: i < opts.length ? opts[i] : const [],
             correctAnswerIndex: i < correct.length ? correct[i] : 0,
             explanation: i < expl.length && expl[i].isNotEmpty ? expl[i] : null,
-          ),
+          ).withMeta(i < meta.length ? meta[i] : null),
       ];
       final score = [
         for (int i = 0; i < questions.length; i++)

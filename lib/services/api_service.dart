@@ -259,8 +259,10 @@ class QuizApiClient {
 
   // Download the per-state quiz pack ONCE (questions are fixed for the year).
   // The app caches it on the device and reads quizzes locally thereafter.
+  // rounds=1 → include picture and sequence rounds (this app can play them).
   Future<Response> pack(String state) => _dio.get(
-      '/api/quiz/pack/${Uri.encodeComponent(state.isEmpty ? 'ALL' : state)}');
+      '/api/quiz/pack/${Uri.encodeComponent(state.isEmpty ? 'ALL' : state)}',
+      queryParameters: {'rounds': '1'});
 
   Future<Response> submit(Map<String, dynamic> payload) =>
       _dio.post('/api/quiz/attempts', data: payload);

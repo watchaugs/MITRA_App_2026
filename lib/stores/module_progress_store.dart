@@ -46,6 +46,7 @@ String _qtextKey(String id) => 'mp_qtext_$id'; // \u0001-joined question texts
 String _optsKey(String id) => 'mp_opts_$id'; // \u0001 rows, \u0002 options
 String _explKey(String id) => 'mp_expl_$id'; // \u0001-joined explanations
 String _arPctKey(String id) => 'mp_arpct_$id'; // highest AR audio % reached
+String _metaKey(String id) => 'mp_qmeta_$id'; // JSON: round type + pictures
 const _lastModuleKey = 'mp_last_module';
 // Day (yyyymmdd) of the last lesson/quiz activity — the daily goal's
 // "revise" mission counts as done when this is today.
@@ -154,8 +155,14 @@ class ModuleProgressStore {
     required List<String> questionTexts,
     required List<List<String>> options,
     required List<String?> explanations,
+    List<Map<String, dynamic>>? meta, // per question: picture / sequence info
   }) async {
     if (id.isEmpty) return;
+    if (meta != null) {
+      await _prefs.setString(_metaKey(id), jsonEncode(meta));
+    } else {
+      await _prefs.remove(_metaKey(id));
+    }
     await _prefs.setString(
         _ansKey(id), answers.map((e) => e == null ? '' : '$e').join(','));
     await _prefs.setString(_correctKey(id), correct.join(','));
@@ -186,12 +193,18 @@ class ModuleProgressStore {
         .map((row) => row.split('\u0002'))
         .toList();
     final expl = (_prefs.getString(_explKey(id)) ?? '').split('\u0001');
+    List<dynamic>? meta;
+    try {
+      final raw = _prefs.getString(_metaKey(id));
+      if (raw != null && raw.isNotEmpty) meta = jsonDecode(raw) as List;
+    } catch (_) {/* unreadable → plain questions */}
     return {
       'answers': ans,
       'correct': correct,
       'questionTexts': qtexts,
       'options': opts,
       'explanations': expl,
+      if (meta != null) 'meta': meta,
     };
   }
 
@@ -278,6 +291,12 @@ class ModuleProgressStore {
             questionTexts: qtexts,
             options: opts,
             explanations: expl.map((e) => e.isEmpty ? null : e).toList(),
+            meta: a['meta'] is List
+                ? (a['meta'] as List)
+                    .whereType<Map>()
+                    .map((e) => Map<String, dynamic>.from(e))
+                    .toList()
+                : null,
           );
         } catch (_) {/* malformed cloud attempt — skip, never crash login */}
       }

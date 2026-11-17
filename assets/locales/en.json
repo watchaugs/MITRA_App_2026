@@ -502,5 +502,10 @@
   "fun_parent_cards": "new hero cards",
   "fun_parent_footer": "Learning with MITRA — ask me what I learnt!",
   "fun_heroes_none": "Your heroes are hiding! Open any lesson to meet that subject's hero.",
-  "fun_heroes_hidden": "{n} more heroes are hiding. Open a lesson in a new subject to meet one."
+  "fun_heroes_hidden": "{n} more heroes are hiding. Open a lesson in a new subject to meet one.",
+  "quiz_picture": "Picture",
+  "quiz_seq_hint": "Tap the steps in the right order · {n} left",
+  "quiz_seq_ready": "All set! Now check your order.",
+  "quiz_seq_clear": "Clear",
+  "quiz_seq_check": "Check my order"
 }
