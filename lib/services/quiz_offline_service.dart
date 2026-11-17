@@ -9,6 +9,7 @@
 import 'dart:async';
 import 'dart:developer' as dev;
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
@@ -213,7 +214,17 @@ class QuizSyncNotifier extends StateNotifier<QuizSyncState> {
     _isSyncing = true;
     state = state.copyWith(status: QuizSyncStatus.syncing);
     try {
-      final rows = await QuizOfflineDb.instance.getUnsynced();
+      // Shared phones: upload only the signed-in student's attempts (the
+      // server rejects any other). Other students' attempts stay queued until
+      // they sign in on this phone again.
+      final me = FirebaseAuth.instance.currentUser?.uid;
+      if (me == null || me.isEmpty) {
+        state = state.copyWith(status: QuizSyncStatus.idle);
+        return;
+      }
+      final rows = (await QuizOfflineDb.instance.getUnsynced())
+          .where((r) => '${r['student_id'] ?? ''}' == me)
+          .toList();
       if (rows.isEmpty) {
         state = state.copyWith(status: QuizSyncStatus.idle);
         return;
@@ -248,7 +259,8 @@ class QuizSyncNotifier extends StateNotifier<QuizSyncState> {
       state = state.copyWith(
         status: QuizSyncStatus.idle,
         lastSyncAt: now,
-        unsyncedCount: 0,
+        // Other students' attempts may still be waiting on this phone.
+        unsyncedCount: await QuizOfflineDb.instance.unsyncedCount(),
       );
       dev.log('✅ Synced ${rows.length} quiz attempts', name: 'QuizSync');
     } catch (e) {
