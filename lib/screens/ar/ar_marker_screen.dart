@@ -7,6 +7,10 @@ import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_flutter_android/webview_flutter_android.dart';
 
 import '../../constants/colors.dart';
+import '../../services/achievement_engine.dart';
+import '../../fun/fun_cards.dart';
+import '../../fun/new_card_banner.dart';
+import '../../theme/theme_provider.dart'; // sharedPreferencesProvider
 import '../../services/ar_video_cache.dart';
 import '../../services/telemetry_service.dart';
 import '../../stores/ar_pack_store.dart';
@@ -53,6 +57,29 @@ class ArMarkerScreen extends ConsumerStatefulWidget {
 }
 
 class _ArMarkerScreenState extends ConsumerState<ArMarkerScreen> {
+  // AR-view XP through the same achievement engine as AR room (one XP path,
+  // one set of analytics). Given once: when the narration (or page video) is
+  // finished, or when the student has stayed 60 seconds.
+  // First time this lesson's page is found, its hero card unlocks.
+  bool _newCard = false, _cardChecked = false;
+  Future<void> _checkCard() async {
+    if (_cardChecked) return;
+    _cardChecked = true;
+    final isNew = await unlockHeroCard(
+        ref.read(sharedPreferencesProvider), widget.topicId);
+    if (!mounted || !isNew) return;
+    ref.read(cardTickProvider.notifier).state++;
+    setState(() => _newCard = true);
+  }
+
+  AchievementEngine? _xpEngine;
+  bool _arXpGiven = false;
+  void _giveArXp() {
+    if (_arXpGiven) return;
+    _arXpGiven = true;
+    _xpEngine?.recordArView(widget.topicId);
+  }
+
   WebViewController? _controller;
   String? _error;
   DateTime? _arStart; // for marker-AR duration telemetry
@@ -152,6 +179,7 @@ class _ArMarkerScreenState extends ConsumerState<ArMarkerScreen> {
     if (msg == 'found') {
       _tracking = true;
       _syncNarration();
+      _checkCard();
     } else if (msg == 'lost') {
       _tracking = false;
       _syncNarration();
@@ -164,6 +192,7 @@ class _ArMarkerScreenState extends ConsumerState<ArMarkerScreen> {
         ref
             .read(moduleProgressStoreProvider)
             .recordArProgress(widget.topicId, pct);
+        if (pct >= 100) _giveArXp();
       }
     } else if (msg == 'vwant') {
       _pushVideoSrc();
@@ -192,6 +221,7 @@ class _ArMarkerScreenState extends ConsumerState<ArMarkerScreen> {
   @override
   void initState() {
     super.initState();
+    _xpEngine = ref.read(achievementEngineProvider);
     _view = !_hasModel
         ? 'video'
         : (_hasVideo && widget.videoView == 'video' ? 'video' : '3d');
@@ -225,6 +255,7 @@ class _ArMarkerScreenState extends ConsumerState<ArMarkerScreen> {
       ref
           .read(moduleProgressStoreProvider)
           .recordArProgress(widget.topicId, 100);
+      _giveArXp();
     });
     _markViewTime();
     _prepareAndLoad();
@@ -285,6 +316,10 @@ class _ArMarkerScreenState extends ConsumerState<ArMarkerScreen> {
 
   @override
   void dispose() {
+    if (_arStart != null &&
+        DateTime.now().difference(_arStart!).inSeconds >= 60) {
+      _giveArXp();
+    }
     // Log the marker-AR end with render_mode 'marker' so the dashboard can
     // break AR engagement down by render mode. completed = the WebView loaded
     // without an init error and the student stayed a meaningful duration.
@@ -473,6 +508,17 @@ class _ArMarkerScreenState extends ConsumerState<ArMarkerScreen> {
                     '${_videoProgress != null ? ' ${(_videoProgress! * 100).round()}%' : '…'}',
                     style: const TextStyle(color: Colors.white, fontSize: 12),
                   ),
+                ),
+              ),
+            // "New hero card!" the first time this page is found.
+            if (_newCard)
+              Positioned(
+                top: 60,
+                left: 16,
+                right: 16,
+                child: Center(
+                  child: NewCardBanner(
+                      onDone: () => setState(() => _newCard = false)),
                 ),
               ),
             // 3D ⇄ Video switch (only when the lesson has both).

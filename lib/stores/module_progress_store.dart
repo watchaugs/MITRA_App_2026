@@ -36,6 +36,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../theme/theme_provider.dart'; // sharedPreferencesProvider
+import '../fun/fun_cards.dart'; // this week's counts for the parent card
 
 String _bestKey(String id) => 'mp_best_$id';
 String _arSeenKey(String id) => 'mp_arseen_$id';
@@ -46,6 +47,9 @@ String _optsKey(String id) => 'mp_opts_$id'; // \u0001 rows, \u0002 options
 String _explKey(String id) => 'mp_expl_$id'; // \u0001-joined explanations
 String _arPctKey(String id) => 'mp_arpct_$id'; // highest AR audio % reached
 const _lastModuleKey = 'mp_last_module';
+// Day (yyyymmdd) of the last lesson/quiz activity — the daily goal's
+// "revise" mission counts as done when this is today.
+const _lastActiveKey = 'mp_last_active_ymd';
 const _masteryKey = 'mp_mastery_pct';
 
 /// Immutable snapshot of one module's progress.
@@ -108,6 +112,10 @@ class ModuleProgressStore {
   /// never downgrades a module that was already mastered.
   Future<void> recordQuiz(String id, int score, int total) async {
     if (id.isEmpty || total <= 0) return;
+    // Checked before any await: the quiz screen saves the attempt right after.
+    final firstTry = bestPct(id) == 0 && !hasSavedAttempt(id);
+    await _touchActiveDay();
+    if (firstTry) await WeekCounts(_prefs).addQuiz();
     final pct = ((score / total) * 100).round().clamp(0, 100);
     final prev = bestPct(id);
     if (pct > prev) {
@@ -124,8 +132,14 @@ class ModuleProgressStore {
     return (_prefs.getInt(_arPctKey(id)) ?? 0).clamp(0, 100);
   }
 
+  Future<void> _touchActiveDay() async {
+    final n = DateTime.now();
+    await _prefs.setInt(_lastActiveKey, n.year * 10000 + n.month * 100 + n.day);
+  }
+
   Future<void> recordArProgress(String id, int pct) async {
     if (id.isEmpty) return;
+    await _touchActiveDay();
     final p = pct.clamp(0, 100);
     if (p > arWatchedPct(id)) await _prefs.setInt(_arPctKey(id), p);
     if (p >= 80) await markArWatched(id);
@@ -185,6 +199,7 @@ class ModuleProgressStore {
     if (id.isEmpty) return;
     if (_prefs.getBool(_arSeenKey(id)) == true) return;
     await _prefs.setBool(_arSeenKey(id), true);
+    await WeekCounts(_prefs).addLesson(); // first full watch, this week
   }
 
   // ── Cloud-sync export / merge ──────────────────────────────────────────────

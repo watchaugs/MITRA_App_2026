@@ -77,6 +77,10 @@ dependencies:
 
   # File System (expo-file-system equivalent)
   path_provider: ^2.1.6
+
+  # Share sheet — the weekly parent card (Hero HQ). 11.x: works with the
+  # current Android Gradle Plugin 8.11 (12.x+ needs AGP 8.12.1).
+  share_plus: ^10.0.0
   
   # Offline / Queue
   hive: ^2.2.3

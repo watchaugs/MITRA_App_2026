@@ -35,6 +35,10 @@ import 'package:go_router/go_router.dart';
 import 'package:vector_math/vector_math_64.dart' as vm;
 
 import '../../constants/colors.dart';
+import '../../services/achievement_engine.dart';
+import '../../fun/fun_cards.dart';
+import '../../fun/new_card_banner.dart';
+import '../../theme/theme_provider.dart'; // sharedPreferencesProvider
 import '../../providers/tr_ext.dart';
 import '../../providers/translation_provider.dart';
 import '../../services/ar_model_cache.dart';
@@ -68,6 +72,29 @@ class ArImageAnchorScreen extends ConsumerStatefulWidget {
 }
 
 class _ArImageAnchorScreenState extends ConsumerState<ArImageAnchorScreen> {
+  // AR-view XP through the same achievement engine as AR room (one XP path,
+  // one set of analytics). Given once: when the narration (or page video) is
+  // finished, or when the student has stayed 60 seconds.
+  // First time this lesson's page is found, its hero card unlocks.
+  bool _newCard = false, _cardChecked = false;
+  Future<void> _checkCard() async {
+    if (_cardChecked) return;
+    _cardChecked = true;
+    final isNew = await unlockHeroCard(
+        ref.read(sharedPreferencesProvider), widget.topicId);
+    if (!mounted || !isNew) return;
+    ref.read(cardTickProvider.notifier).state++;
+    setState(() => _newCard = true);
+  }
+
+  AchievementEngine? _xpEngine;
+  bool _arXpGiven = false;
+  void _giveArXp() {
+    if (_arXpGiven) return;
+    _arXpGiven = true;
+    _xpEngine?.recordArView(widget.topicId);
+  }
+
   ARSessionManager? _session;
   ARObjectManager? _objects;
 
@@ -139,6 +166,7 @@ class _ArImageAnchorScreenState extends ConsumerState<ArImageAnchorScreen> {
   @override
   void initState() {
     super.initState();
+    _xpEngine = ref.read(achievementEngineProvider);
     _hint = ref.trNow(
         'ar_point_camera_at_page', 'Point the camera at the textbook page');
     _arStart = DateTime.now();
@@ -163,11 +191,16 @@ class _ArImageAnchorScreenState extends ConsumerState<ArImageAnchorScreen> {
       ref
           .read(moduleProgressStoreProvider)
           .recordArProgress(widget.topicId, 100);
+      _giveArXp();
     });
   }
 
   @override
   void dispose() {
+    if (_arStart != null &&
+        DateTime.now().difference(_arStart!).inSeconds >= 60) {
+      _giveArXp();
+    }
     if (_arStarted) {
       final secs =
           _arStart == null ? 0 : DateTime.now().difference(_arStart!).inSeconds;
@@ -307,6 +340,7 @@ class _ArImageAnchorScreenState extends ConsumerState<ArImageAnchorScreen> {
         _placed = true;
         _hint = null;
       });
+      _checkCard();
     } else {
       _fail(ref.trNow(
           'ar_model_could_not_load', 'The 3D model could not be loaded.'));
@@ -381,6 +415,17 @@ class _ArImageAnchorScreenState extends ConsumerState<ArImageAnchorScreen> {
                     textAlign: TextAlign.center,
                     style: const TextStyle(color: Colors.white, fontSize: 14),
                   ),
+                ),
+              ),
+            // "New hero card!" the first time this page is found.
+            if (_newCard)
+              Positioned(
+                top: 60,
+                left: 16,
+                right: 16,
+                child: Center(
+                  child: NewCardBanner(
+                      onDone: () => setState(() => _newCard = false)),
                 ),
               ),
             Positioned(

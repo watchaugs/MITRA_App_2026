@@ -26,6 +26,7 @@ import 'package:go_router/go_router.dart';
 import 'package:model_viewer_plus/model_viewer_plus.dart';
 import 'package:audioplayers/audioplayers.dart';
 import '../../constants/colors.dart';
+import '../../services/achievement_engine.dart';
 import '../../theme/theme_provider.dart';
 import '../../stores/module_progress_store.dart';
 import '../../services/language_options_service.dart';
@@ -71,6 +72,17 @@ class ArViewerScreen extends ConsumerStatefulWidget {
 }
 
 class _ArViewerScreenState extends ConsumerState<ArViewerScreen> {
+  // AR-view XP through the same achievement engine as AR room (one XP path,
+  // one set of analytics). Given once: when the narration (or page video) is
+  // finished, or when the student has stayed 60 seconds.
+  AchievementEngine? _xpEngine;
+  bool _arXpGiven = false;
+  void _giveArXp() {
+    if (_arXpGiven) return;
+    _arXpGiven = true;
+    _xpEngine?.recordArView(widget.topicId);
+  }
+
   final AudioPlayer _audio = AudioPlayer();
   Duration? _audioDuration;
   // Set when the viewer is closing. A narration that is still buffering when
@@ -206,6 +218,7 @@ class _ArViewerScreenState extends ConsumerState<ArViewerScreen> {
   @override
   void initState() {
     super.initState();
+    _xpEngine = ref.read(achievementEngineProvider);
     _arStart = DateTime.now();
     _telemetry = ref.read(telemetryServiceProvider);
     _telemetry?.logArStart(
@@ -226,6 +239,7 @@ class _ArViewerScreenState extends ConsumerState<ArViewerScreen> {
       ref
           .read(moduleProgressStoreProvider)
           .recordArProgress(widget.topicId, 100);
+      _giveArXp();
     });
     _audio.onDurationChanged.listen((d) => _audioDuration = d);
     _audio.onPositionChanged.listen((pos) {
@@ -278,6 +292,10 @@ class _ArViewerScreenState extends ConsumerState<ArViewerScreen> {
 
   @override
   void dispose() {
+    if (_arStart != null &&
+        DateTime.now().difference(_arStart!).inSeconds >= 60) {
+      _giveArXp();
+    }
     final secs =
         _arStart == null ? 0 : DateTime.now().difference(_arStart!).inSeconds;
     ref.read(telemetryServiceProvider)?.logArEnd(

@@ -19,6 +19,7 @@ import '../../services/quotes_service.dart';
 import '../../services/brain_spark_service.dart';
 import '../../services/achievement_engine.dart';
 import 'widgets/sponsor_banner.dart';
+import '../../fun/hero_power_card.dart';
 
 // ═══════════════════════════════════════════════════════
 // MODELS
@@ -335,6 +336,10 @@ class HomeScreen extends ConsumerWidget {
                     bottom: MediaQuery.paddingOf(context).bottom + 32),
                 child: Column(
                   children: [
+                    // Streak power meter + today's hero missions (Chiku).
+                    const SizedBox(height: 8),
+                    const HeroPowerCard(),
+
                     // Thought for the Day
                     const SizedBox(height: 8),
                     ref.watch(dailyMotivationProvider).when(

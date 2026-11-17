@@ -14,7 +14,8 @@ class StudentShell extends ConsumerWidget {
   static const _tabs = [
     _Tab(label: 'Home', emoji: '🏨', route: '/student/home'),
     _Tab(label: 'Learn', emoji: '🧠', route: '/student/learn'),
-    _Tab(label: 'Achievements', emoji: '🏆', route: '/student/achievements'),
+    // Hero HQ (replaces Achievements — same route).
+    _Tab(label: 'Heroes', emoji: '🦸', route: '/student/achievements'),
     _Tab(label: 'Profile', emoji: '👥', route: '/student/profile'),
   ];
 

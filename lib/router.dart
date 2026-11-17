@@ -6,7 +6,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:convert';
 import 'package:go_router/go_router.dart';
-import 'package:mitra_student/screens/student/achievements_screen.dart';
+// Hero HQ replaces the old Achievements page (same routes).
+import 'fun/hero_hq_screen.dart';
+import 'fun/card_album_screen.dart';
 
 import '../screens/auth/splash_screen.dart';
 import '../screens/auth/onboarding_screen.dart';
@@ -165,7 +167,16 @@ final routerProvider = Provider<GoRouter>((ref) {
       // button returns there instead of jumping to the Home tab.
       GoRoute(
         path: '/achievements',
-        builder: (c, s) => const AchievementsScreen(),
+        builder: (c, s) => const HeroHqScreen(standalone: true),
+      ),
+      // "My heroes" (Home card button) opens Hero HQ too.
+      GoRoute(
+        path: '/student/heroes',
+        builder: (c, s) => const HeroHqScreen(standalone: true),
+      ),
+      GoRoute(
+        path: '/student/cards',
+        builder: (c, s) => const CardAlbumScreen(),
       ),
       GoRoute(
         path: '/onboarding',
@@ -225,7 +236,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           // ✨ Deleted the dead AR tab route
           GoRoute(
               path: '/student/achievements',
-              builder: (c, s) => const AchievementsScreen()),
+              builder: (c, s) => const HeroHqScreen()),
           GoRoute(
               path: '/student/profile',
               builder: (c, s) => const StudentProfileScreen()),
