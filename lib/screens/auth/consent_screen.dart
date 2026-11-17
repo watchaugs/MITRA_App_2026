@@ -5,6 +5,8 @@
 // Design: follows MITRA design system exactly
 // ════════════════════════════════════════════════════════════
 
+import 'dart:convert';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -27,6 +29,10 @@ import '../../providers/tr_ext.dart';
 abstract class ConsentKeys {
   static const consentGiven = 'consentGiven';
   static const consentDate = 'consentDate';
+  // A grant the server hasn't recorded yet (offline at consent time). Sent
+  // later by AuthNotifier.onTerritoryResolved; kept per student by
+  // DeviceOwner.
+  static const pendingGrant = 'consentPendingGrant';
 }
 
 abstract class ConsentRoutes {
@@ -108,31 +114,35 @@ class _ConsentPersistence {
             ConsentKeys.consentDate, DateTime.now().toIso8601String()),
       ]);
 
-      // 2. Register with backend dashboard (best-effort)
-      try {
-        if (uid != null) {
-          // Verifiable parental consent (DPDPA). Two signals must BOTH hold:
-          //  (a) the registered phone was OTP-verified at login, and
-          //  (b) that phone belongs to a parent/guardian — i.e. the student's
-          //      declared mobile owner is Mother/Father/Other, not "Self".
-          final u = FirebaseAuth.instance.currentUser;
-          final phoneVerified = (u?.phoneNumber ?? '').isNotEmpty;
-          final owner = (mobileOwner ?? '').trim().toLowerCase();
-          final isGuardianPhone = owner.isNotEmpty && owner != 'self';
-          final verifiedParental = phoneVerified && isGuardianPhone;
-          await ConsentAPI.grant(
-            uid,
-            [
-              'data_collection', // mandatory
-              'analytics', // optional
-              'communications', // optional
-            ],
-            verifiedParental: verifiedParental,
-          );
+      // 2. Register with backend dashboard (best-effort; retried if it fails)
+      if (uid != null) {
+        // Verifiable parental consent (DPDPA). Two signals must BOTH hold:
+        //  (a) the registered phone was OTP-verified at login, and
+        //  (b) that phone belongs to a parent/guardian — i.e. the student's
+        //      declared mobile owner is Mother/Father/Other, not "Self".
+        final u = FirebaseAuth.instance.currentUser;
+        final phoneVerified = (u?.phoneNumber ?? '').isNotEmpty;
+        final owner = (mobileOwner ?? '').trim().toLowerCase();
+        final isGuardianPhone = owner.isNotEmpty && owner != 'self';
+        final verifiedParental = phoneVerified && isGuardianPhone;
+        const consents = [
+          'data_collection', // mandatory
+          'analytics', // optional
+          'communications', // optional
+        ];
+        try {
+          await ConsentAPI.grant(uid, consents,
+              verifiedParental: verifiedParental);
+          await prefs.remove(ConsentKeys.pendingGrant);
+        } catch (e) {
+          debugPrint('⚠️ ConsentAPI.grant failed: $e — saved, will retry');
+          // The server must hold a record of every consent (DPDPA), so keep
+          // it and send it the next time the app is online in the home state.
+          await prefs.setString(
+              ConsentKeys.pendingGrant,
+              jsonEncode(
+                  {'uid': uid, 'consents': consents, 'vp': verifiedParental}));
         }
-      } catch (e) {
-        debugPrint(
-            '⚠️ ConsentAPI.grant failed: $e — proceeding with local save');
       }
 
       return true;
@@ -265,7 +275,8 @@ class _ConsentScreenState extends ConsumerState<ConsentScreen> {
     } else {
       setState(() {
         _isSubmitting = false;
-        _errorMessage = ref.trNow('error_generic', 'Something went wrong. Please try again.');
+        _errorMessage = ref.trNow(
+            'error_generic', 'Something went wrong. Please try again.');
       });
     }
   }
@@ -508,9 +519,12 @@ class _Header extends ConsumerWidget {
           ),
           SizedBox(height: 14),
           Text(
-            context.tr(ref, 'auth_mitra_collects_learning_data_under_t', 'MITRA collects learning data under the Digital Personal Data '
-            'Protection Act, 2023 (DPDPA). Please read and confirm below '
-            'before continuing.'),
+            context.tr(
+                ref,
+                'auth_mitra_collects_learning_data_under_t',
+                'MITRA collects learning data under the Digital Personal Data '
+                    'Protection Act, 2023 (DPDPA). Please read and confirm below '
+                    'before continuing.'),
             style: TextStyle(
               fontFamily: 'Mukta',
               fontSize: 13,
@@ -699,7 +713,8 @@ class _RightsSection extends ConsumerWidget {
                   color: MitraColors.emerald, size: 16),
               SizedBox(width: 8),
               Text(
-                context.tr(ref, 'auth_your_rights_under_dpdpa_2023', 'Your Rights under DPDPA 2023'),
+                context.tr(ref, 'auth_your_rights_under_dpdpa_2023',
+                    'Your Rights under DPDPA 2023'),
                 style: TextStyle(
                   fontFamily: 'Baloo2',
                   fontWeight: FontWeight.w700,
@@ -844,7 +859,8 @@ class _PrimaryActionButton extends ConsumerWidget {
                     color: Colors.white, strokeWidth: 2.5),
               )
             : Text(
-                context.tr(ref, 'auth_i_agree_continue_to_mitra', 'I Agree — Continue to MITRA'),
+                context.tr(ref, 'auth_i_agree_continue_to_mitra',
+                    'I Agree — Continue to MITRA'),
                 style: TextStyle(color: Colors.white),
               ),
       ),
@@ -935,7 +951,8 @@ class _DeclineHint extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return Center(
       child: Text(
-        context.tr(ref, 'auth_declining_will_sign_you_out_you', 'Declining will sign you out. You can re-consent on next login.'),
+        context.tr(ref, 'auth_declining_will_sign_you_out_you',
+            'Declining will sign you out. You can re-consent on next login.'),
         textAlign: TextAlign.center,
         style: TextStyle(
           fontFamily: 'Mukta',

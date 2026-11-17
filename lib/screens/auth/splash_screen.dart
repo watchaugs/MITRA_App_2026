@@ -120,8 +120,11 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
             classGrade: data['class_grade'],
             assignedState: data['assigned_state'],
             assignedDistrict: data['assigned_district'],
-            avatarEmoji: data['avatar_emoji'] ?? '🎒',
+            avatarEmoji: data['avatar_emoji'] ?? '⚡',
             languagePreference: data['language_preference'] ?? 'en',
+            // Same fields as the auth listener (whichever runs last wins).
+            gender: data['gender'],
+            mobileBelongsTo: data['mobile_belongs_to'],
           );
           ref.read(authProvider.notifier).setUser(consumerUser);
         }

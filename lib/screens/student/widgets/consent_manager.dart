@@ -41,6 +41,7 @@ class _ConsentManagerState extends ConsumerState<ConsentManager> {
     try {
       final res = await ConsentAPI.status(studentId: uid);
       final data = res.data as Map<String, dynamic>;
+      if (!mounted) return;
       setState(() {
         _granted = data['granted'] == true;
         _version = data['version']?.toString();
@@ -48,9 +49,11 @@ class _ConsentManagerState extends ConsumerState<ConsentManager> {
         _loading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _loading = false;
-        _error = ref.trNow('student_could_not_load_consent_status', 'Could not load consent status.');
+        _error = ref.trNow('student_could_not_load_consent_status',
+            'Could not load consent status.');
       });
     }
   }
@@ -63,11 +66,14 @@ class _ConsentManagerState extends ConsumerState<ConsentManager> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: MitraColors.bgCard,
-        title: Text(context.tr(ref, 'student_withdraw_consent', 'Withdraw consent?')),
+        title: Text(
+            context.tr(ref, 'student_withdraw_consent', 'Withdraw consent?')),
         content: Text(
-          ref.trNow('student_you_can_withdraw_your_consent_to', 'You can withdraw your consent to data collection. Some features '
-          'that need your data (progress tracking, leaderboards) may stop '
-          'working until you consent again. You can re-consent any time.'),
+          ref.trNow(
+              'student_you_can_withdraw_your_consent_to',
+              'You can withdraw your consent to data collection. Some features '
+                  'that need your data (progress tracking, leaderboards) may stop '
+                  'working until you consent again. You can re-consent any time.'),
         ),
         actions: [
           TextButton(
@@ -89,13 +95,19 @@ class _ConsentManagerState extends ConsumerState<ConsentManager> {
       await _load();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.tr(ref, 'student_consent_withdrawn', 'Consent withdrawn.'))),
+          SnackBar(
+              content: Text(context.tr(
+                  ref, 'student_consent_withdrawn', 'Consent withdrawn.'))),
         );
       }
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.tr(ref, 'student_could_not_withdraw_try_again', 'Could not withdraw. Try again.'))),
+          SnackBar(
+              content: Text(context.tr(
+                  ref,
+                  'student_could_not_withdraw_try_again',
+                  'Could not withdraw. Try again.'))),
         );
       }
     }
@@ -109,13 +121,19 @@ class _ConsentManagerState extends ConsumerState<ConsentManager> {
       await _load();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.tr(ref, 'student_consent_granted', 'Consent granted.'))),
+          SnackBar(
+              content: Text(context.tr(
+                  ref, 'student_consent_granted', 'Consent granted.'))),
         );
       }
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.tr(ref, 'student_could_not_save_consent_try_a', 'Could not save consent. Try again.'))),
+          SnackBar(
+              content: Text(context.tr(
+                  ref,
+                  'student_could_not_save_consent_try_a',
+                  'Could not save consent. Try again.'))),
         );
       }
     }
@@ -171,7 +189,11 @@ class _ConsentManagerState extends ConsumerState<ConsentManager> {
                         _granted ? MitraColors.emerald : MitraColors.crimson),
                 const SizedBox(width: 8),
                 Text(
-                  _granted ? context.tr(ref, 'student_consent_granted_2', 'Consent granted') : context.tr(ref, 'student_consent_not_granted', 'Consent not granted'),
+                  _granted
+                      ? context.tr(
+                          ref, 'student_consent_granted_2', 'Consent granted')
+                      : context.tr(ref, 'student_consent_not_granted',
+                          'Consent not granted'),
                   style: TextStyle(
                       fontFamily: 'Mukta',
                       fontWeight: FontWeight.w600,
@@ -190,7 +212,9 @@ class _ConsentManagerState extends ConsumerState<ConsentManager> {
             ),
             if (_consents.isNotEmpty) ...[
               const SizedBox(height: 6),
-              Text(context.trp(ref, 'student_active_v1', 'Active: {v1}', {'v1': _consents.join(', ')}),
+              Text(
+                  context.trp(ref, 'student_active_v1', 'Active: {v1}',
+                      {'v1': _consents.join(', ')}),
                   style: TextStyle(
                       fontFamily: 'Mukta',
                       fontSize: 12,
@@ -211,7 +235,12 @@ class _ConsentManagerState extends ConsumerState<ConsentManager> {
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(MitraRadius.pill)),
                 ),
-                child: Text(_granted ? context.tr(ref, 'student_withdraw_consent_2', 'Withdraw consent') : context.tr(ref, 'student_grant_consent', 'Grant consent'),
+                child: Text(
+                    _granted
+                        ? context.tr(ref, 'student_withdraw_consent_2',
+                            'Withdraw consent')
+                        : context.tr(
+                            ref, 'student_grant_consent', 'Grant consent'),
                     style: const TextStyle(
                         fontFamily: 'Baloo2', fontWeight: FontWeight.w700)),
               ),

@@ -110,6 +110,7 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
         await store.refresh(state);
         loaded = await store.questionsFor(widget.quizId);
       }
+      if (!mounted) return; // left the quiz while it was loading
       setState(() {
         _questions = List.from(loaded); // may be empty → clean empty state
         _studentAnswers.addAll(List.filled(_questions.length, null));
@@ -118,6 +119,7 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
       });
     } catch (_) {
       // Pack missing/unreadable → show the clean empty state, not demo content.
+      if (!mounted) return;
       setState(() {
         _questions = const [];
         _loading = false;

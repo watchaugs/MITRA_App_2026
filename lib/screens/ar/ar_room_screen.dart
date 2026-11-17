@@ -126,7 +126,7 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
     // Track narration progress → unlock the quiz once ≥80% is heard.
     _audio.onPositionChanged.listen((pos) {
       final dur = _audioDuration;
-      if (dur == null || dur.inMilliseconds <= 0) return;
+      if (dur == null || dur.inMilliseconds <= 0 || !mounted) return;
       final pct = ((pos.inMilliseconds / dur.inMilliseconds) * 100).round();
       ref
           .read(moduleProgressStoreProvider)
@@ -614,6 +614,7 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
             'This model is heavy for live AR — switching to 3D view…'));
         await _anchorManager.removeAnchor(anchor);
         _anchors.remove(anchor);
+        if (!mounted) return;
         if (widget.onNativeLoadFailed != null) {
           widget.onNativeLoadFailed!();
         } else {
@@ -754,6 +755,7 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
     }
     _nodes.clear();
     _anchors.clear();
+    if (!mounted) return;
     _placedNode = null;
     _modelScale = 0.3;
     _modelY = 0.0;

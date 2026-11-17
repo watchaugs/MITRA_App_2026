@@ -219,7 +219,9 @@ class _ArViewerScreenState extends ConsumerState<ArViewerScreen> {
   @override
   void initState() {
     super.initState();
-    _xpEngine = ref.read(achievementEngineProvider);
+    try {
+      _xpEngine = ref.read(achievementEngineProvider);
+    } catch (_) {/* XP store unavailable → no XP, the lesson still opens */}
     markEngaged(ref, widget.topicId);
     _arStart = DateTime.now();
     _telemetry = ref.read(telemetryServiceProvider);
@@ -246,7 +248,7 @@ class _ArViewerScreenState extends ConsumerState<ArViewerScreen> {
     _audio.onDurationChanged.listen((d) => _audioDuration = d);
     _audio.onPositionChanged.listen((pos) {
       final dur = _audioDuration;
-      if (dur == null || dur.inMilliseconds <= 0) return;
+      if (dur == null || dur.inMilliseconds <= 0 || !mounted) return;
       final pct = ((pos.inMilliseconds / dur.inMilliseconds) * 100).round();
       ref
           .read(moduleProgressStoreProvider)

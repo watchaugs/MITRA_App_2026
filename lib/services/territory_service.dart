@@ -117,6 +117,13 @@ class TerritoryGate {
     _status = s;
     if (homeAt != null) _lastHomeCheck = homeAt;
   }
+
+  // A check that finishes after its student signed out (shared phone) must
+  // not decide for the next student.
+  static void _setFor(String uid, TerritoryStatus s, {DateTime? homeAt}) {
+    if (_uid != uid) return;
+    _set(s, homeAt: homeAt);
+  }
 }
 
 class TerritoryResult {
@@ -189,7 +196,7 @@ class TerritoryService {
     final prefs = await SharedPreferences.getInstance();
     final home = norm(homeState);
     if (uid.isEmpty || home.isEmpty) {
-      TerritoryGate._set(TerritoryStatus.unverified);
+      TerritoryGate._setFor(uid, TerritoryStatus.unverified);
       return TerritoryResult(TerritoryStatus.unverified, homeState,
           message: 'Your home state is not set.');
     }
@@ -203,7 +210,7 @@ class TerritoryService {
     if (!force &&
         lastHome != null &&
         DateTime.now().difference(lastHome.at) < recheckAfter) {
-      TerritoryGate._set(TerritoryStatus.home, homeAt: lastHome.at);
+      TerritoryGate._setFor(uid, TerritoryStatus.home, homeAt: lastHome.at);
       return TerritoryResult(TerritoryStatus.home, homeState);
     }
 
@@ -213,12 +220,12 @@ class TerritoryService {
     final inside = await _checkNow(home, homeState, boundary);
     if (inside == true) {
       await _writeResult(prefs, uid, 'home', homeState);
-      TerritoryGate._set(TerritoryStatus.home, homeAt: DateTime.now());
+      TerritoryGate._setFor(uid, TerritoryStatus.home, homeAt: DateTime.now());
       return TerritoryResult(TerritoryStatus.home, homeState);
     }
     if (inside == false) {
       await _writeResult(prefs, uid, 'outside', homeState);
-      TerritoryGate._set(TerritoryStatus.outside);
+      TerritoryGate._setFor(uid, TerritoryStatus.outside);
       return TerritoryResult(TerritoryStatus.outside, homeState,
           message: 'You are outside $homeState.');
     }
@@ -228,12 +235,12 @@ class TerritoryService {
       final used = DateTime.now().difference(lastHome.at);
       final left = graceDays - used.inDays;
       if (used < Duration(days: graceDays)) {
-        TerritoryGate._set(TerritoryStatus.grace);
+        TerritoryGate._setFor(uid, TerritoryStatus.grace);
         return TerritoryResult(TerritoryStatus.grace, homeState,
             graceDaysLeft: left < 1 ? 1 : left);
       }
     }
-    TerritoryGate._set(TerritoryStatus.unverified);
+    TerritoryGate._setFor(uid, TerritoryStatus.unverified);
     return TerritoryResult(TerritoryStatus.unverified, homeState,
         message: 'Turn on location to confirm you are in $homeState.');
   }

@@ -194,8 +194,9 @@ class QuizResultScreen extends ConsumerWidget {
                       width: double.infinity,
                       height: 56,
                       child: GestureDetector(
-                        // ✨ Forces them back to the AR Viewer
-                        onTap: () => context.go('/student/ar/$quizId'),
+                        // Back to the lesson list: quizId is not a lesson id,
+                        // and the lesson needs its media links (Learn adds them).
+                        onTap: () => context.go('/student/learn'),
                         child: Container(
                           decoration: BoxDecoration(
                               color: MitraColors.crimson,

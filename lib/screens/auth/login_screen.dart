@@ -260,6 +260,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         classGrade: profile?['class_grade']?.toString(),
         assignedState: profile?['assigned_state']?.toString(),
         assignedDistrict: profile?['assigned_district']?.toString(),
+        // Same fields as the auth listener, so heroes keep the right gender
+        // and consent keeps the phone owner after sign-in.
+        gender: profile?['gender']?.toString(),
+        mobileBelongsTo: profile?['mobile_belongs_to']?.toString(),
+        avatarEmoji: profile?['avatar_emoji']?.toString(),
+        languagePreference: profile?['language_preference']?.toString(),
       );
 
       authNotifier.setUser(consumerUser);

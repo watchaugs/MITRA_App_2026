@@ -135,7 +135,10 @@ class ModuleProgressStore {
 
   Future<void> _touchActiveDay() async {
     final n = DateTime.now();
-    await _prefs.setInt(_lastActiveKey, n.year * 10000 + n.month * 100 + n.day);
+    final ymd = n.year * 10000 + n.month * 100 + n.day;
+    // Called on every narration tick — write only when the day changes.
+    if (_prefs.getInt(_lastActiveKey) == ymd) return;
+    await _prefs.setInt(_lastActiveKey, ymd);
   }
 
   Future<void> recordArProgress(String id, int pct) async {

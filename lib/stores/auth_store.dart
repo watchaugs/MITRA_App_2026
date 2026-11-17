@@ -28,6 +28,7 @@ import 'package:flutter/widgets.dart';
 import 'package:isar_community/isar.dart' show Isar;
 import '../fun/fun_cards.dart'; // cardTickProvider
 import '../services/achievement_engine.dart'; // isarProvider
+import '../services/api_service.dart'; // ConsentAPI (pending consent retry)
 import '../services/progress_sync_service.dart';
 import '../services/telemetry_batch_buffer.dart';
 import '../services/territory_service.dart'; // TerritoryGate (home-state rule)
@@ -209,9 +210,25 @@ class AuthNotifier extends StateNotifier<AuthState> {
   void onTerritoryResolved() {
     final user = state.user;
     if (user == null || !user.isStudent || !TerritoryGate.syncAllowed) return;
+    unawaited(_sendPendingConsent(user.id));
     try {
       unawaited(ref.read(progressSyncServiceProvider).pushIfDue(user.id));
     } catch (_) {/* Isar unavailable → no progress sync */}
+  }
+
+  // A consent given offline is on the phone but not on the server yet; send it.
+  Future<void> _sendPendingConsent(String uid) async {
+    final prefs = ref.read(sharedPreferencesProvider);
+    final raw = prefs.getString('consentPendingGrant');
+    if (raw == null) return;
+    try {
+      final m = jsonDecode(raw) as Map;
+      if ('${m['uid']}' != uid) return;
+      final consents =
+          ((m['consents'] as List?) ?? const []).map((e) => '$e').toList();
+      await ConsentAPI.grant(uid, consents, verifiedParental: m['vp'] == true);
+      await prefs.remove('consentPendingGrant');
+    } catch (_) {/* still offline / server error → next check */}
   }
 
   /// FCM topics follow the home-state rule: unsubscribed while the student

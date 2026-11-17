@@ -55,6 +55,7 @@ class DeviceOwner {
       k.startsWith('fun_') ||
       k == 'consentGiven' ||
       k == 'consentDate' ||
+      k == 'consentPendingGrant' ||
       k == 'classLockedAt';
 
   /// Makes [uid]'s progress the live set. Runs one at a time. Returns true
@@ -77,7 +78,9 @@ class DeviceOwner {
     }
     try {
       await _save(owner, prefs, isar);
-    } catch (_) {/* disk full etc. — still never hand data to another student */}
+    } catch (_) {
+      /* disk full etc. — still never hand data to another student */
+    }
     await _clearLive(prefs, isar);
     try {
       await _load(uid, prefs, isar);
@@ -128,7 +131,8 @@ class DeviceOwner {
           'lastActiveYmd': p.lastActiveYmd,
         };
       }
-      for (final t in await isar.collection<TopicProgress>().where().findAll()) {
+      for (final t
+          in await isar.collection<TopicProgress>().where().findAll()) {
         topics.add({
           'topicId': t.topicId,
           'hasViewedAr': t.hasViewedAr,

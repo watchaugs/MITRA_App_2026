@@ -293,9 +293,10 @@ class _MitraAppState extends ConsumerState<MitraApp>
           final ctx = rootNavigatorKey.currentContext;
           if (ctx != null && parts.length == 2 && parts[1].isNotEmpty) {
             // Quizzes open via Learn so the AR-watch gate still applies.
-            if (parts[0] == 'quiz') GoRouter.of(ctx).go('/student/learn');
-            if (parts[0] == 'ar_topic') {
-              GoRouter.of(ctx).go('/student/ar/${parts[1]}');
+            // Lessons open through Learn: a bare /student/ar/<id> link has
+            // none of the lesson's media (model / video / narration).
+            if (parts[0] == 'quiz' || parts[0] == 'ar_topic') {
+              GoRouter.of(ctx).go('/student/learn');
             }
           }
         }
@@ -373,7 +374,8 @@ class _MitraAppState extends ConsumerState<MitraApp>
     final imageUrl = (data['image_url'] ?? '').toString();
     Color? accent;
     if (colorHex.startsWith('#') && colorHex.length == 7) {
-      accent = Color(int.parse('FF${colorHex.substring(1)}', radix: 16));
+      final v = int.tryParse('FF${colorHex.substring(1)}', radix: 16);
+      if (v != null) accent = Color(v); // a bad colour must not drop the alert
     }
     final payload =
         '${data['deep_link_type'] ?? ''}|${data['deep_link_id'] ?? ''}';
@@ -430,8 +432,10 @@ class _MitraAppState extends ConsumerState<MitraApp>
     final ctx = rootNavigatorKey.currentContext;
     if (ctx == null) return;
     // Quizzes open via Learn so the AR-watch gate still applies.
-    if (type == 'quiz') GoRouter.of(ctx).go('/student/learn');
-    if (type == 'ar_topic') GoRouter.of(ctx).go('/student/ar/$id');
+    // Lessons open through Learn (a bare /student/ar/<id> has no media).
+    if (type == 'quiz' || type == 'ar_topic') {
+      GoRouter.of(ctx).go('/student/learn');
+    }
   }
 
   @override

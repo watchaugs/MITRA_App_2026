@@ -150,10 +150,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       // and refreshListenable re-runs this once isLoading flips to false.
       if (authState.isLoading) return null;
 
+      // Privacy policy / terms must be readable before signing in too.
       if (!loggedIn &&
           path != '/onboarding' &&
           path != '/login' &&
-          path != '/consent') {
+          path != '/consent' &&
+          !path.startsWith('/legal/')) {
         return '/onboarding';
       }
 

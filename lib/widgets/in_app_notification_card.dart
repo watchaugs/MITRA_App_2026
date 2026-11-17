@@ -32,8 +32,10 @@ void showInAppNotificationCard(BuildContext context, RemoteMessage msg) {
         final id = data['deep_link_id']?.toString();
         if (type != null && id != null && id.isNotEmpty) {
           // Quizzes open via Learn so the AR-watch gate still applies.
-          if (type == 'quiz') GoRouter.of(context).go('/student/learn');
-          if (type == 'ar_topic') GoRouter.of(context).go('/student/ar/$id');
+          // Lessons too: a bare /student/ar/<id> has none of the media.
+          if (type == 'quiz' || type == 'ar_topic') {
+            GoRouter.of(context).go('/student/learn');
+          }
         }
       },
       onDismiss: () => entry.remove(),
@@ -70,7 +72,8 @@ class _InAppCardState extends State<_InAppCard>
   Color get _accent {
     final h = widget.colorHex;
     if (h.startsWith('#') && h.length == 7) {
-      return Color(int.parse('FF${h.substring(1)}', radix: 16));
+      final v = int.tryParse('FF${h.substring(1)}', radix: 16);
+      if (v != null) return Color(v); // bad colour → default, not a crash
     }
     return const Color(0xFFFF9933); // saffron default
   }

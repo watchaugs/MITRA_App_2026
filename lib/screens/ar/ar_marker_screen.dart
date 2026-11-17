@@ -221,7 +221,9 @@ class _ArMarkerScreenState extends ConsumerState<ArMarkerScreen> {
   @override
   void initState() {
     super.initState();
-    _xpEngine = ref.read(achievementEngineProvider);
+    try {
+      _xpEngine = ref.read(achievementEngineProvider);
+    } catch (_) {/* XP store unavailable → no XP, the lesson still opens */}
     markEngaged(ref, widget.topicId);
     _view = !_hasModel
         ? 'video'
