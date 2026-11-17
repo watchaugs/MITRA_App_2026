@@ -25,6 +25,14 @@ import '../services/telemetry_service.dart';
 import '../providers/telemetry_provider.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/widgets.dart';
+import 'package:isar_community/isar.dart' show Isar;
+import '../fun/fun_cards.dart'; // cardTickProvider
+import '../services/achievement_engine.dart'; // isarProvider
+import '../services/progress_sync_service.dart';
+import '../services/telemetry_batch_buffer.dart';
+import '../theme/theme_provider.dart'; // sharedPreferencesProvider
+import 'device_owner.dart';
+import 'module_progress_store.dart'; // moduleProgressTickProvider
 
 const _kCachedUserKey = 'mitra_cached_user_json';
 
@@ -168,10 +176,35 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   Future<void> setUser(MitraUser user) async {
+    // Shared phones: make THIS student's progress the live set before any
+    // screen shows it or any sync runs (stores/device_owner.dart).
+    await _switchProgressOwner(user.id);
     state = state.copyWith(user: user, isLoggedIn: true, isLoading: false);
     await _cacheUser(user); // persist so the next launch restores instantly
     await _initializeTelemetry();
     _subscribeFCMTopics(user);
+    // Cloud copy of progress: every 10 days (and first merge if never done).
+    try {
+      unawaited(ref.read(progressSyncServiceProvider).pushIfDue(user.id));
+    } catch (_) {/* Isar unavailable → no progress sync */}
+  }
+
+  Future<void> _switchProgressOwner(String uid) async {
+    try {
+      Isar? isar;
+      try {
+        isar = ref.read(isarProvider);
+      } catch (_) {/* Isar failed to open → prefs only */}
+      final changed = await DeviceOwner.switchTo(uid,
+          prefs: ref.read(sharedPreferencesProvider), isar: isar);
+      if (changed) {
+        // Screens that read progress from prefs rebuild with this student's.
+        ref.read(moduleProgressTickProvider.notifier).state++;
+        ref.read(cardTickProvider.notifier).state++;
+      }
+    } catch (e) {
+      debugPrint('⚠️ Progress owner switch failed: $e');
+    }
   }
 
   void _subscribeFCMTopics(MitraUser user) {
@@ -229,6 +262,22 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> logout() async {
     final user = state.user;
     if (user != null) {
+      // While this student is still signed in: send their queued telemetry and
+      // save their progress to the cloud. Best-effort and capped at a few
+      // seconds; offline, Firestore keeps the writes for their next sign-in.
+      try {
+        await TelemetryBatchBuffer.instance
+            .flushNow()
+            .timeout(const Duration(seconds: 5));
+      } catch (_) {}
+      try {
+        await ref
+            .read(progressSyncServiceProvider)
+            .push(user.id)
+            .timeout(const Duration(seconds: 5));
+      } catch (_) {}
+    }
+    if (user != null) {
       final st = user.assignedState?.toLowerCase().replaceAll(' ', '_') ?? '';
       final cls = user.classGrade?.toLowerCase().replaceAll(' ', '_') ?? '';
       FirebaseMessaging.instance.unsubscribeFromTopic('mitra_all');
@@ -246,6 +295,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
       await _secureProfileStore.delete(key: 'mitra_refresh_token');
     } catch (_) {}
     await FirebaseAuth.instance.signOut();
+    // Stop tagging events with the student who just left.
+    TelemetryService.current = null;
+    ref.read(telemetryServiceProvider.notifier).state = null;
     state = const AuthState(isLoggedIn: false, isLoading: false);
   }
 }

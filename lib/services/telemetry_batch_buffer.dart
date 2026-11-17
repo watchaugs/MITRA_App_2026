@@ -13,6 +13,7 @@ import 'dart:convert';
 import 'dart:developer' as dev;
 import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -223,6 +224,11 @@ class TelemetryBatchBuffer {
   Future<void> flushNow({Tier tier = Tier.all}) async {
     await _ensureBox();
     if (_isFlushing || _box!.isEmpty || _db == null) return;
+    // Shared phones: Firestore only accepts a student's own telemetry, so send
+    // only the signed-in student's events. Others wait for that student's
+    // next sign-in on this phone (logout sends the leaving student's first).
+    final me = FirebaseAuth.instance.currentUser?.uid;
+    if (me == null || me.isEmpty) return;
     _isFlushing = true;
 
     try {
@@ -230,7 +236,8 @@ class TelemetryBatchBuffer {
       final events = entries
           .map((e) =>
               MapEntry(e.key, _BufferedEvent.fromJson(jsonDecode(e.value))))
-          .where((e) => _tierMatches(tier, e.value.collection))
+          .where((e) =>
+              e.value.studentId == me && _tierMatches(tier, e.value.collection))
           .toList();
 
       if (events.isEmpty) return;

@@ -21,6 +21,10 @@
 // Picture rounds: after a download, every quiz picture is saved next to the
 // pack (quiz_packs/img/) so picture rounds work offline. A pack saved by an
 // older app version (no picture / sequence rounds) is replaced once, online.
+//
+// The pack remembers which state it was downloaded for. When a different
+// state's student signs in on the same phone (or a student's state changes),
+// that state's pack is downloaded instead of reusing the other one.
 
 import 'dart:async';
 import 'dart:convert';
@@ -60,8 +64,10 @@ class QuizPackStore {
       final f = await _file();
       if (f.existsSync() && f.lengthSync() > 2) {
         _memory ??= _safeDecode(await f.readAsString());
-        // Already have a usable pack from this app version.
-        if (_memory != null && (_memory!['fmt'] ?? 0) == _kFmt) {
+        // Already have a usable pack from this app version, for this state.
+        if (_memory != null &&
+            (_memory!['fmt'] ?? 0) == _kFmt &&
+            '${_memory!['for_state'] ?? ''}' == state) {
           if (!_imagesChecked) {
             _imagesChecked = true;
             unawaited(
@@ -89,6 +95,7 @@ class QuizPackStore {
     if (res.data is Map) {
       final map = Map<String, dynamic>.from(res.data as Map);
       map['fmt'] = _kFmt;
+      map['for_state'] = state;
       _memory = map;
       final f = await _file();
       await f.writeAsString(jsonEncode(map));
