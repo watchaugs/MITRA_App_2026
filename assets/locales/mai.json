@@ -242,8 +242,8 @@
   "student_bestpct_complete": "{bestPct}% पूरा भेल",
   "student_not_started_yet": "एखन धरि शुरू नहि भेल अछि",
   "student_v1_arcount_ar_topics": "{v1}% · {arCount} ए. आर. विषय",
-  "student_thought_for_the_day": "दिनक लेल सोचू",
-  "student_brain_spark": "ब्रेन स्पार्क",
+  "student_thought_for_the_day": "आइक बुद्धिमान विचार",
+  "student_brain_spark": "मजेदार तथ्य",
   "student_next_fact_in_hoursleft_h_minsleft": "अगला तथ्य {hoursLeft} एच {minsLeft} मीटर में",
   "student_next_fact_in_minsleft_m": "अगिला तथ्य {minsLeft} मीटरमे",
   "student_name_must_be_at_least_2": "नाम कम सँ कम 2 वर्णक होअय चाही।",
@@ -520,5 +520,6 @@
   "terr_rights": "अहाँक डेटा अधिकार",
   "terr_grievance": "शिकायत अधिकारी",
   "terr_privacy": "गोपनीयता नीति",
-  "terr_terms": "उपयोगक शर्तसभ"
+  "terr_terms": "उपयोगक शर्तसभ",
+  "student_new_badge": "नव"
 }

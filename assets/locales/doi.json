@@ -242,8 +242,8 @@
   "student_bestpct_complete": "{bestPct}% पूरा होआ",
   "student_not_started_yet": "अजें तक्कर शुरू नेईं होआ ऐ",
   "student_v1_arcount_ar_topics": "{v1}% · {arCount} ए. आर. विशे",
-  "student_thought_for_the_day": "दिन आस्तै सोचेआ",
-  "student_brain_spark": "ब्रेन स्पार्क",
+  "student_thought_for_the_day": "अज्ज दा बुद्घिमान बिचार",
+  "student_brain_spark": "मजेदार सचाई",
   "student_next_fact_in_hoursleft_h_minsleft": "अगला तथ्य {hoursLeft} एच {minsLeft} मीटर च",
   "student_next_fact_in_minsleft_m": "अगला तथ्य {minsLeft} मीटर च",
   "student_name_must_be_at_least_2": "नांऽ घट्ट कोला घट्ट 2 वर्णें दा होना चाहिदा।",
@@ -519,5 +519,6 @@
   "terr_rights": "तुंʼदे डेटा हक्क",
   "terr_grievance": "शिकायत अधिकारी",
   "terr_privacy": "निजता नीति",
-  "terr_terms": "उपयोग दियां शर्तें"
+  "terr_terms": "उपयोग दियां शर्तें",
+  "student_new_badge": "नमां"
 }

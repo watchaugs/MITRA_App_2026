@@ -242,8 +242,8 @@
   "student_bestpct_complete": "{bestPct}% പൂർത്തിയായി",
   "student_not_started_yet": "ഇതുവരെ തുടങ്ങിയിട്ടില്ല",
   "student_v1_arcount_ar_topics": "{v1}% · {arCount} എ. ആർ വിഷയങ്ങൾ",
-  "student_thought_for_the_day": "ഒരു ദിവസത്തേക്കുള്ള ചിന്ത",
-  "student_brain_spark": "ബ്രെയിൻ സ്പാർക്ക്",
+  "student_thought_for_the_day": "ഇന്നത്തെ ബുദ്ധിപരമായ ചിന്ത",
+  "student_brain_spark": "രസകരമായ വസ്തുത",
   "student_next_fact_in_hoursleft_h_minsleft": "അടുത്ത വസ്തുത {hoursLeft} എച്ച് {minsLeft} മീറ്ററിൽ",
   "student_next_fact_in_minsleft_m": "അടുത്ത വസ്തുത {minsLeft} മീറ്ററിൽ",
   "student_name_must_be_at_least_2": "പേര് കുറഞ്ഞത് രണ്ട് അക്ഷരങ്ങളെങ്കിലും ആയിരിക്കണം.",
@@ -519,5 +519,6 @@
   "terr_rights": "നിങ്ങളുടെ ഡാറ്റ അവകാശങ്ങൾ",
   "terr_grievance": "പരാതി പരിഹാര ഉദ്യോഗസ്ഥൻ",
   "terr_privacy": "സ്വകാര്യത നയം",
-  "terr_terms": "ഉപയോഗ നിബന്ധനകൾ"
+  "terr_terms": "ഉപയോഗ നിബന്ധനകൾ",
+  "student_new_badge": "പുതിയത്"
 }

@@ -242,8 +242,8 @@
   "student_bestpct_complete": "{bestPct}% সম্পূৰ্ণ",
   "student_not_started_yet": "এতিয়াও আৰম্ভ হোৱা নাই",
   "student_v1_arcount_ar_topics": "{v1}% · {arCount} এ. আৰ বিষয়সমূহ",
-  "student_thought_for_the_day": "দিনটোৰ বাবে চিন্তা",
-  "student_brain_spark": "ব্ৰেইন স্পার্ক",
+  "student_thought_for_the_day": "আজিৰ বুদ্ধিমান চিন্তাধাৰা",
+  "student_brain_spark": "আকৰ্ষণীয় তথ্য",
   "student_next_fact_in_hoursleft_h_minsleft": "পৰৱৰ্তী তথ্য {hoursLeft} h {minsLeft} m-ত",
   "student_next_fact_in_minsleft_m": "পৰৱৰ্তী তথ্য {minsLeft} মিটাৰত",
   "student_name_must_be_at_least_2": "নাম কমেও 2টা আখৰ হ 'ব লাগিব।",
@@ -520,5 +520,6 @@
   "terr_rights": "আপোনাৰ তথ্যৰ অধিকাৰ",
   "terr_grievance": "অভিযোগ বিষয়া",
   "terr_privacy": "গোপনীয়তা নীতি",
-  "terr_terms": "ব্যৱহাৰৰ চৰ্তসমূহ"
+  "terr_terms": "ব্যৱহাৰৰ চৰ্তসমূহ",
+  "student_new_badge": "নতুন"
 }

@@ -241,8 +241,8 @@
   "student_bestpct_complete": "{bestPct}% முடிந்தது",
   "student_not_started_yet": "இன்னும் தொடங்கவில்லை",
   "student_v1_arcount_ar_topics": "{v1}% · {arCount} ஏஆர் தலைப்புகள்",
-  "student_thought_for_the_day": "நாளுக்கான சிந்தனை",
-  "student_brain_spark": "மூளை வெடிப்பு",
+  "student_thought_for_the_day": "இன்றைய அறிவார்ந்த சிந்தனை",
+  "student_brain_spark": "வேடிக்கையான உண்மை",
   "student_next_fact_in_hoursleft_h_minsleft": "அடுத்த உண்மை {hoursLeft} மணி {minsLeft} மீட்டரில்",
   "student_next_fact_in_minsleft_m": "அடுத்த உண்மை {minsLeft} மீட்டரில்",
   "student_name_must_be_at_least_2": "பெயர் குறைந்தது 2 எழுத்துகளாக இருக்க வேண்டும்.",
@@ -519,5 +519,6 @@
   "terr_rights": "உங்கள் தரவு உரிமைகள்",
   "terr_grievance": "குறைதீர்ப்பு அதிகாரி",
   "terr_privacy": "தனியுரிமைக் கொள்கை",
-  "terr_terms": "பயன்பாட்டு நிபந்தனைகள்"
+  "terr_terms": "பயன்பாட்டு நிபந்தனைகள்",
+  "student_new_badge": "புதியது"
 }

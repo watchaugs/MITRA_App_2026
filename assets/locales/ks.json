@@ -241,8 +241,8 @@
   "student_bestpct_complete": "{bestPct}% مکمل",
   "student_not_started_yet": "وونہ گو٘ شروع",
   "student_v1_arcount_ar_topics": "{v1}% · {arCount} اے آر موضوعات",
-  "student_thought_for_the_day": "دۄہہ خٲطرٕ سونٛچ",
-  "student_brain_spark": "برین سٕپارک",
+  "student_thought_for_the_day": "أزچ دانشمندانہ سوچ",
+  "student_brain_spark": "مزٕ دار حقیقت",
   "student_next_fact_in_hoursleft_h_minsleft": "بیاکھ فیکٹ چھ {hoursLeft} ایچ {minsLeft} میٹرس منٛز",
   "student_next_fact_in_minsleft_m": "بیاکھ فیکٹ چھ {minsLeft} م منٛز",
   "student_name_must_be_at_least_2": "امک ناو چھ کنہٕ ہنٛد سپیرل ہیڑٕ پیٹھ پیمت۔",
@@ -512,5 +512,6 @@
   "terr_rights": "تہنٛد ڈیٹا حقوق",
   "terr_grievance": "شکایت کرن وول افسر",
   "terr_privacy": "پرائیویسی پالیسی",
-  "terr_terms": "استعمال کی شرائط"
+  "terr_terms": "استعمال کی شرائط",
+  "student_new_badge": "نوٚو"
 }

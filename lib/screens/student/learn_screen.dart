@@ -224,7 +224,15 @@ const _subjectEmoji = <String, String>{
   'Biology': '🧬',
 };
 
-String _emojiFor(String subject) => _subjectEmoji[subject] ?? '📖';
+// Case/space-insensitive ("science", " Maths ") so a subject typed
+// differently on the Dashboard still gets its icon.
+String _emojiFor(String subject) {
+  final k = subject.trim().toLowerCase();
+  for (final e in _subjectEmoji.entries) {
+    if (e.key.toLowerCase() == k) return e.value;
+  }
+  return '📖';
+}
 
 // ═══════════════════════════════════════════════════════════
 // DOMAIN: Filter parameters
@@ -1846,6 +1854,7 @@ class _SubjectSection extends ConsumerWidget {
                   questionCount: 0,
                   completed: false,
                   comingSoon: true,
+                  subjectEmoji: _emojiFor(subject),
                 ));
                 continue;
               }
@@ -1866,6 +1875,12 @@ class _SubjectSection extends ConsumerWidget {
                   unlocked: unlocked,
                   bestPct: best,
                   questionCount: qCount,
+                  subjectEmoji: _emojiFor(subject),
+                  // NEW until the student starts it (some narration heard or
+                  // a quiz score).
+                  isNew: unlocked &&
+                      progress.arWatchedPct(ar.id) == 0 &&
+                      best == 0,
                   // VIEWED badge only once the whole narration was heard.
                   completed: progress.arWatchedPct(ar.id) >= 100,
                   watchedPct: progress.arWatchedPct(ar.id),
@@ -2062,6 +2077,8 @@ class _ArTile extends ConsumerWidget {
   // combined — both save to the same value), and the % the quiz needs.
   final int watchedPct;
   final int watchThreshold;
+  final String subjectEmoji; // the module's subject icon
+  final bool isNew; // unlocked, not started yet → glow + NEW badge
 
   const _ArTile({
     required this.lesson,
@@ -2074,6 +2091,8 @@ class _ArTile extends ConsumerWidget {
     this.audioLabel = '',
     this.watchedPct = 0,
     this.watchThreshold = 85,
+    this.subjectEmoji = '📖',
+    this.isNew = false,
   });
 
   @override
@@ -2124,7 +2143,7 @@ class _ArTile extends ConsumerWidget {
                 ),
                 alignment: Alignment.center,
                 child: Text(
-                  unlocked ? '🧊' : '🔒',
+                  unlocked ? subjectEmoji : '🔒',
                   style: const TextStyle(fontSize: 24),
                 ),
               ),
@@ -2144,6 +2163,26 @@ class _ArTile extends ConsumerWidget {
                 ),
               ),
               const SizedBox(width: 8),
+              // "NEW" badge: unlocked and not started yet.
+              if (isNew) ...[
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: MitraColors.saffron,
+                    borderRadius: BorderRadius.circular(MitraRadius.pill),
+                  ),
+                  child: Text(
+                    context.tr(ref, 'student_new_badge', 'NEW'),
+                    style: const TextStyle(
+                        fontFamily: 'SpaceMono',
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white),
+                  ),
+                ),
+                const SizedBox(width: 8),
+              ],
               // "VIEWED" badge once 100% of the narration has been heard.
               if (completed) ...[
                 Container(
@@ -2263,11 +2302,66 @@ class _ArTile extends ConsumerWidget {
         child: GestureDetector(
           // Locked tiles do nothing on tap (the hint is already visible).
           onTap: unlocked ? () => onTap(lesson.id) : null,
-          child: Opacity(opacity: unlocked ? 1.0 : 0.6, child: card),
+          child: Opacity(
+              opacity: unlocked ? 1.0 : 0.6,
+              child: isNew ? _NewGlow(child: card) : card),
         ),
       ),
     );
   }
+}
+
+// ── Soft pulsing saffron glow around a newly unlocked module ──────────────
+class _NewGlow extends StatefulWidget {
+  final Widget child;
+  const _NewGlow({required this.child});
+
+  @override
+  State<_NewGlow> createState() => _NewGlowState();
+}
+
+class _NewGlowState extends State<_NewGlow>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(
+      vsync: this, duration: const Duration(milliseconds: 1400));
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Reduced motion → a steady glow instead of a pulse.
+    if (MediaQuery.of(context).disableAnimations) {
+      _c.value = 0.6;
+      _c.stop();
+    } else if (!_c.isAnimating) {
+      _c.repeat(reverse: true);
+    }
+  }
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AnimatedBuilder(
+        animation: _c,
+        child: widget.child,
+        builder: (_, child) => DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(MitraRadius.md),
+            boxShadow: [
+              BoxShadow(
+                color: MitraColors.saffron
+                    .withValues(alpha: 0.25 + 0.35 * _c.value),
+                blurRadius: 10 + 10 * _c.value,
+                spreadRadius: 1 + 2 * _c.value,
+              ),
+            ],
+          ),
+          child: child,
+        ),
+      );
 }
 
 // ── Score badge (mastered, or best % so far) ──────────────

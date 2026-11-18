@@ -242,8 +242,8 @@
   "student_bestpct_complete": "{bestPct}% आबुं",
   "student_not_started_yet": "दाबो जागायाखै",
   "student_v1_arcount_ar_topics": "{v1}% · {arCount} ए. आर. आयदाफोर",
-  "student_thought_for_the_day": "साननि थाखाय सानदोंमोन",
-  "student_brain_spark": "ब्रेन स्पार्क",
+  "student_thought_for_the_day": "दिनैनि गियान गोनां साननाय",
+  "student_brain_spark": "रंजाथाव सैथो",
   "student_next_fact_in_hoursleft_h_minsleft": "उननि सैथोआ {hoursLeft} h {minsLeft} m आव",
   "student_next_fact_in_minsleft_m": "उननि सैथोआ {minsLeft} मि. आव",
   "student_name_must_be_at_least_2": "मुङा खमैबो 2 हांखोफोर जानांगौ।",
@@ -518,5 +518,6 @@
   "terr_rights": "नोंथांनि डेटा राइट्स",
   "terr_grievance": "नालिस खालामग्रा मावख 'गिरि",
   "terr_privacy": "प्राइभेसि पलिसि",
-  "terr_terms": "बाहायनायनि बाथ्राफोर"
+  "terr_terms": "बाहायनायनि बाथ्राफोर",
+  "student_new_badge": "गोदान"
 }

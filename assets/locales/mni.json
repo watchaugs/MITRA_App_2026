@@ -242,8 +242,8 @@
   "student_bestpct_complete": "{bestPct}% ꯃꯄꯨꯡ ꯐꯥꯕ",
   "student_not_started_yet": "ꯍꯧꯖꯤꯛ ꯐꯥꯎꯕ ꯍꯧꯗ ꯭ ꯔꯤ",
   "student_v1_arcount_ar_topics": "{v1}% · {arCount} ꯑꯦ. ꯑꯥꯔ. ꯒꯤ ꯍꯤꯔꯝꯁꯤꯡ",
-  "student_thought_for_the_day": "ꯅꯨꯃꯤꯠ ꯑꯗꯨꯒꯤ ꯋꯥꯈꯜ ꯈꯟꯈꯤ",
-  "student_brain_spark": "ꯕ ꯭ ꯔꯦꯟ ꯁ ꯭ ꯄꯥꯔꯛ",
+  "student_thought_for_the_day": "ꯉꯁꯤꯒꯤ ꯍꯩꯔꯕ ꯋꯥꯈꯜꯂꯣꯟ ꯑꯗꯨ",
+  "student_brain_spark": "ꯐꯟ ꯐꯦꯛꯠ",
   "student_next_fact_in_hoursleft_h_minsleft": "ꯃꯊꯪ ꯐꯦꯛꯠ ꯑꯗꯨ {hoursLeft} ꯑꯩꯆ {minsLeft} ꯃꯤꯇꯔꯗ ꯂꯩ",
   "student_next_fact_in_minsleft_m": "ꯃꯊꯪ ꯐꯦꯛꯠ ꯑꯗꯨ {minsLeft} ꯃꯤꯇꯔꯗ ꯂꯩ",
   "student_name_must_be_at_least_2": "ꯃꯃꯤꯡ ꯑꯁꯤ ꯌꯥꯝꯗ ꯭ ꯔꯕꯗ ꯀꯦꯔꯦꯛꯇꯔ 2 ꯑꯣꯏꯒꯗꯕꯅꯤ ꯫",
@@ -516,5 +516,6 @@
   "terr_rights": "ꯅꯍꯥꯛꯀꯤ ꯗꯦꯇꯥꯒꯤ ꯍꯛꯁꯤꯡ",
   "terr_grievance": "ꯒ ꯭ ꯔꯤꯚꯦꯟꯁ ꯑꯣꯐꯤꯁꯔ",
   "terr_privacy": "ꯄ ꯭ ꯔꯥꯏꯚꯦꯁꯤ ꯄꯣꯂꯤꯁꯤ",
-  "terr_terms": "ꯁꯤꯖꯤꯟꯅꯕꯒꯤ ꯀꯥꯡꯂꯣꯟꯁꯤꯡ"
+  "terr_terms": "ꯁꯤꯖꯤꯟꯅꯕꯒꯤ ꯀꯥꯡꯂꯣꯟꯁꯤꯡ",
+  "student_new_badge": "ꯑꯅꯧꯕ"
 }

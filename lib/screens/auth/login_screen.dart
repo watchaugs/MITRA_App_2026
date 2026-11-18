@@ -337,10 +337,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         context.go('/location');
       } else {
         // Location already captured earlier; go to language then consent.
-        // State isn't known in this scope — the language screen falls back to
-        // Hindi + English, and the main onboarding path (/location) sets it.
-        context.go(
-            '/language?next=${Uri.encodeComponent('/consent?next=$homeRoute')}');
+        // Pass the saved home state so the picker offers its regional
+        // language (without it only Hindi + English were shown).
+        final knownState = (profile?['assigned_state']?.toString() ??
+                ref.read(currentUserProvider)?.assignedState ??
+                '')
+            .trim();
+        if (knownState.isEmpty) {
+          context.go('/location'); // state unknown → detect it first
+        } else {
+          context.go('/language'
+              '?next=${Uri.encodeComponent('/consent?next=$homeRoute')}'
+              '&state=${Uri.encodeComponent(knownState)}');
+        }
       }
     } catch (e) {
       debugPrint("🚨 FIRESTORE ERROR: $e");

@@ -242,8 +242,8 @@
   "student_bestpct_complete": "{bestPct}% पूर्ण",
   "student_not_started_yet": "अझै सुरु भएको छैन",
   "student_v1_arcount_ar_topics": "{v1}% · {arCount} एआर विषयहरू",
-  "student_thought_for_the_day": "दिनको लागि सोच्नुहोस्",
-  "student_brain_spark": "ब्रेन स्पार्क",
+  "student_thought_for_the_day": "आजको विवेकपूर्ण विचार",
+  "student_brain_spark": "रमाइलो तथ्य",
   "student_next_fact_in_hoursleft_h_minsleft": "अर्को तथ्य {hoursLeft} एच {minsLeft} एम मा",
   "student_next_fact_in_minsleft_m": "{minsLeft} मिटरमा अर्को तथ्य",
   "student_name_must_be_at_least_2": "नाम कम्तिमा 2 क्यारेक्टर हुनुपर्छ।",
@@ -520,5 +520,6 @@
   "terr_rights": "तपाईँको डेटा अधिकारहरू",
   "terr_grievance": "शिकायत अधिकारी",
   "terr_privacy": "गोपनीयता नीति",
-  "terr_terms": "प्रयोगका सर्तहरू"
+  "terr_terms": "प्रयोगका सर्तहरू",
+  "student_new_badge": "नयाँ"
 }

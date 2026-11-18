@@ -242,8 +242,8 @@
   "student_bestpct_complete": "{bestPct}% पूर्णम्",
   "student_not_started_yet": "अद्यापि न आरभत",
   "student_v1_arcount_ar_topics": "{v1}% · {arCount} ए. आर्. विषयाः",
-  "student_thought_for_the_day": "दिवसस्य विचारः",
-  "student_brain_spark": "मस्तिष्क-स्पार्क्",
+  "student_thought_for_the_day": "अद्यतनः विवेकपूर्णः विचारः",
+  "student_brain_spark": "विनोदं तथ्यम्",
   "student_next_fact_in_minsleft_m": "{minsLeft} मी मध्ये अग्रिमं तथ्यम्",
   "student_name_must_be_at_least_2": "नाम न्यूनातिन्यूनं 2 अक्षराणि भवेत्।",
   "student_class_can_be_changed_again_in": "{daysRemaining} दिनेषु पुनः वर्गः परिवर्तयितुं शक्यते।",
@@ -519,5 +519,6 @@
   "terr_rights": "भवतः दत्तांश-अधिकाराः",
   "terr_grievance": "शिकायत अधिकारी",
   "terr_privacy": "गोप्यता नीतिः",
-  "terr_terms": "उपयोगस्य नियमाः"
+  "terr_terms": "उपयोगस्य नियमाः",
+  "student_new_badge": "नूतनम्"
 }

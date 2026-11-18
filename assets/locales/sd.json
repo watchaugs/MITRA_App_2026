@@ -241,8 +241,8 @@
   "student_bestpct_complete": "{bestPct}% پورو ٿیو",
   "student_not_started_yet": "اڃا تائین شروع نہ ٿیو آھی",
   "student_v1_arcount_ar_topics": "{v1}% · {arCount} ای آر موضوع",
-  "student_thought_for_the_day": "ڏینھن لاء سوچیو",
-  "student_brain_spark": "برین اسپارڪ",
+  "student_thought_for_the_day": "اڄ جی دانائی واری سوچ",
+  "student_brain_spark": "دلچسپ حقیقت",
   "student_next_fact_in_hoursleft_h_minsleft": "ایندڙ حقیقت {hoursLeft} ھ {minsLeft} م ۾",
   "student_next_fact_in_minsleft_m": "ایندڙ حقیقت {minsLeft} م ۾",
   "student_name_must_be_at_least_2": "نالو گھٽ ۾ گھٽ 2 اکرن جو ہجڻ گھرجی",
@@ -519,5 +519,6 @@
   "terr_rights": "توھان جی ڊیٽا جا حق",
   "terr_grievance": "شڪایت ڪندڙ آفیسر",
   "terr_privacy": "پرائیویسی پالسیء",
-  "terr_terms": "استعمال جون شرطون"
+  "terr_terms": "استعمال جون شرطون",
+  "student_new_badge": "نئون"
 }

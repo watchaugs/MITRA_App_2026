@@ -19,6 +19,11 @@
 //    for that string (tr() falls back), and the key is listed at the end.
 //  • Konkani (kok) is skipped: the Bhashini pipeline rejects it (HTTP 400).
 //  • Each pack is written after its language finishes.
+//  • SOURCE_OVERRIDES: for these keys Bhashini translates the given English
+//    phrase instead of the en.json text (the on-screen English stays as is).
+//  • --redo=key1,key2 retranslates those keys even where a pack has them
+//    (to replace bad translations). HAND_SET keys are never overwritten.
+//       node tools/i18n/translate_missing.js --redo=student_thought_for_the_day,student_brain_spark
 // ─────────────────────────────────────────────────────────────────────────────
 const fs = require('fs');
 const path = require('path');
@@ -32,8 +37,21 @@ const ALL_LANGS = ['as', 'bn', 'brx', 'doi', 'gu', 'hi', 'kn', 'ks', 'mai', 'ml'
 const PROTECTED_TERMS = ['MITRA', 'DPDPA'];
 const BATCH = 16;
 
+// Translate these keys from a plainer English phrase (literal "Thought for
+// the day" / "Brain Spark" came back meaningless).
+const SOURCE_OVERRIDES = {
+  student_thought_for_the_day: "Today's wise thought",
+  student_brain_spark: 'Fun Fact',
+};
+// Reviewed by hand — never replaced by machine translation.
+const HAND_SET = {
+  hi: ['student_thought_for_the_day', 'student_brain_spark'],
+};
+
 const args = process.argv.slice(2);
 const DRY = args.includes('--dry-run');
+const REDO = new Set(((args.find(a => a.startsWith('--redo=')) || '').slice(7))
+  .split(',').map(k => k.trim()).filter(Boolean));
 const only = args.filter(a => !a.startsWith('--'));
 const LANGS = only.length ? ALL_LANGS.filter(l => only.includes(l)) : ALL_LANGS;
 
@@ -112,13 +130,18 @@ async function translateBatch(texts, tgt) {
   let total = 0;
   for (const lang of LANGS) {
     const pack = readPack(lang);
-    const todo = Object.keys(en).filter(k => !(k in pack) && /[A-Za-z]{2,}/.test(String(en[k])));
+    const locked = new Set(HAND_SET[lang] || []);
+    const todo = Object.keys(en).filter(k =>
+      !locked.has(k) &&
+      (!(k in pack) || REDO.has(k)) &&
+      /[A-Za-z]{2,}/.test(String(en[k])));
+    const srcOf = k => String(SOURCE_OVERRIDES[k] ?? en[k]);
     total += todo.length;
     if (DRY || todo.length === 0) { console.log(`${lang}.json: ${todo.length} to translate`); continue; }
     let done = 0;
     for (let i = 0; i < todo.length; i += BATCH) {
       const keys = todo.slice(i, i + BATCH);
-      const masked = keys.map(k => mask(String(en[k])));
+      const masked = keys.map(k => mask(srcOf(k)));
       let results;
       try {
         results = await translateBatch(masked.map(m => m[0]), lang);
@@ -133,8 +156,12 @@ async function translateBatch(texts, tgt) {
       keys.forEach((k, j) => {
         const r = results[j];
         const restored = r && r.trim() ? unmask(r.trim(), masked[j][1]) : null;
-        if (restored && restored !== en[k]) { pack[k] = restored; done++; }
-        else keepEnglish.push(`${lang}/${k}`);
+        if (restored && restored !== en[k] && restored !== srcOf(k)) { pack[k] = restored; done++; }
+        else {
+          // A redo that failed: drop the old (bad) text so English shows.
+          if (REDO.has(k)) delete pack[k];
+          keepEnglish.push(`${lang}/${k}`);
+        }
       });
     }
     writePack(lang, pack);

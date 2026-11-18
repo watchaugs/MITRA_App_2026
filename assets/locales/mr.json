@@ -241,8 +241,8 @@
   "student_bestpct_complete": "{bestPct}% पूर्ण",
   "student_not_started_yet": "अद्याप सुरुवात झालेली नाही",
   "student_v1_arcount_ar_topics": "{v1}% · {arCount} ए. आर. विषय",
-  "student_thought_for_the_day": "दिवसभराचा विचार",
-  "student_brain_spark": "ब्रेन स्पार्क",
+  "student_thought_for_the_day": "आजचा सुज्ञ विचार",
+  "student_brain_spark": "मजेदार तथ्य",
   "student_next_fact_in_hoursleft_h_minsleft": "{hoursLeft} एच {minsLeft} मीटरमधील पुढील तथ्य",
   "student_next_fact_in_minsleft_m": "पुढील तथ्य {minsLeft} मीटरमध्ये",
   "student_name_must_be_at_least_2": "नाव किमान 2 वर्णांचे असावे.",
@@ -518,5 +518,6 @@
   "terr_rights": "तुमचे माहिती अधिकार",
   "terr_grievance": "तक्रार निवारण अधिकारी",
   "terr_privacy": "गोपनीयता धोरण",
-  "terr_terms": "वापराच्या अटी"
+  "terr_terms": "वापराच्या अटी",
+  "student_new_badge": "नवीन"
 }

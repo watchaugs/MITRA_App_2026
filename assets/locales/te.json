@@ -242,8 +242,8 @@
   "student_bestpct_complete": "{bestPct}% పూర్తయింది",
   "student_not_started_yet": "ఇంకా ప్రారంభం కాలేదు",
   "student_v1_arcount_ar_topics": "{v1}% · {arCount} ఏఆర్ అంశాలు",
-  "student_thought_for_the_day": "రోజు కోసం ఆలోచించండి",
-  "student_brain_spark": "బ్రెయిన్ స్పార్క్",
+  "student_thought_for_the_day": "నేటి తెలివైన ఆలోచన",
+  "student_brain_spark": "సరదా వాస్తవం",
   "student_next_fact_in_hoursleft_h_minsleft": "తదుపరి వాస్తవం {hoursLeft} h {minsLeft} m లో",
   "student_next_fact_in_minsleft_m": "తదుపరి వాస్తవం {minsLeft} m లో",
   "student_name_must_be_at_least_2": "పేరు కనీసం 2 అక్షరాలు ఉండాలి.",
@@ -519,5 +519,6 @@
   "terr_rights": "మీ డేటా హక్కులు",
   "terr_grievance": "ఫిర్యాదుల అధికారి",
   "terr_privacy": "గోప్యత విధానం",
-  "terr_terms": "ఉపయోగ నిబంధనలు"
+  "terr_terms": "ఉపయోగ నిబంధనలు",
+  "student_new_badge": "కొత్తది"
 }

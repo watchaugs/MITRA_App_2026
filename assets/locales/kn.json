@@ -241,8 +241,8 @@
   "student_bestpct_complete": "{bestPct}% ಪೂರ್ಣಗೊಂಡಿದೆ",
   "student_not_started_yet": "ಇನ್ನೂ ಆರಂಭವಾಗಿಲ್ಲ",
   "student_v1_arcount_ar_topics": "{v1}% · {arCount} ಎಆರ್ ವಿಷಯಗಳು",
-  "student_thought_for_the_day": "ದಿನದ ಯೋಚನೆ",
-  "student_brain_spark": "ಬ್ರೈನ್ ಸ್ಪಾರ್ಕ್",
+  "student_thought_for_the_day": "ಇಂದಿನ ಬುದ್ಧಿವಂತ ಆಲೋಚನೆ",
+  "student_brain_spark": "ತಮಾಷೆಯ ಸಂಗತಿ",
   "student_next_fact_in_hoursleft_h_minsleft": "ಮುಂದಿನ ಸಂಗತಿ {hoursLeft} h {minsLeft} m ನಲ್ಲಿ",
   "student_next_fact_in_minsleft_m": "ಮುಂದಿನ ಸಂಗತಿ {minsLeft} ಮೀ ನಲ್ಲಿ",
   "student_name_must_be_at_least_2": "ಹೆಸರು ಕನಿಷ್ಠ 2 ಅಕ್ಷರಗಳಾಗಿರಬೇಕು.",
@@ -518,5 +518,6 @@
   "terr_rights": "ನಿಮ್ಮ ದತ್ತಾಂಶ ಹಕ್ಕುಗಳು",
   "terr_grievance": "ಕುಂದುಕೊರತೆ ಅಧಿಕಾರಿ",
   "terr_privacy": "ಗೌಪ್ಯತೆ ನೀತಿ",
-  "terr_terms": "ಬಳಕೆಯ ನಿಯಮಗಳು"
+  "terr_terms": "ಬಳಕೆಯ ನಿಯಮಗಳು",
+  "student_new_badge": "ಹೊಸ"
 }
