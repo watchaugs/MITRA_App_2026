@@ -25,6 +25,7 @@
 // The static TerritoryGate below is read by the API client, telemetry,
 // progress sync and media downloaders, so the rule holds at every level.
 // ═══════════════════════════════════════════════════════════════════════════
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math' as math;
@@ -186,12 +187,38 @@ class TerritoryService {
         }));
   }
 
+  // One check at a time per student: a second caller (e.g. the profile
+  // reloading during login) joins the running check instead of starting a
+  // parallel location request.
+  static final Map<String, Future<TerritoryResult>> _running = {};
+
   /// Decides the student's status. [force] skips the once-a-day reuse
   /// ("Check again" button).
   static Future<TerritoryResult> resolve({
     required String uid,
     required String homeState,
     bool force = false,
+  }) {
+    final key = '$uid|${norm(homeState)}';
+    final running = _running[key];
+    if (running != null) return running;
+    final f = _resolve(uid: uid, homeState: homeState, force: force);
+    _running[key] = f;
+    () async {
+      try {
+        await f;
+      } catch (_) {
+      } finally {
+        if (identical(_running[key], f)) _running.remove(key);
+      }
+    }();
+    return f;
+  }
+
+  static Future<TerritoryResult> _resolve({
+    required String uid,
+    required String homeState,
+    required bool force,
   }) async {
     final prefs = await SharedPreferences.getInstance();
     final home = norm(homeState);
@@ -282,9 +309,14 @@ class TerritoryService {
     }
   }
 
+  // Coarse request. Attempt 1: Google location (Wi-Fi/mobile network).
+  // Attempt 2 (Android): the phone's own location service, balanced power.
+  // Either way the app holds only ACCESS_COARSE_LOCATION, so Android returns
+  // an approximate point (DPDP data-minimisation).
   static Future<Position?> _freshPosition() async {
     try {
       if (!await Geolocator.isLocationServiceEnabled().timeout(_timeout)) {
+        debugPrint('📍 Territory: phone location is switched off');
         return null;
       }
       var perm = await Geolocator.checkPermission().timeout(_timeout);
@@ -295,6 +327,7 @@ class TerritoryService {
       }
       if (perm == LocationPermission.denied ||
           perm == LocationPermission.deniedForever) {
+        debugPrint('📍 Territory: location permission not given ($perm)');
         return null;
       }
       try {
@@ -304,13 +337,20 @@ class TerritoryService {
           return last;
         }
       } catch (_) {}
-      // Coarse only (DPDP data-minimisation): a state is hundreds of km wide.
-      // The app holds only ACCESS_COARSE_LOCATION, so Android returns an
-      // approximate point anyway. Use `low` (Wi-Fi/mobile-network fix):
-      // `reduced` is iOS-only; Android reads it as `best` (GPS), which can
-      // take longer than 20 s indoors and then fails the check.
+      // Coarse only: a state is hundreds of km wide. (`reduced` is iOS-only;
+      // Android reads it as `best`, so it is not used.)
+      try {
+        return await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.low,
+        ).timeout(_timeout);
+      } on TimeoutException {
+        debugPrint('📍 Territory: no fix from Google location in 20 s; '
+            "trying the phone's location service");
+      }
+      if (!Platform.isAndroid) return null;
       return await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.low,
+        desiredAccuracy: LocationAccuracy.medium,
+        forceAndroidLocationManager: true,
       ).timeout(_timeout);
     } catch (e) {
       debugPrint('📍 Territory: no fix: $e');
