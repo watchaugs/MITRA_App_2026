@@ -16,7 +16,6 @@ import '../screens/student/learn_screen.dart';
 import '../stores/module_progress_store.dart';
 import '../theme/theme_provider.dart';
 import '../widgets/mitra_scaffold.dart';
-import 'chiku.dart';
 import 'fun_cards.dart';
 import 'hero_catalog.dart';
 import 'hero_svg.dart';
@@ -26,7 +25,8 @@ class AlbumCard {
   final bool unlocked, isNew;
   final int stars; // 0..3
   final int? day; // yyyymmdd unlocked
-  const AlbumCard(this.id, this.title, this.subject, this.unlocked, this.isNew, this.stars, this.day);
+  const AlbumCard(this.id, this.title, this.subject, this.unlocked, this.isNew,
+      this.stars, this.day);
 }
 
 /// Every scannable lesson as a card, unlocked ones first.
@@ -44,7 +44,8 @@ final albumCardsProvider = Provider<List<AlbumCard>>((ref) {
           (catalog.targetImageById[l.id] ?? '').isNotEmpty;
       if (!scannable) continue;
       final qids = catalog.quizIdsByArId[l.id] ?? const <String>[];
-      final best = qids.isEmpty ? 0 : qids.map(progress.bestPct).reduce(math.max);
+      final best =
+          qids.isEmpty ? 0 : qids.map(progress.bestPct).reduce(math.max);
       final stars = qids.any(progress.isMastered)
           ? 3
           : best > 0
@@ -53,7 +54,8 @@ final albumCardsProvider = Provider<List<AlbumCard>>((ref) {
                   ? 1
                   : 0;
       final has = unlocked.containsKey(l.id);
-      out.add(AlbumCard(l.id, l.title, e.key, has, has && !seen.contains(l.id), stars, unlocked[l.id]));
+      out.add(AlbumCard(l.id, l.title, e.key, has, has && !seen.contains(l.id),
+          stars, unlocked[l.id]));
     }
   }
   out.sort((a, b) => (b.unlocked ? 1 : 0) - (a.unlocked ? 1 : 0));
@@ -93,9 +95,14 @@ class _CardAlbumScreenState extends ConsumerState<CardAlbumScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(icon: Icon(Icons.arrow_back, color: tp), onPressed: () => context.pop()),
-        title: Text(context.trp(ref, 'fun_album_title', 'Hero cards · {got} of {all}', {'got': '$got', 'all': '${cards.length}'}),
-            style: TextStyle(fontFamily: 'Baloo2', fontWeight: FontWeight.w800, color: tp)),
+        leading: IconButton(
+            icon: Icon(Icons.arrow_back, color: tp),
+            onPressed: () => context.pop()),
+        title: Text(
+            context.trp(ref, 'fun_album_title', 'Hero cards · {got} of {all}',
+                {'got': '$got', 'all': '${cards.length}'}),
+            style: TextStyle(
+                fontFamily: 'Baloo2', fontWeight: FontWeight.w800, color: tp)),
       ),
       body: Stack(children: [
         cards.isEmpty
@@ -103,7 +110,8 @@ class _CardAlbumScreenState extends ConsumerState<CardAlbumScreen> {
                 child: Padding(
                   padding: const EdgeInsets.all(28),
                   child: Text(
-                      context.tr(ref, 'fun_album_empty', 'Cards appear here for lessons that have a textbook page to scan.'),
+                      context.tr(ref, 'fun_album_empty',
+                          'Cards appear here for lessons that have a textbook page to scan.'),
                       textAlign: TextAlign.center,
                       style: TextStyle(fontFamily: 'Mukta', color: ts)),
                 ),
@@ -117,9 +125,10 @@ class _CardAlbumScreenState extends ConsumerState<CardAlbumScreen> {
                   childAspectRatio: 0.7,
                 ),
                 itemCount: cards.length,
-                itemBuilder: (ctx, i) => HeroCardTile(card: cards[i], onTap: () => _open(cards[i])),
+                itemBuilder: (ctx, i) =>
+                    HeroCardTile(card: cards[i], onTap: () => _open(cards[i])),
               ),
-        const Positioned(top: 4, right: 10, child: ChikuCorner(size: 84)),
+        // Chiku lives only on Home and Hero HQ.
       ]),
     );
   }
@@ -144,7 +153,8 @@ class HeroCardTile extends ConsumerWidget {
   final AlbumCard card;
   final VoidCallback? onTap;
   final double scale;
-  const HeroCardTile({super.key, required this.card, this.onTap, this.scale = 1});
+  const HeroCardTile(
+      {super.key, required this.card, this.onTap, this.scale = 1});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -157,9 +167,11 @@ class HeroCardTile extends ConsumerWidget {
               color: hero.main,
               border: Border.all(color: hero.accent, width: 3 * scale),
             ),
-            padding: EdgeInsets.fromLTRB(6 * scale, 10 * scale, 6 * scale, 14 * scale),
+            padding: EdgeInsets.fromLTRB(
+                6 * scale, 10 * scale, 6 * scale, 14 * scale),
             child: Column(children: [
-              SvgPicture.string(heroEmblemSvg(hero), width: 40 * scale, height: 40 * scale),
+              SvgPicture.string(heroEmblemSvg(hero),
+                  width: 40 * scale, height: 40 * scale),
               SizedBox(height: 4 * scale),
               Expanded(
                 child: Center(
@@ -179,43 +191,58 @@ class HeroCardTile extends ConsumerWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: List.generate(
                     3,
-                    (i) => Icon(i < card.stars ? Icons.star_rounded : Icons.star_outline_rounded,
-                        size: 14 * scale, color: const Color(0xFFFDE68A))),
+                    (i) => Icon(
+                        i < card.stars
+                            ? Icons.star_rounded
+                            : Icons.star_outline_rounded,
+                        size: 14 * scale,
+                        color: const Color(0xFFFDE68A))),
               ),
             ]),
           )
         : Container(
             decoration: BoxDecoration(
               color: ThemeHelper.ctxGlassFill(context),
-              border: Border.all(color: ThemeHelper.ctxGlassBorder(context), width: 2),
+              border: Border.all(
+                  color: ThemeHelper.ctxGlassBorder(context), width: 2),
             ),
             alignment: Alignment.center,
             padding: const EdgeInsets.all(6),
-            child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+            child:
+                Column(mainAxisAlignment: MainAxisAlignment.center, children: [
               Icon(Icons.lock_outline_rounded, color: ts, size: 26 * scale),
               const SizedBox(height: 4),
               Text(card.subject,
                   textAlign: TextAlign.center,
                   maxLines: 2,
-                  style: TextStyle(fontFamily: 'Mukta', fontSize: 11 * scale, color: ts)),
+                  style: TextStyle(
+                      fontFamily: 'Mukta', fontSize: 11 * scale, color: ts)),
             ]),
           );
     return Semantics(
       button: onTap != null,
-      label: card.unlocked ? '${card.title}, ${card.stars} stars' : '${card.subject}, locked',
+      label: card.unlocked
+          ? '${card.title}, ${card.stars} stars'
+          : '${card.subject}, locked',
       child: GestureDetector(
         onTap: onTap,
         child: Stack(clipBehavior: Clip.none, children: [
-          Positioned.fill(child: ClipPath(clipper: _ShieldClipper(), child: face)),
+          Positioned.fill(
+              child: ClipPath(clipper: _ShieldClipper(), child: face)),
           if (card.isNew)
             Positioned(
               top: -4,
               right: -2,
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(color: hl, borderRadius: BorderRadius.circular(8)),
+                decoration: BoxDecoration(
+                    color: hl, borderRadius: BorderRadius.circular(8)),
                 child: Text(context.tr(ref, 'fun_new', 'NEW'),
-                    style: const TextStyle(fontFamily: 'SpaceMono', fontWeight: FontWeight.w700, fontSize: 10, color: Colors.black)),
+                    style: const TextStyle(
+                        fontFamily: 'SpaceMono',
+                        fontWeight: FontWeight.w700,
+                        fontSize: 10,
+                        color: Colors.black)),
               ),
             ),
         ]),
@@ -231,7 +258,8 @@ class _ShieldClipper extends CustomClipper<Path> {
     ..lineTo(s.width, s.height * .1)
     ..lineTo(s.width * .96, s.height * .64)
     ..quadraticBezierTo(s.width * .85, s.height * .88, s.width * .5, s.height)
-    ..quadraticBezierTo(s.width * .15, s.height * .88, s.width * .04, s.height * .64)
+    ..quadraticBezierTo(
+        s.width * .15, s.height * .88, s.width * .04, s.height * .64)
     ..lineTo(0, s.height * .1)
     ..close();
 
@@ -248,9 +276,11 @@ class _CardZoom extends ConsumerStatefulWidget {
   ConsumerState<_CardZoom> createState() => _CardZoomState();
 }
 
-class _CardZoomState extends ConsumerState<_CardZoom> with SingleTickerProviderStateMixin {
-  late final AnimationController _flip =
-      AnimationController(vsync: this, duration: const Duration(milliseconds: 700))..forward();
+class _CardZoomState extends ConsumerState<_CardZoom>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _flip = AnimationController(
+      vsync: this, duration: const Duration(milliseconds: 700))
+    ..forward();
 
   @override
   void dispose() {
@@ -262,7 +292,8 @@ class _CardZoomState extends ConsumerState<_CardZoom> with SingleTickerProviderS
   Widget build(BuildContext context) {
     final c = widget.card;
     final d = c.day;
-    final date = d == null ? '' : '${d % 100}/${(d ~/ 100) % 100}/${d ~/ 10000}';
+    final date =
+        d == null ? '' : '${d % 100}/${(d ~/ 100) % 100}/${d ~/ 10000}';
     return Center(
       child: Column(mainAxisSize: MainAxisSize.min, children: [
         AnimatedBuilder(
@@ -277,19 +308,27 @@ class _CardZoomState extends ConsumerState<_CardZoom> with SingleTickerProviderS
               child: child,
             );
           },
-          child: SizedBox(width: 210, height: 300, child: HeroCardTile(card: c, scale: 2)),
+          child: SizedBox(
+              width: 210, height: 300, child: HeroCardTile(card: c, scale: 2)),
         ),
         const SizedBox(height: 14),
         Text(c.subject,
-            style: const TextStyle(fontFamily: 'Mukta', fontSize: 14, color: Colors.white70)),
+            style: const TextStyle(
+                fontFamily: 'Mukta', fontSize: 14, color: Colors.white70)),
         if (date.isNotEmpty)
-          Text(context.trp(ref, 'fun_card_unlocked_on', 'Unlocked on {date}', {'date': date}),
-              style: const TextStyle(fontFamily: 'Mukta', fontSize: 13, color: Colors.white60)),
+          Text(
+              context.trp(ref, 'fun_card_unlocked_on', 'Unlocked on {date}',
+                  {'date': date}),
+              style: const TextStyle(
+                  fontFamily: 'Mukta', fontSize: 13, color: Colors.white60)),
         const SizedBox(height: 10),
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
           child: Text(context.tr(ref, 'fun_close', 'Close'),
-              style: const TextStyle(fontFamily: 'Mukta', fontWeight: FontWeight.w700, color: Colors.white)),
+              style: const TextStyle(
+                  fontFamily: 'Mukta',
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white)),
         ),
       ]),
     );

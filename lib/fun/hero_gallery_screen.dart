@@ -12,7 +12,6 @@ import '../screens/student/learn_screen.dart';
 import '../stores/auth_store.dart';
 import '../theme/theme_provider.dart';
 import '../widgets/mitra_scaffold.dart';
-import 'chiku.dart';
 import 'fun_progress.dart';
 import 'hero_catalog.dart';
 import 'hero_view.dart';
@@ -114,7 +113,7 @@ class HeroGalleryScreen extends ConsumerWidget {
             bottom: MediaQuery.paddingOf(context).bottom + 8,
             child: HiddenHeroesNote(hidden: hidden),
           ),
-        const Positioned(top: 4, right: 10, child: ChikuCorner(size: 88)),
+        // Chiku lives only on Home and Hero HQ.
       ]),
     );
   }

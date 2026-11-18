@@ -130,6 +130,7 @@ class QuizSummary {
   final double avgScore;
   final QuizStatus status;
   final String languageTag; // ✨ Added language tag
+  final String className; // '' = for every class
 
   const QuizSummary({
     required this.id,
@@ -140,6 +141,7 @@ class QuizSummary {
     required this.avgScore,
     required this.status,
     required this.languageTag,
+    this.className = '',
   });
 
   /// Parses a single quiz map from the API response.
@@ -166,6 +168,7 @@ class QuizSummary {
       status: _parseQuizStatus(m['status'] as String?),
       // ✨ Safely pulls the tag, defaults to 'all' for legacy/un-tagged dashboard content
       languageTag: m['language_tag'] as String? ?? 'all',
+      className: (m['class_name'] ?? m['class_grade'] ?? '').toString().trim(),
     );
   }
 
@@ -365,6 +368,18 @@ final arWatchThresholdProvider = FutureProvider<int>((ref) async {
 /// even when case/spacing differ ("Human Heart" == "human  heart").
 String _topicKey(String s) =>
     s.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
+
+/// Content for the student's own class? "Class 9" == "class 9" == "9".
+/// Untagged content (no class) is for every class, as is a student with no
+/// class set yet.
+bool _sameClass(String contentClass, String studentClass) {
+  String n(String s) => s
+      .toLowerCase()
+      .replaceAll('class', '')
+      .replaceAll(RegExp(r'[^a-z0-9]'), '');
+  final c = n(contentClass), me = n(studentClass);
+  return me.isEmpty || c.isEmpty || c == me;
+}
 
 /// Rule 1 dialog: tapping a quiz before the AR is watched enough opens this.
 /// Offers an "Open AR module" action that jumps straight to the AR content.
@@ -1118,17 +1133,28 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
                   final arGlbById =
                       arCatalog?.glbById ?? const <String, String>{};
 
+                  // Only the student's own class (the server sends the
+                  // whole state's quizzes).
+                  final myClass =
+                      ref.watch(currentUserProvider)?.classGrade ?? '';
                   final filteredQuizzes = quizzes.where((q) {
-                    return q.languageTag == currentLang ||
-                        q.languageTag == 'all';
+                    return (q.languageTag == currentLang ||
+                            q.languageTag == 'all') &&
+                        _sameClass(q.className, myClass);
                   }).toList();
 
                   final grouped = LearnScreen._groupQuizzesBySubject(
                     filteredQuizzes,
                   );
 
-                  for (final subject in arBySubject.keys) {
-                    grouped.putIfAbsent(subject, () => []);
+                  // A subject tile only when it has a lesson for this class.
+                  for (final e in arBySubject.entries) {
+                    if (e.value.any((ar) =>
+                        (ar.languageTag == currentLang ||
+                            ar.languageTag == 'all') &&
+                        _sameClass(ar.classTag, myClass))) {
+                      grouped.putIfAbsent(e.key, () => []);
+                    }
                   }
 
                   if (grouped.isEmpty) {
@@ -1324,12 +1350,8 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
                                   arLessonsForSubject.where((ar) {
                                 final langOk = ar.languageTag == currentLang ||
                                     ar.languageTag == 'all';
-                                final arClass =
-                                    ar.classTag.trim().toLowerCase();
-                                final classOk = userClass.isEmpty ||
-                                    arClass.isEmpty ||
-                                    arClass == userClass;
-                                return langOk && classOk;
+                                return langOk &&
+                                    _sameClass(ar.classTag, userClass);
                               }).toList();
 
                               if (entry.value.isEmpty &&
@@ -1503,19 +1525,27 @@ class _LearnHeader extends ConsumerWidget {
     final lang = ref.watch(translationProvider).langCode;
     bool inSubject(String subject) =>
         selectedSubject == 'All' || subject == selectedSubject;
+    // The student's own class only, same as the list below (not the state).
+    final myClass =
+        ref.watch(currentUserProvider.select((u) => u?.classGrade ?? ''));
     final quizzes = (ref
                 .watch(quizFeedProvider(ref.watch(quizFilterParamsProvider)))
                 .valueOrNull ??
             const <QuizSummary>[])
         .where((q) =>
             (q.languageTag == lang || q.languageTag == 'all') &&
+            _sameClass(q.className, myClass) &&
             inSubject(q.subject))
         .toList();
     final arCatalog = ref.watch(arCatalogProvider).valueOrNull;
     final arBySubject = arCatalog?.bySubject ?? LearnScreen._arLessonsBySubject;
     final lessons = [
       for (final e in arBySubject.entries)
-        if (inSubject(e.key)) ...e.value.where((l) => !l.locked),
+        if (inSubject(e.key))
+          ...e.value.where((l) =>
+              !l.locked &&
+              (l.languageTag == lang || l.languageTag == 'all') &&
+              _sameClass(l.classTag, myClass)),
     ];
     final topicsWatched =
         lessons.where((l) => progress.arWatchedPct(l.id) >= threshold).length;
@@ -1893,6 +1923,7 @@ class _SubjectSection extends ConsumerWidget {
             // when the lesson sits under another subject name or is hidden by
             // the language/class filter. Only a quiz with no lesson is open.
             final qSubject = _topicKey(subject);
+            final myClass = ref.read(currentUserProvider)?.classGrade ?? '';
             for (final q in quizzes) {
               if (shownQuizIds.contains(q.id)) continue;
               final qTopic = _topicKey(q.topic);
@@ -1905,7 +1936,8 @@ class _SubjectSection extends ConsumerWidget {
                             x.id == q.id ||
                             (qTopic.isNotEmpty &&
                                 _topicKey(e.key) == qSubject &&
-                                _topicKey(x.topic) == qTopic)))
+                                _topicKey(x.topic) == qTopic &&
+                                _sameClass(x.classTag, myClass))))
                       x,
               ];
               final watchedAny = linked

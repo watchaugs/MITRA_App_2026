@@ -234,20 +234,28 @@ class HomeScreen extends ConsumerWidget {
                                 context.push('/student/notifications'),
                           ),
                           const SizedBox(width: 8),
-                          Container(
-                            width: 54,
-                            height: 54,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: isDark
-                                  ? const Color(0xFF0F172A)
-                                  : Colors.white,
-                              border: Border.all(
-                                  color: MitraColors.saffron, width: 2.5),
+                          // Opens the Profile tab (edit profile, rights, etc.).
+                          Semantics(
+                            button: true,
+                            label: context.tr(ref, 'tab_profile', 'Profile'),
+                            child: GestureDetector(
+                              onTap: () => context.go('/student/profile'),
+                              child: Container(
+                                width: 54,
+                                height: 54,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: isDark
+                                      ? const Color(0xFF0F172A)
+                                      : Colors.white,
+                                  border: Border.all(
+                                      color: MitraColors.saffron, width: 2.5),
+                                ),
+                                alignment: Alignment.center,
+                                child: Text(user?.avatarEmoji ?? '🎒',
+                                    style: const TextStyle(fontSize: 28)),
+                              ),
                             ),
-                            alignment: Alignment.center,
-                            child: Text(user?.avatarEmoji ?? '🎒',
-                                style: const TextStyle(fontSize: 28)),
                           ),
                         ],
                       ),

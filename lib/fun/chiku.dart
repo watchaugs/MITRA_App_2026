@@ -24,38 +24,65 @@ void celebrateWithChiku() {
   if (_activeCorners.isNotEmpty) _activeCorners.last._onCelebrate();
 }
 
-const double _cw = 84, _ch = 110; // Chiku canvas
+const double _cw = 120, _ch = 160; // Chiku canvas (storybook style)
 
+// Storybook Chiku: big head, glossy eyes, fur strokes, toothy grin. Three
+// layers (tail behind, body, eyes on top) so the tail can curl and the eyes
+// can blink on their own.
 const String _chikuBody =
-    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 84 110">'
-    '<path d="M42 -60 L42 22" stroke="#16A34A" stroke-width="3"/>'
-    '<path d="M38 -20 C30 -22 28 -14 34 -12Z" fill="#22C55E"/>'
-    '<ellipse cx="42" cy="76" rx="15" ry="17" fill="#92400E" stroke="#5B2A0A" stroke-width="1.2"/>'
-    '<ellipse cx="42" cy="80" rx="9" ry="10" fill="#FCD9B6"/>'
-    '<path d="M36 62 C34 48 39 34 42 24" stroke="#92400E" stroke-width="5" fill="none" stroke-linecap="round"/>'
-    '<circle cx="42" cy="23" r="3.2" fill="#FCD9B6"/>'
-    '<path d="M54 70 C60 74 64 80 66 86" stroke="#92400E" stroke-width="5" fill="none" stroke-linecap="round"/>'
-    '<circle cx="67" cy="88" r="3.2" fill="#FCD9B6"/>'
-    '<path d="M64 90 C66 98 74 98 76 92 C72 94 68 94 66 90Z" fill="#FACC15" stroke="#A16207" stroke-width="0.8"/>'
-    '<path d="M34 92 L30 104 M50 92 L54 104" stroke="#92400E" stroke-width="5" stroke-linecap="round"/>'
-    '<circle cx="25" cy="46" r="6.5" fill="#92400E"/><circle cx="25" cy="46" r="3.8" fill="#FCD9B6"/>'
-    '<circle cx="59" cy="46" r="6.5" fill="#92400E"/><circle cx="59" cy="46" r="3.8" fill="#FCD9B6"/>'
-    '<circle cx="42" cy="48" r="15" fill="#92400E" stroke="#5B2A0A" stroke-width="1.2"/>'
-    '<path d="M31 49 C31 40 38 39 42 43 C46 39 53 40 53 49 C53 58 31 58 31 49Z" fill="#FCD9B6"/>'
-    '<path d="M37 54 Q42 58 47 54" stroke="#1C1917" stroke-width="1.3" fill="none" stroke-linecap="round"/>'
-    '<circle cx="33" cy="54" r="1.8" fill="#F9A8D4" opacity="0.7"/><circle cx="51" cy="54" r="1.8" fill="#F9A8D4" opacity="0.7"/>'
-    '<path d="M36 34 C38 30 42 30 44 33" stroke="#5B2A0A" stroke-width="1.4" fill="none"/>'
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 160">'
+    // vine + leaves
+    '<path d="M60 -60 L60 30" stroke="#15803D" stroke-width="4"/>'
+    '<path d="M58 12 C46 7 43 19 56 20Z" fill="#22C55E" stroke="#15803D" stroke-width="1"/>'
+    '<path d="M62 20 C74 15 77 27 64 28Z" fill="#4ADE80" stroke="#15803D" stroke-width="1"/>'
+    // arm up, holding the vine
+    '<path d="M50 92 C46 70 54 50 60 34" stroke="#8A4A1C" stroke-width="7" fill="none" stroke-linecap="round"/>'
+    '<circle cx="60" cy="32" r="4.8" fill="#FAD4AE" stroke="#5B2A0A" stroke-width="1.3"/>'
+    // body, belly, fur strokes
+    '<ellipse cx="60" cy="116" rx="19" ry="21" fill="#A0522D" stroke="#4A2207" stroke-width="1.8"/>'
+    '<ellipse cx="60" cy="121" rx="12" ry="13" fill="#FAD4AE"/>'
+    '<path d="M45 106 l3 -3 M47 112 l3 -3 M73 106 l-3 -3 M71 112 l-3 -3" stroke="#6B3410" stroke-width="1.2" stroke-linecap="round"/>'
+    // arm down + hand
+    '<path d="M76 106 C84 112 88 118 90 126" stroke="#8A4A1C" stroke-width="7" fill="none" stroke-linecap="round"/>'
+    '<circle cx="91" cy="129" r="4.8" fill="#FAD4AE" stroke="#5B2A0A" stroke-width="1.3"/>'
+    // legs + feet
+    '<path d="M51 134 L47 150 M69 134 L73 150" stroke="#8A4A1C" stroke-width="7" stroke-linecap="round"/>'
+    '<ellipse cx="46" cy="152" rx="6" ry="3.5" fill="#FAD4AE" stroke="#5B2A0A" stroke-width="1"/>'
+    '<ellipse cx="74" cy="152" rx="6" ry="3.5" fill="#FAD4AE" stroke="#5B2A0A" stroke-width="1"/>'
+    // ears
+    '<circle cx="32" cy="64" r="11" fill="#A0522D" stroke="#4A2207" stroke-width="1.6"/>'
+    '<circle cx="32" cy="64" r="7" fill="#FAD4AE"/><circle cx="33" cy="65" r="3.5" fill="#E8A87C"/>'
+    '<circle cx="88" cy="64" r="11" fill="#A0522D" stroke="#4A2207" stroke-width="1.6"/>'
+    '<circle cx="88" cy="64" r="7" fill="#FAD4AE"/><circle cx="87" cy="65" r="3.5" fill="#E8A87C"/>'
+    // head + fur tufts
+    '<circle cx="60" cy="64" r="26" fill="#A0522D" stroke="#4A2207" stroke-width="1.8"/>'
+    '<path d="M50 40 l2 4 M58 38 l1 4 M66 39 l-1 4 M72 43 l-2 3" stroke="#6B3410" stroke-width="1.3" stroke-linecap="round"/>'
+    // face
+    '<path d="M40 68 C40 52 52 50 60 57 C68 50 80 52 80 68 C80 86 40 86 40 68Z" fill="#FAD4AE" stroke="#C98B5E" stroke-width="1"/>'
+    '<path d="M45 56 Q51 52 56 56 M64 56 Q69 52 75 56" stroke="#3B1A08" stroke-width="1.8" fill="none" stroke-linecap="round"/>'
+    // nose, grin, tooth, cheeks
+    '<ellipse cx="60" cy="74" rx="2.6" ry="1.6" fill="#5B2A0A"/>'
+    '<path d="M52 78 Q60 86 68 78" stroke="#3B1A08" stroke-width="1.8" fill="#C2410C" stroke-linecap="round"/>'
+    '<rect x="58" y="78.5" width="4" height="3" fill="#FFFFFF"/>'
+    '<ellipse cx="43" cy="75" rx="3.6" ry="2.2" fill="#F9A8D4"/>'
+    '<ellipse cx="77" cy="75" rx="3.6" ry="2.2" fill="#F9A8D4"/>'
     '</svg>';
 
 const String _chikuTail =
-    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 84 110">'
-    '<path d="M54 86 C74 86 78 66 68 60 C62 66 66 76 56 80" stroke="#7C2D12" stroke-width="4" fill="none" stroke-linecap="round"/>'
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 160">'
+    '<path d="M78 124 C104 126 110 98 95 90 C87 98 93 110 79 115" stroke="#7A3A12" stroke-width="5.5" fill="none" stroke-linecap="round"/>'
+    '<circle cx="95" cy="90" r="2.6" fill="#7A3A12"/>'
     '</svg>';
 
+// Whole eyes (whites + pupils + shine) so a blink closes them fully.
 const String _chikuEyes =
-    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 84 110">'
-    '<ellipse cx="37" cy="48" rx="2.2" ry="2.6" fill="#1C1917"/><ellipse cx="47" cy="48" rx="2.2" ry="2.6" fill="#1C1917"/>'
-    '<circle cx="37.8" cy="47.2" r="0.8" fill="#FFFFFF"/><circle cx="47.8" cy="47.2" r="0.8" fill="#FFFFFF"/>'
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 160">'
+    '<ellipse cx="51" cy="64" rx="6" ry="7" fill="#FFFFFF" stroke="#3B1A08" stroke-width="1"/>'
+    '<ellipse cx="69" cy="64" rx="6" ry="7" fill="#FFFFFF" stroke="#3B1A08" stroke-width="1"/>'
+    '<ellipse cx="52" cy="65" rx="4" ry="5" fill="#1C1917"/>'
+    '<ellipse cx="70" cy="65" rx="4" ry="5" fill="#1C1917"/>'
+    '<circle cx="53.5" cy="63" r="1.6" fill="#FFFFFF"/><circle cx="71.5" cy="63" r="1.6" fill="#FFFFFF"/>'
+    '<circle cx="50.5" cy="67" r="0.8" fill="#FFFFFF"/><circle cx="68.5" cy="67" r="0.8" fill="#FFFFFF"/>'
     '</svg>';
 
 /// Chiku drawn once, with an optional dance wiggle and blink amount.
@@ -80,11 +107,11 @@ class _ChikuFigure extends StatelessWidget {
         child: Stack(clipBehavior: Clip.none, children: [
           Transform.rotate(
               angle: tail,
-              alignment: const Alignment(0.3, 0.55),
+              alignment: const Alignment(0.32, 0.44), // tail base (79, 115)
               child: layer(_chikuTail)),
           layer(_chikuBody),
           Transform(
-            alignment: const Alignment(0, -0.13),
+            alignment: const Alignment(0, -0.2), // eye line (y 64 of 160)
             transform: Matrix4.diagonal3Values(1, 1 - 0.9 * blink, 1),
             child: layer(_chikuEyes),
           ),
@@ -136,6 +163,9 @@ class _ChikuCornerState extends State<ChikuCorner>
 
   void _onCelebrate() {
     if (!mounted || _away) return;
+    // Only the Chiku on the screen being looked at (never one under a
+    // pushed screen, e.g. Home under a quiz).
+    if (ModalRoute.of(context)?.isCurrent == false) return;
     final box = context.findRenderObject() as RenderBox?;
     // Root overlay: he flies over the whole screen, bottom bar included.
     final overlay = Overlay.maybeOf(context, rootOverlay: true);
@@ -244,7 +274,9 @@ class _ChikuFlightState extends State<_ChikuFlight>
   late final AnimationController _c;
   final List<_Banana> _bananas = [];
   int _thrown = 0;
-  static const _throwAt = [0.20, 0.30, 0.40, 0.46, 0.52, 0.58, 0.66, 0.74];
+  // Last throw at 0.58 so every banana finishes its arc (life 0.42) before
+  // the flight ends, instead of vanishing mid-air.
+  static const _throwAt = [0.18, 0.24, 0.30, 0.36, 0.42, 0.48, 0.54, 0.58];
   final _rnd = math.Random();
 
   @override
@@ -337,9 +369,22 @@ class _BananaPainter extends CustomPainter {
   final double t;
   _BananaPainter(this.bananas, this.t);
 
+  // One banana, ~44 px wide before scaling, centred on (0, 0).
+  static final Path _peel = Path()
+    ..moveTo(-21, -7)
+    ..cubicTo(-15, 13, 15, 13, 21, -9)
+    ..cubicTo(15, 2, -6, 4, -17, -7)
+    ..close();
+  static final Path _ridge = Path()
+    ..moveTo(-15, -2)
+    ..cubicTo(-8, 8, 8, 8, 16, -5);
+  static final Path _shine = Path()
+    ..moveTo(-10, 5)
+    ..quadraticBezierTo(0, 9, 10, 5);
+
   @override
   void paint(Canvas canvas, Size size) {
-    const life = 0.3; // fraction of the flight a banana stays visible
+    const life = 0.42; // fraction of the flight a banana stays visible
     for (final b in bananas) {
       final age = (t - b.born) / life;
       if (age < 0 || age > 1) continue;
@@ -347,31 +392,63 @@ class _BananaPainter extends CustomPainter {
       final p = b.from +
           Offset(b.vel.dx * age * life,
               b.vel.dy * age * life + 900 * age * age * life * life);
+      // Solid for most of the throw; fades only in the last quarter.
+      final a = age < 0.75 ? 1.0 : ((1 - age) / 0.25).clamp(0.0, 1.0);
+      Color c(int argb) {
+        final base = Color(argb);
+        return base.withValues(alpha: base.a * a); // keeps a colour's own alpha
+      }
+
       canvas.save();
       canvas.translate(p.dx, p.dy);
       canvas.rotate(b.spin * age);
-      final sc = 0.9 + age * 0.6;
+      final sc = 1.6 + age * 0.5; // big and easy to spot
       canvas.scale(sc, sc);
-      final alpha = (1 - age).clamp(0.0, 1.0);
-      final peel = Path()
-        ..moveTo(-16, -4)
-        ..cubicTo(-10, 10, 10, 10, 16, -6)
-        ..cubicTo(12, 0, -4, 2, -12, -4)
-        ..close();
-      canvas.drawPath(peel,
-          Paint()..color = const Color(0xFFFACC15).withValues(alpha: alpha));
+      // Soft shadow + white sticker edge: readable on light and dark screens.
       canvas.drawPath(
-          peel,
+          _peel.shift(const Offset(1.5, 2.5)),
+          Paint()
+            ..color = c(0x40000000)
+            ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.5));
+      canvas.drawPath(
+          _peel,
           Paint()
             ..style = PaintingStyle.stroke
-            ..strokeWidth = 1.4
-            ..color = const Color(0xFFA16207).withValues(alpha: alpha));
-      canvas.drawLine(
-          const Offset(15, -6),
-          const Offset(18, -9),
+            ..strokeWidth = 4.5
+            ..strokeJoin = StrokeJoin.round
+            ..color = c(0xFFFFFFFF));
+      canvas.drawPath(_peel, Paint()..color = c(0xFFFDE047));
+      canvas.drawPath(
+          _ridge,
           Paint()
-            ..color = const Color(0xFF713F12).withValues(alpha: alpha)
-            ..strokeWidth = 2.2);
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 1.8
+            ..strokeCap = StrokeCap.round
+            ..color = c(0xFFEAB308));
+      canvas.drawPath(
+          _shine,
+          Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 1.6
+            ..strokeCap = StrokeCap.round
+            ..color = c(0xCCFFFFFF));
+      canvas.drawPath(
+          _peel,
+          Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 1.8
+            ..strokeJoin = StrokeJoin.round
+            ..color = c(0xFF854D0E));
+      // Stem and dark tip.
+      canvas.drawLine(
+          const Offset(20, -9),
+          const Offset(24, -15),
+          Paint()
+            ..strokeWidth = 3.4
+            ..strokeCap = StrokeCap.round
+            ..color = c(0xFF713F12));
+      canvas.drawCircle(
+          const Offset(-20, -7), 1.8, Paint()..color = c(0xFF422006));
       canvas.restore();
     }
   }
