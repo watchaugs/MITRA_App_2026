@@ -65,7 +65,7 @@ class TerritoryLockScreen extends ConsumerWidget {
       body = context.trp(
           ref,
           'terr_need_location_body',
-          'MITRA needs to confirm you are in {state} before lessons open. Turn on location and tap Check again.',
+          'MITRA needs to confirm you are in {state} before lessons open. Turn on location and tap Check again. If location is already on, switch it off and on once.',
           {'state': home});
     }
 

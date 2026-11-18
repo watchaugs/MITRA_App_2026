@@ -149,6 +149,10 @@ class TerritoryService {
   static const Duration recheckAfter = Duration(hours: 24);
   static const Duration _boundaryMaxAge = Duration(hours: 24);
   static const Duration _freshFix = Duration(minutes: 10);
+  // When no fresh fix comes (some phones give none until location is switched
+  // off and on), the phone's last saved location is accepted if it is at most
+  // this old — the same window as the once-a-day check.
+  static const Duration _lastFixMax = Duration(hours: 24);
   static const Duration _timeout = Duration(seconds: 20);
   static const int _defaultGraceDays = 7;
 
@@ -330,8 +334,9 @@ class TerritoryService {
         debugPrint('📍 Territory: location permission not given ($perm)');
         return null;
       }
+      Position? last;
       try {
-        final last = await Geolocator.getLastKnownPosition();
+        last = await Geolocator.getLastKnownPosition();
         if (last != null &&
             DateTime.now().difference(last.timestamp).abs() <= _freshFix) {
           return last;
@@ -347,11 +352,31 @@ class TerritoryService {
         debugPrint('📍 Territory: no fix from Google location in 20 s; '
             "trying the phone's location service");
       }
-      if (!Platform.isAndroid) return null;
-      return await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.medium,
-        forceAndroidLocationManager: true,
-      ).timeout(_timeout);
+      if (Platform.isAndroid) {
+        try {
+          return await Geolocator.getCurrentPosition(
+            desiredAccuracy: LocationAccuracy.medium,
+            forceAndroidLocationManager: true,
+          ).timeout(_timeout);
+        } on TimeoutException {
+          debugPrint("📍 Territory: no fix from the phone's location service "
+              'in 20 s');
+        }
+      }
+      // No fresh fix: fall back to the phone's last saved location (≤ 24 h).
+      if (last != null) {
+        final age = DateTime.now().difference(last.timestamp).abs();
+        if (age <= _lastFixMax) {
+          debugPrint('📍 Territory: using the last saved location '
+              '(${age.inMinutes} min old)');
+          return last;
+        }
+        debugPrint('📍 Territory: last saved location too old '
+            '(${age.inHours} h)');
+      } else {
+        debugPrint('📍 Territory: no saved location on the phone');
+      }
+      return null;
     } catch (e) {
       debugPrint('📍 Territory: no fix: $e');
       return null;

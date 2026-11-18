@@ -92,6 +92,7 @@ class _ConsentManagerState extends ConsumerState<ConsentManager> {
 
     try {
       await ConsentAPI.withdraw(uid);
+      await ref.read(authProvider.notifier).onConsentWithdrawn();
       await _load();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -118,6 +119,7 @@ class _ConsentManagerState extends ConsumerState<ConsentManager> {
     if (uid == null) return;
     try {
       await ConsentAPI.grant(uid, ['data_collection', 'analytics']);
+      await ref.read(authProvider.notifier).onConsentGranted(uid);
       await _load();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

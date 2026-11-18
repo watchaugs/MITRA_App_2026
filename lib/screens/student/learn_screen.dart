@@ -2110,7 +2110,8 @@ class _ArTile extends ConsumerWidget {
     final audioNote = audioLabel.isEmpty ? '' : ' · 🔊 $audioLabel';
 
     final card = Container(
-      margin: const EdgeInsets.only(bottom: MitraSpacing.sm),
+      // A NEW tile gets its gap from _NewGlow, so the glow hugs the card.
+      margin: isNew ? null : const EdgeInsets.only(bottom: MitraSpacing.sm),
       padding: const EdgeInsets.all(MitraSpacing.lg),
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -2347,19 +2348,25 @@ class _NewGlowState extends State<_NewGlow>
   Widget build(BuildContext context) => AnimatedBuilder(
         animation: _c,
         child: widget.child,
-        builder: (_, child) => DecoratedBox(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(MitraRadius.md),
-            boxShadow: [
-              BoxShadow(
-                color: MitraColors.saffron
-                    .withValues(alpha: 0.25 + 0.35 * _c.value),
-                blurRadius: 10 + 10 * _c.value,
-                spreadRadius: 1 + 2 * _c.value,
-              ),
-            ],
+        builder: (_, child) => Padding(
+          padding: const EdgeInsets.only(bottom: MitraSpacing.sm),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(MitraRadius.md),
+              boxShadow: [
+                BoxShadow(
+                  color: MitraColors.saffron
+                      .withValues(alpha: 0.25 + 0.35 * _c.value),
+                  blurRadius: 10 + 10 * _c.value,
+                  spreadRadius: 1 + 2 * _c.value,
+                  // Outside only: the tile is see-through, so a normal
+                  // shadow would tint the whole card orange.
+                  blurStyle: BlurStyle.outer,
+                ),
+              ],
+            ),
+            child: child,
           ),
-          child: child,
         ),
       );
 }

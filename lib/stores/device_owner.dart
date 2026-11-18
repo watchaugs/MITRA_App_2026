@@ -56,6 +56,7 @@ class DeviceOwner {
       k == 'consentGiven' ||
       k == 'consentDate' ||
       k == 'consentPendingGrant' ||
+      k == 'consentWithdrawn' ||
       k == 'classLockedAt';
 
   /// Makes [uid]'s progress the live set. Runs one at a time. Returns true

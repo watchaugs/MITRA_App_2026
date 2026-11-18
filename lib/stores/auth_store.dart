@@ -303,10 +303,25 @@ class AuthNotifier extends StateNotifier<AuthState> {
       TelemetryService.current = null;
       ref.read(telemetryServiceProvider.notifier).state = null;
     }
-    final consented =
-        ref.read(sharedPreferencesProvider).getBool('consentGiven') ?? false;
-    if (!consented) return;
+    final prefs = ref.read(sharedPreferencesProvider);
+    final consented = prefs.getBool('consentGiven') ?? false;
+    if (!consented || (prefs.getBool('consentWithdrawn') ?? false)) return;
     await _initializeTelemetry();
+  }
+
+  /// Consent given (consent screen) or given again (Profile → re-grant):
+  /// analytics may run for this student.
+  Future<void> onConsentGranted(String? uid) async {
+    await ref.read(sharedPreferencesProvider).remove('consentWithdrawn');
+    await startTelemetryIfConsented(uid);
+  }
+
+  /// Consent withdrawn (Profile → data rights): stop analytics now, and keep
+  /// them off on later sign-ins until consent is given again (DPDP).
+  Future<void> onConsentWithdrawn() async {
+    await ref.read(sharedPreferencesProvider).setBool('consentWithdrawn', true);
+    TelemetryService.current = null;
+    ref.read(telemetryServiceProvider.notifier).state = null;
   }
 
   Future<void> _initializeTelemetry() async {

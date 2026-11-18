@@ -204,6 +204,8 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
   }
 
   void _logLanguageChoice(String lang, {required bool switched}) {
+    // Analytics run only after consent (TelemetryService exists only then).
+    if (TelemetryService.current == null) return;
     try {
       final uid = ref.read(currentUserProvider)?.id ?? 'anon';
       TelemetryBatchBuffer.instance.buffer(

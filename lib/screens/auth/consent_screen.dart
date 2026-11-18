@@ -272,7 +272,7 @@ class _ConsentScreenState extends ConsumerState<ConsentScreen> {
 
     if (success) {
       // Consent saved → learning analytics may start for this student.
-      ref.read(authProvider.notifier).startTelemetryIfConsented(user?.id);
+      ref.read(authProvider.notifier).onConsentGranted(user?.id);
       context.go(widget.nextRoute);
     } else {
       setState(() {
@@ -603,8 +603,10 @@ class _MoeBadge extends ConsumerWidget {
         borderRadius: BorderRadius.circular(MitraRadius.pill),
         border: Border.all(color: MitraColors.saffron.withValues(alpha: 0.4)),
       ),
+      // Ministry of Education mark: the same in every language, never
+      // translated (MT turned it into "मो. ई" / "મોઈ").
       child: Text(
-        context.tr(ref, 'auth_moe', '🇮🇳  MoE'),
+        '🇮🇳  MoE',
         style: TextStyle(
           fontFamily: 'Mukta',
           fontWeight: FontWeight.w600,

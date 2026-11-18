@@ -97,12 +97,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           await _saveUserAndNavigate(userCred.user!);
         },
         verificationFailed: (FirebaseAuthException e) {
+          if (!mounted) return;
           setState(() => _loading = false);
           _showError(
               ref.trNow('auth_verification_failed', 'Verification Failed'),
               e.message ?? ref.trNow('auth_unknown_error', 'Unknown error'));
         },
         codeSent: (String verificationId, int? resendToken) {
+          if (!mounted) return;
           setState(() {
             _verificationId = verificationId;
             _loading = false;
@@ -158,8 +160,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
       debugPrint("🚨 STEP 6: Routing to Dashboard!");
     } catch (e) {
-      setState(() => _loading = false);
       debugPrint("🚨 GOOGLE SIGN-IN FATAL ERROR: $e");
+      if (!mounted) return;
+      setState(() => _loading = false);
       _showError(
           ref.trNow('auth_google_login_failed', 'Google Login Failed'),
           ref.trNow('auth_could_not_sign_in_with_google',
@@ -189,6 +192,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           await FirebaseAuth.instance.signInWithCredential(credential);
       await _saveUserAndNavigate(userCred.user!);
     } catch (e) {
+      if (!mounted) return;
       setState(() => _loading = false);
       _showError(
           ref.trNow('auth_wrong_otp', 'Wrong OTP'),

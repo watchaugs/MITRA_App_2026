@@ -512,7 +512,7 @@
   "terr_outside_title": "MITRA works only in {state}",
   "terr_outside_body": "You are outside {state}, your registered state. Lessons, quizzes and syncing stay paused until you are back. Your progress is safe on this phone.",
   "terr_need_location": "Turn on location",
-  "terr_need_location_body": "MITRA needs to confirm you are in {state} before lessons open. Turn on location and tap Check again.",
+  "terr_need_location_body": "MITRA needs to confirm you are in {state} before lessons open. Turn on location and tap Check again. If location is already on, switch it off and on once.",
   "terr_unsaved_title": "Saved lessons only",
   "terr_unsaved_body": "Your location is not confirmed, so only lessons saved on this phone open. Turn on location in {state} to open this one.",
   "terr_check_again": "Check again",
