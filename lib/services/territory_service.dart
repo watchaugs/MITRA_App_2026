@@ -289,7 +289,9 @@ class TerritoryService {
       }
       var perm = await Geolocator.checkPermission().timeout(_timeout);
       if (perm == LocationPermission.denied) {
-        perm = await Geolocator.requestPermission().timeout(_timeout);
+        // The student answers this pop-up; 20 s was too short for some.
+        perm = await Geolocator.requestPermission()
+            .timeout(const Duration(minutes: 2));
       }
       if (perm == LocationPermission.denied ||
           perm == LocationPermission.deniedForever) {
@@ -303,8 +305,12 @@ class TerritoryService {
         }
       } catch (_) {}
       // Coarse only (DPDP data-minimisation): a state is hundreds of km wide.
+      // The app holds only ACCESS_COARSE_LOCATION, so Android returns an
+      // approximate point anyway. Use `low` (Wi-Fi/mobile-network fix):
+      // `reduced` is iOS-only; Android reads it as `best` (GPS), which can
+      // take longer than 20 s indoors and then fails the check.
       return await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.reduced,
+        desiredAccuracy: LocationAccuracy.low,
       ).timeout(_timeout);
     } catch (e) {
       debugPrint('📍 Territory: no fix: $e');

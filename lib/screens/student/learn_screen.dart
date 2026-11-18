@@ -1345,6 +1345,7 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
                                     arCatalog?.audiosByLangById ?? const {},
                                 quizIdsByArId:
                                     arCatalog?.quizIdsByArId ?? const {},
+                                allArBySubject: arBySubject,
                                 hideHeader: _selectedSubject !=
                                     'All', // ✨ Hides redundant headings when filtered!
                                 onQuizTap: (id) => LearnScreen._navigateToQuiz(
@@ -1666,6 +1667,9 @@ class _SubjectSection extends ConsumerWidget {
   final ValueChanged<String> onArTap;
   final Map<String, Map<String, String>> audiosByLangById; // #8b
   final Map<String, List<String>> quizIdsByArId; // tree-linked quizzes
+  // Every subject's lessons (before the language/class filter), so a quiz
+  // whose lesson sits under another subject name still waits for it.
+  final Map<String, List<ArLessonRec>> allArBySubject;
 
   const _SubjectSection({
     required this.subject,
@@ -1676,6 +1680,7 @@ class _SubjectSection extends ConsumerWidget {
     required this.onArTap,
     this.audiosByLangById = const {},
     this.quizIdsByArId = const {},
+    this.allArBySubject = const {},
   });
 
   @override
@@ -1882,14 +1887,39 @@ class _SubjectSection extends ConsumerWidget {
                   : progress.arWatchedPct(ar.id) >= arWatchThreshold;
             }
 
-            // Any quizzes with no matching AR module (standalone) show as before.
+            // Quizzes with no AR module in this list. One still linked to a
+            // lesson (Curriculum tree link, same id, or same topic under the
+            // same subject, any case) waits for that lesson's narration, even
+            // when the lesson sits under another subject name or is hidden by
+            // the language/class filter. Only a quiz with no lesson is open.
+            final qSubject = _topicKey(subject);
             for (final q in quizzes) {
               if (shownQuizIds.contains(q.id)) continue;
+              final qTopic = _topicKey(q.topic);
+              final linked = <ArLessonRec>[
+                for (final e in allArBySubject.entries)
+                  for (final x in e.value)
+                    if (!x.locked &&
+                        ((quizIdsByArId[x.id] ?? const <String>[])
+                                .contains(q.id) ||
+                            x.id == q.id ||
+                            (qTopic.isNotEmpty &&
+                                _topicKey(e.key) == qSubject &&
+                                _topicKey(x.topic) == qTopic)))
+                      x,
+              ];
+              final watchedAny = linked
+                  .any((x) => progress.arWatchedPct(x.id) >= arWatchThreshold);
               widgets.add(
                 _QuizTile(
                   quiz: q,
                   onTap: onQuizTap,
                   bestPct: progress.bestPct(q.id),
+                  locked: linked.isNotEmpty && !watchedAny,
+                  onLockedTap: linked.isEmpty
+                      ? null
+                      : () => _showWatchArFirstDialog(context, arWatchThreshold,
+                          () => onArTap(linked.first.id)),
                 ),
               );
             }

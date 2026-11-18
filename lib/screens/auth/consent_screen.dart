@@ -271,6 +271,8 @@ class _ConsentScreenState extends ConsumerState<ConsentScreen> {
     if (!mounted) return;
 
     if (success) {
+      // Consent saved → learning analytics may start for this student.
+      ref.read(authProvider.notifier).startTelemetryIfConsented(user?.id);
       context.go(widget.nextRoute);
     } else {
       setState(() {

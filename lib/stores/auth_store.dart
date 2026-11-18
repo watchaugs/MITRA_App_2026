@@ -185,7 +185,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     _beginTerritory(user); // home-state rule, before any screen or sync runs
     state = state.copyWith(user: user, isLoggedIn: true, isLoading: false);
     await _cacheUser(user); // persist so the next launch restores instantly
-    await _initializeTelemetry();
+    await startTelemetryIfConsented(user.id);
     unawaited(syncTopicsWithTerritory()); // topics only while allowed
     // Cloud copy of progress: every 10 days (and first merge if never done).
     try {
@@ -290,6 +290,23 @@ class AuthNotifier extends StateNotifier<AuthState> {
       }
     }
     debugPrint('✅ FCM topics subscribed for $state / $cls');
+  }
+
+  /// Learning analytics start only after this student's consent is saved
+  /// (DPDP). Called at sign-in and again by the consent screen.
+  Future<void> startTelemetryIfConsented(String? uid) async {
+    if (uid == null || uid.isEmpty) return;
+    final cur = ref.read(telemetryServiceProvider);
+    if (cur != null && cur.context.studentId == uid) return; // already on
+    if (cur != null) {
+      // Another student's service (shared phone): never tag this one's events.
+      TelemetryService.current = null;
+      ref.read(telemetryServiceProvider.notifier).state = null;
+    }
+    final consented =
+        ref.read(sharedPreferencesProvider).getBool('consentGiven') ?? false;
+    if (!consented) return;
+    await _initializeTelemetry();
   }
 
   Future<void> _initializeTelemetry() async {

@@ -78,7 +78,9 @@ class TerritoryLockScreen extends ConsumerWidget {
             borderRadius: BorderRadius.circular(MitraRadius.lg),
             border: Border.all(color: ThemeHelper.ctxGlassBorder(context)),
           ),
-          child: child,
+          // ListTiles inside need their own Material over this tinted box,
+          // or their tap ripple is hidden (Flutter debug assertion).
+          child: Material(type: MaterialType.transparency, child: child),
         );
 
     Widget link(String label, String route) => ListTile(
@@ -109,7 +111,10 @@ class TerritoryLockScreen extends ConsumerWidget {
               Text(body,
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                      fontFamily: 'Mukta', fontSize: 14, color: ts, height: 1.4)),
+                      fontFamily: 'Mukta',
+                      fontSize: 14,
+                      color: ts,
+                      height: 1.4)),
             ],
             const SizedBox(height: 14),
             if (unsaved)
@@ -140,26 +145,25 @@ class TerritoryLockScreen extends ConsumerWidget {
           ])),
           if (!unsaved) ...[
             // ── Your data rights (always available, by law) ──
-            card(Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(context.tr(ref, 'terr_rights', 'Your data rights'),
-                      style: TextStyle(
-                          fontFamily: 'Baloo2',
-                          fontWeight: FontWeight.w700,
-                          fontSize: 16,
-                          color: tp)),
-                  const SizedBox(height: 6),
-                  const ConsentManager(),
-                  const SizedBox(height: 6),
-                  const DataRightsSection(),
-                  link(context.tr(ref, 'terr_grievance', 'Grievance officer'),
-                      '/legal/grievance'),
-                  link(context.tr(ref, 'terr_privacy', 'Privacy policy'),
-                      '/legal/privacy'),
-                  link(context.tr(ref, 'terr_terms', 'Terms of use'),
-                      '/legal/terms'),
-                ])),
+            card(
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(context.tr(ref, 'terr_rights', 'Your data rights'),
+                  style: TextStyle(
+                      fontFamily: 'Baloo2',
+                      fontWeight: FontWeight.w700,
+                      fontSize: 16,
+                      color: tp)),
+              const SizedBox(height: 6),
+              const ConsentManager(),
+              const SizedBox(height: 6),
+              const DataRightsSection(),
+              link(context.tr(ref, 'terr_grievance', 'Grievance officer'),
+                  '/legal/grievance'),
+              link(context.tr(ref, 'terr_privacy', 'Privacy policy'),
+                  '/legal/privacy'),
+              link(context.tr(ref, 'terr_terms', 'Terms of use'),
+                  '/legal/terms'),
+            ])),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(

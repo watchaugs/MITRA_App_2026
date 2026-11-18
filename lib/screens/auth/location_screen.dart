@@ -226,8 +226,9 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
       var permission =
           await Geolocator.checkPermission().timeout(_kLocationTimeout);
       if (permission == LocationPermission.denied) {
-        permission =
-            await Geolocator.requestPermission().timeout(_kLocationTimeout);
+        // The student answers this pop-up; 20 s was too short for some.
+        permission = await Geolocator.requestPermission()
+            .timeout(const Duration(minutes: 2));
       }
       if (permission == LocationPermission.denied) {
         throw const _LocException('PERMISSION_DENIED');
@@ -239,15 +240,17 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
       // 3. Get position — coords stay in local scope, never logged.
       // DPDP data minimisation: we only need the STATE. We try a cached fix
       // first (instant, no radio wake-up), and only ask for a fresh one if none
-      // exists. APPROXIMATE accuracy only (LocationAccuracy.reduced → coarse):
-      // a state is hundreds of km wide, so precise/fine location would collect
-      // more than the purpose requires and break DPDP/CERT-In compliance.
+      // exists. APPROXIMATE accuracy only: a state is hundreds of km wide, so
+      // precise/fine location would collect more than the purpose requires.
+      // The app holds only ACCESS_COARSE_LOCATION, so Android returns an
+      // approximate point. `low` = Wi-Fi/mobile-network fix (`reduced` is
+      // iOS-only; Android reads it as `best`, i.e. a slow GPS fix).
       Position? position;
       try {
         position = await Geolocator.getLastKnownPosition();
       } catch (_) {/* no cached fix — fall through to a fresh read */}
       position ??= await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.reduced,
+        desiredAccuracy: LocationAccuracy.low,
       ).timeout(_kLocationTimeout);
 
       // 4. Reverse geocode via Nominatim — works on all Android devices
@@ -374,13 +377,16 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
       }
     } on TimeoutException {
       if (opId != _saveOpId || !mounted) return;
-      setState(() => _error = ref.trNow('auth_server_is_taking_too_long_please', 'Server is taking too long. Please try again.'));
+      setState(() => _error = ref.trNow('auth_server_is_taking_too_long_please',
+          'Server is taking too long. Please try again.'));
     } on _LocException catch (e) {
       if (opId != _saveOpId || !mounted) return;
       setState(() => _error = _safeErrorMessage(e.message));
     } catch (_) {
       if (opId != _saveOpId || !mounted) return;
-      setState(() => _error = ref.trNow('auth_could_not_save_location_please_try', 'Could not save location. Please try again.'));
+      setState(() => _error = ref.trNow(
+          'auth_could_not_save_location_please_try',
+          'Could not save location. Please try again.'));
     } finally {
       if (opId == _saveOpId && mounted) {
         setState(() => _saving = false);
@@ -493,7 +499,8 @@ class _LocationHeader extends ConsumerWidget {
                     ),
                   ),
                   Text(
-                    context.tr(ref, 'auth_confirm_location', 'Confirm Location'),
+                    context.tr(
+                        ref, 'auth_confirm_location', 'Confirm Location'),
                     style: TextStyle(
                       fontFamily: 'Baloo2',
                       fontWeight: FontWeight.w900,
@@ -508,8 +515,11 @@ class _LocationHeader extends ConsumerWidget {
           ),
           const SizedBox(height: 14),
           Text(
-            context.tr(ref, 'auth_we_use_your_location_to_personalise', 'We use your location to personalise your learning content. '
-            'Your GPS coordinates are never stored — only your district and state.'),
+            context.tr(
+                ref,
+                'auth_we_use_your_location_to_personalise',
+                'We use your location to personalise your learning content. '
+                    'Your GPS coordinates are never stored — only your district and state.'),
             style: TextStyle(
               fontFamily: 'Mukta',
               fontSize: 13,
@@ -542,7 +552,10 @@ class _DetectButton extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return Semantics(
       button: true,
-      label: detected ? context.tr(ref, 'auth_detect_location_again', 'Detect location again') : context.tr(ref, 'auth_detect_my_location', 'Detect my location'),
+      label: detected
+          ? context.tr(
+              ref, 'auth_detect_location_again', 'Detect location again')
+          : context.tr(ref, 'auth_detect_my_location', 'Detect my location'),
       enabled: _interactable,
       child: Material(
         color: Colors.transparent,
@@ -586,10 +599,12 @@ class _DetectButton extends ConsumerWidget {
                 const SizedBox(width: 12),
                 Text(
                   detecting
-                      ? context.tr(ref, 'auth_detecting_location', 'Detecting location…')
+                      ? context.tr(
+                          ref, 'auth_detecting_location', 'Detecting location…')
                       : detected
                           ? context.tr(ref, 'auth_detect_again', 'Detect Again')
-                          : context.tr(ref, 'auth_detect_my_location_2', 'Detect My Location'),
+                          : context.tr(ref, 'auth_detect_my_location_2',
+                              'Detect My Location'),
                   style: TextStyle(
                     fontFamily: 'Baloo2',
                     fontWeight: FontWeight.w700,
@@ -651,7 +666,8 @@ class _LocationResult extends ConsumerWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            context.tr(ref, 'auth_is_this_correct_you_can_detect', 'Is this correct? You can detect again if needed.'),
+            context.tr(ref, 'auth_is_this_correct_you_can_detect',
+                'Is this correct? You can detect again if needed.'),
             textAlign: TextAlign.center,
             style: TextStyle(
               fontFamily: 'Mukta',
@@ -739,7 +755,8 @@ class _ConfirmButton extends ConsumerWidget {
                   ),
                 )
               : Text(
-                  context.tr(ref, 'auth_confirm_continue', 'Confirm & Continue →'),
+                  context.tr(
+                      ref, 'auth_confirm_continue', 'Confirm & Continue →'),
                   style: TextStyle(
                     fontFamily: 'Baloo2',
                     fontWeight: FontWeight.w700,

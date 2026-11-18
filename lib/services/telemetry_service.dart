@@ -95,6 +95,32 @@ class TelemetryService {
       profileError = e;
     }
 
+    // Most students have no `students` doc (setup writes one only when gender
+    // or phone owner is given), so analytics never started for them. Take the
+    // class/state/etc. from the student's profile in app_users; values in the
+    // `students` doc still win. Gender/phone owner still need consent to be
+    // sent (StudentContext.demographicsIfConsented).
+    try {
+      final u = (await firestore.collection('app_users').doc(uid).get()).data();
+      if (u != null) {
+        String? str(Object? v) =>
+            (v == null || '$v'.trim().isEmpty) ? null : '$v'.trim();
+        final fromProfile = <String, dynamic>{
+          'state': str(u['assigned_state']),
+          'district': str(u['assigned_district']),
+          'class_grade': str(u['class_grade']),
+          'language': str(u['language_preference']),
+          'gender': str(u['gender']),
+          'mobile_ownership': str(u['mobile_belongs_to']),
+        }..removeWhere((_, v) => v == null);
+        final own = <String, dynamic>{...?profileDoc}
+          ..removeWhere((_, v) => v == null);
+        profileDoc = {...fromProfile, ...own};
+      }
+    } catch (e) {
+      profileError ??= e;
+    }
+
     if (profileDoc == null) {
       // Either the read threw, or the doc genuinely doesn't exist yet.
       // Either way we don't have enough to safely emit DPDPA-relevant
