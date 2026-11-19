@@ -1,6 +1,9 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// Animated MITRA hero: hovers, cape flutters, eyes blink, Gyani aura spins.
-// Tap = power move (flies up with a spark burst). Code-drawn, works offline.
+// Animated MITRA hero ("Bio-tech armour" look, hero_biotech.dart): breathes,
+// cape sways, light lines pulse, eyes blink, Gyani aura spins.
+// Tap = power move (1.6 s): crouch → launch with a chest flash and visor flare
+// → sparks and a shockwave at the top → land with a ground impact.
+// Code-drawn, works offline.
 // ═══════════════════════════════════════════════════════════════════════════
 import 'dart:async';
 import 'dart:math' as math;
@@ -8,8 +11,8 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
+import 'hero_biotech.dart';
 import 'hero_catalog.dart';
-import 'hero_svg.dart';
 
 class MitraHeroView extends StatefulWidget {
   final HeroDef hero;
@@ -43,14 +46,33 @@ class _MitraHeroViewState extends State<MitraHeroView> {
   @override
   Widget build(BuildContext context) {
     final team = widget.gender == HeroGender.team;
-    final w = widget.height * kHeroW / kHeroH;
+    final w = widget.height * kBioW / kBioH;
     final heroes = team
         ? [
-            _OneHero(key: _keys[0], hero: widget.hero, girl: false, level: widget.level, width: w * .8, height: widget.height * .8),
-            _OneHero(key: _keys[1], hero: widget.hero, girl: true, level: widget.level, width: w * .8, height: widget.height * .8, phase: .5),
+            _OneHero(
+                key: _keys[0],
+                hero: widget.hero,
+                girl: false,
+                level: widget.level,
+                width: w * .8,
+                height: widget.height * .8),
+            _OneHero(
+                key: _keys[1],
+                hero: widget.hero,
+                girl: true,
+                level: widget.level,
+                width: w * .8,
+                height: widget.height * .8,
+                phase: .5),
           ]
         : [
-            _OneHero(key: _keys[0], hero: widget.hero, girl: widget.gender == HeroGender.girl, level: widget.level, width: w, height: widget.height),
+            _OneHero(
+                key: _keys[0],
+                hero: widget.hero,
+                girl: widget.gender == HeroGender.girl,
+                level: widget.level,
+                width: w,
+                height: widget.height),
           ];
     return Semantics(
       label: heroName(widget.hero, widget.gender),
@@ -84,8 +106,8 @@ class _OneHero extends StatefulWidget {
 }
 
 class _OneHeroState extends State<_OneHero> with TickerProviderStateMixin {
-  late HeroLayers _layers;
-  late final AnimationController _loop; // hover + cape + aura
+  late BiotechLayers _layers;
+  late final AnimationController _loop; // breathe + cape + aura + glow pulse
   late final AnimationController _blink;
   late final AnimationController _power;
   Timer? _blinkTimer;
@@ -94,17 +116,22 @@ class _OneHeroState extends State<_OneHero> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    _layers = buildHeroLayers(widget.hero, girl: widget.girl, level: widget.level);
-    _loop = AnimationController(vsync: this, duration: const Duration(milliseconds: 2400))
+    _layers =
+        buildBiotechLayers(widget.hero, girl: widget.girl, level: widget.level);
+    _loop = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 3200))
       ..value = widget.phase
       ..repeat();
-    _blink = AnimationController(vsync: this, duration: const Duration(milliseconds: 160));
-    _power = AnimationController(vsync: this, duration: const Duration(milliseconds: 1200));
+    _blink = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 160));
+    _power = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 1600));
     _scheduleBlink();
   }
 
   void _scheduleBlink() {
-    _blinkTimer = Timer(Duration(milliseconds: 2400 + _rnd.nextInt(2600)), () async {
+    _blinkTimer =
+        Timer(Duration(milliseconds: 2400 + _rnd.nextInt(2600)), () async {
       if (!mounted) return;
       await _blink.forward(from: 0);
       if (!mounted) return;
@@ -120,8 +147,11 @@ class _OneHeroState extends State<_OneHero> with TickerProviderStateMixin {
   @override
   void didUpdateWidget(covariant _OneHero old) {
     super.didUpdateWidget(old);
-    if (old.hero != widget.hero || old.girl != widget.girl || old.level != widget.level) {
-      _layers = buildHeroLayers(widget.hero, girl: widget.girl, level: widget.level);
+    if (old.hero != widget.hero ||
+        old.girl != widget.girl ||
+        old.level != widget.level) {
+      _layers = buildBiotechLayers(widget.hero,
+          girl: widget.girl, level: widget.level);
     }
   }
 
@@ -136,12 +166,180 @@ class _OneHeroState extends State<_OneHero> with TickerProviderStateMixin {
 
   Widget _svg(String s) => s.isEmpty
       ? const SizedBox.shrink()
-      : SvgPicture.string(s, width: widget.width, height: widget.height, fit: BoxFit.contain);
+      : SvgPicture.string(s,
+          width: widget.width, height: widget.height, fit: BoxFit.contain);
+
+  // A point of the 400 × 600 canvas as an Alignment of this box.
+  static Alignment _at(double x, double y) =>
+      Alignment(x / 200 - 1, y / 300 - 1);
+
+  // Power-move keyframes: [progress 0..1, value], eased between.
+  static double _kf(double p, List<List<double>> k) {
+    if (p <= k.first[0]) return k.first[1];
+    for (var i = 1; i < k.length; i++) {
+      if (p <= k[i][0]) {
+        final a = k[i - 1], b = k[i];
+        final f = (p - a[0]) / (b[0] - a[0]);
+        return a[1] + (b[1] - a[1]) * Curves.easeInOut.transform(f);
+      }
+    }
+    return k.last[1];
+  }
+
+  static const _moveY = [
+    [0.0, 0.0],
+    [.12, 8.0],
+    [.34, -74.0],
+    [.52, -80.0],
+    [.78, 0.0],
+    [.88, -6.0],
+    [1.0, 0.0]
+  ];
+  static const _sclX = [
+    [0.0, 1.0],
+    [.12, 1.04],
+    [.34, .97],
+    [.52, 1.0],
+    [.78, 1.05],
+    [.88, 1.0],
+    [1.0, 1.0]
+  ];
+  static const _sclY = [
+    [0.0, 1.0],
+    [.12, .94],
+    [.34, 1.05],
+    [.52, 1.0],
+    [.78, .94],
+    [.88, 1.0],
+    [1.0, 1.0]
+  ];
+  static const _tilt = [
+    [0.0, 0.0],
+    [.34, -3.0],
+    [.52, 2.0],
+    [.78, 0.0],
+    [1.0, 0.0]
+  ]; // degrees
+  static const _flashO = [
+    [0.0, 0.0],
+    [.32, 0.0],
+    [.40, .9],
+    [.60, 0.0],
+    [1.0, 0.0]
+  ];
+  static const _shockO = [
+    [0.0, 0.0],
+    [.34, 0.0],
+    [.40, 1.0],
+    [.70, 0.0],
+    [1.0, 0.0]
+  ];
+  static const _shockS = [
+    [0.0, .3],
+    [.34, .3],
+    [.40, .6],
+    [.70, 4.2],
+    [1.0, 4.2]
+  ];
+  static const _shock2O = [
+    [0.0, 0.0],
+    [.44, 0.0],
+    [.50, 1.0],
+    [.82, 0.0],
+    [1.0, 0.0]
+  ];
+  static const _shock2S = [
+    [0.0, .3],
+    [.44, .3],
+    [.50, .6],
+    [.82, 3.4],
+    [1.0, 3.4]
+  ];
+  static const _sparkO = [
+    [0.0, 0.0],
+    [.36, 0.0],
+    [.44, 1.0],
+    [.72, 0.0],
+    [1.0, 0.0]
+  ];
+  static const _sparkS = [
+    [0.0, .2],
+    [.36, .2],
+    [.44, 1.0],
+    [.72, 2.4],
+    [1.0, 2.4]
+  ];
+  static const _sparkR = [
+    [0.0, 0.0],
+    [.36, 0.0],
+    [.44, 20.0],
+    [.72, 60.0],
+    [1.0, 60.0]
+  ]; // degrees
+  static const _vflareO = [
+    [0.0, 0.0],
+    [.26, 0.0],
+    [.36, 1.0],
+    [.56, 0.0],
+    [1.0, 0.0]
+  ];
+  static const _impactO = [
+    [0.0, 0.0],
+    [.74, 0.0],
+    [.80, 1.0],
+    [1.0, 0.0]
+  ];
+  static const _impactS = [
+    [0.0, .3],
+    [.74, .3],
+    [.80, .6],
+    [1.0, 2.0]
+  ];
+  static const _capeSk = [
+    [0.0, 0.0],
+    [.30, 0.0],
+    [.40, -6.0],
+    [.60, 5.0],
+    [.82, -2.0],
+    [1.0, 0.0]
+  ]; // degrees
+  static const _capeSy = [
+    [0.0, 1.0],
+    [.30, 1.0],
+    [.40, 1.1],
+    [.60, .92],
+    [.82, 1.04],
+    [1.0, 1.0]
+  ];
+
+  static const _deg = math.pi / 180;
+
+  // One power-move effect layer, faded and scaled around [a].
+  Widget _fx(String svg, double opacity, double scale, Alignment a,
+      [double turn = 0]) {
+    if (svg.isEmpty || opacity <= 0.01) return const SizedBox.shrink();
+    return Opacity(
+      opacity: opacity.clamp(0.0, 1.0),
+      child: Transform.scale(
+        scale: scale,
+        alignment: a,
+        child: Transform.rotate(
+            angle: turn * _deg, alignment: a, child: _svg(svg)),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    final aura = _svg(_layers.aura), back = _svg(_layers.back), cape = _svg(_layers.cape);
-    final body = _svg(_layers.body), eyes = _svg(_layers.eyes);
+    final aura = _svg(_layers.aura), ground = _svg(_layers.ground);
+    final back = _svg(_layers.back), cape = _svg(_layers.cape);
+    final body = _svg(_layers.body),
+        glow = _svg(_layers.glow),
+        eyes = _svg(_layers.eyes);
+    final u = widget.height / kBioH; // one canvas unit in pixels
+    final chest = _at(200, 222),
+        feet = _at(200, 540),
+        shoulders = _at(200, 182);
     return SizedBox(
       width: widget.width,
       height: widget.height,
@@ -149,77 +347,77 @@ class _OneHeroState extends State<_OneHero> with TickerProviderStateMixin {
         animation: Listenable.merge([_loop, _blink, _power]),
         builder: (context, _) {
           final t = _loop.value * 2 * math.pi;
-          final hover = math.sin(t) * widget.height * 0.02;
+          final breathe = 1 + math.sin(t) * 0.012;
           final p = _power.value;
-          // Power move: up and back with a little lean.
-          final lift = p == 0 ? 0.0 : math.sin(p * math.pi) * widget.height * 0.15;
-          final lean = p == 0 ? 0.0 : -math.sin(p * math.pi) * 0.1;
-          final capeSkew = math.sin(t * 1.7) * 0.12;
+          final acting = p > 0 && p < 1;
+          final capeSkew = math.sin(t * 1.3) * 0.05 +
+              (acting ? _kf(p, _capeSk) * _deg : 0.0);
+          final capeY = acting ? _kf(p, _capeSy) : 1.0;
+          final pulse = 0.55 + 0.45 * (0.5 + 0.5 * math.sin(t * 2));
           return Stack(clipBehavior: Clip.none, children: [
             if (_layers.aura.isNotEmpty)
               Positioned.fill(
                 child: Transform.rotate(
-                  // spins around the hero's chest (120, 170) of 240 × 320
-                  alignment: const Alignment(0, 0.0625),
-                  angle: _loop.value * 2 * math.pi / 6,
+                  alignment:
+                      Alignment.center, // the aura rings' centre (200, 300)
+                  angle: _loop.value * 2 * math.pi / 4,
                   child: aura,
                 ),
               ),
+            Positioned.fill(child: ground),
             Positioned.fill(
               child: Transform.translate(
-                offset: Offset(0, hover - lift),
+                offset: Offset(0, acting ? _kf(p, _moveY) * u : 0.0),
                 child: Transform.rotate(
-                  angle: lean,
-                  alignment: Alignment.bottomCenter,
-                  child: Stack(children: [
-                    back,
-                    // Cape hangs from the shoulders (y 112 of 320).
-                    Transform(
-                      alignment: const Alignment(0, -0.3),
-                      transform: Matrix4.skewX(capeSkew)
-                          .multiplied(Matrix4.diagonal3Values(1 + capeSkew.abs() * 0.3, 1, 1)),
-                      child: cape,
-                    ),
-                    body,
-                    // Eyes close around their centre line (y 70 of 320).
-                    Transform(
-                      alignment: const Alignment(0, -0.5625),
-                      transform: Matrix4.diagonal3Values(1, 1 - 0.9 * _blink.value, 1),
-                      child: eyes,
-                    ),
-                  ]),
+                  angle: acting ? _kf(p, _tilt) * _deg : 0.0,
+                  alignment: feet,
+                  child: Transform(
+                    alignment: feet,
+                    transform: Matrix4.diagonal3Values(
+                        acting ? _kf(p, _sclX) : 1.0,
+                        (acting ? _kf(p, _sclY) : 1.0) * breathe,
+                        1),
+                    child: Stack(children: [
+                      // Cape hangs from the shoulders (y 182 of 600).
+                      Transform(
+                        alignment: shoulders,
+                        transform: Matrix4.skewX(capeSkew)
+                            .multiplied(Matrix4.diagonal3Values(1, capeY, 1)),
+                        child: cape,
+                      ),
+                      back,
+                      body,
+                      Opacity(opacity: acting ? 1.0 : pulse, child: glow),
+                      // Eyes close around their centre line (y 113 of 600).
+                      Transform(
+                        alignment: _at(200, 113),
+                        transform: Matrix4.diagonal3Values(
+                            1, 1 - 0.9 * _blink.value, 1),
+                        child: eyes,
+                      ),
+                      if (acting) ...[
+                        _fx(_layers.vflare, _kf(p, _vflareO), 1, _at(200, 113)),
+                        _fx(_layers.flash, _kf(p, _flashO), 1, chest),
+                        _fx(_layers.shock, _kf(p, _shockO), _kf(p, _shockS),
+                            chest),
+                        _fx(_layers.shock2, _kf(p, _shock2O), _kf(p, _shock2S),
+                            chest),
+                        _fx(_layers.sparks, _kf(p, _sparkO), _kf(p, _sparkS),
+                            chest, _kf(p, _sparkR)),
+                      ],
+                    ]),
+                  ),
                 ),
               ),
             ),
-            if (p > 0 && p < 1)
+            if (acting)
               Positioned.fill(
-                child: CustomPaint(painter: _SparkPainter(p, widget.hero.accent)),
+                child: _fx(_layers.impact, _kf(p, _impactO), _kf(p, _impactS),
+                    _at(200, 548)),
               ),
           ]);
         },
       ),
     );
   }
-}
-
-class _SparkPainter extends CustomPainter {
-  final double t; // 0..1
-  final Color accent;
-  _SparkPainter(this.t, this.accent);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final c = Offset(size.width / 2, size.height * 0.47);
-    final reach = size.width * 0.55 * Curves.easeOut.transform(t);
-    final fade = (1 - t).clamp(0.0, 1.0);
-    for (int i = 0; i < 12; i++) {
-      final a = i * math.pi / 6;
-      final pt = c + Offset(math.cos(a), math.sin(a)) * reach;
-      final paint = Paint()..color = (i.isEven ? accent : const Color(0xFFFDE68A)).withValues(alpha: fade);
-      canvas.drawCircle(pt, size.width * 0.025 * (0.6 + t), paint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _SparkPainter old) => old.t != t || old.accent != accent;
 }
