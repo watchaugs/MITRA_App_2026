@@ -27,7 +27,7 @@
 //    Santali sentence, a Hindi word in Manipuri): known words are replaced,
 //    anything else is removed so English shows until it is translated again.
 // 12. Small MT glitches: an arrow moved into the middle, a lost trailing "…",
-//    "XP·" without spaces, a space before an apostrophe (ল 'ড), stray ′ marks,
+//    "XP·" without spaces, a space before an apostrophe (Assamese/Dogri only), stray ′ marks,
 //    Santali ᱾ used as a colon, and a lost "XXXXXXX" mask (value dropped).
 // 8. Devanagari packs (not Sanskrit): MT wrote the colon as a visarga ("सकाः {v1}"). Where the
 //    English has a colon, "ः" before a space/placeholder becomes ": " — real
@@ -152,6 +152,7 @@ const SCRIPT_FIX = {
   mni: [['पाउखुम', 'ꯄꯥꯎꯈꯨꯝ']],  // "answer"
 };
 const RTL = new Set(['ur', 'ks', 'sd']);
+const APOS_JOIN = new Set(['as', 'doi']);
 const LEAD_DECOR = /^[\p{Extended_Pictographic}\u{1F3FB}-\u{1F3FF}\uFE0F\u200D]+/u;
 
 const TIER_KEYS = ['tier_jigyasu', 'tier_anveshak', 'tier_vidwan', 'tier_acharya', 'tier_gyani'];
@@ -212,8 +213,13 @@ for (const [lang, [tiers, viewed]] of Object.entries(FIX)) {
     if (/(…|\.\.\.)\s*$/.test(en[k]) && !/(…|\.\.\.)\s*$/.test(v)) v = `${v.replace(TERMINATOR, '').trim()}…`;
     // "XP· 20" → "XP · 20" when English has a spaced middle dot.
     if (en[k].includes(' · ')) v = v.replace(/\s*·\s*/g, ' · ');
-    // A space MT put before an apostrophe inside a word ("ल 'ड" → "ल'ड").
-    if (!en[k].includes("'")) v = v.replace(/([\p{L}\p{M}]) '(?=[\p{L}\p{M}])/gu, "$1'");
+    // A space MT put before an apostrophe inside a word: Assamese ল 'ড → ল'ড,
+    // Dogri र 'वो → र'वो. Only these two: in Punjabi 'ਤੇ is its own word, and in
+    // Bodo a joined word cannot be told from two words. Not after a vowel
+    // letter (Assamese ভিডিঅ' ends a word) and not before Latin letters.
+    if (APOS_JOIN.has(lang) && !en[k].includes("'")) {
+      v = v.replace(/([\p{L}\p{M}])(?<![অআ]) '(?=[^\sA-Za-z\p{P}])/gu, "$1'");
+    }
     // Stray prime marks (′ ″) MT left where an emoji or quote was.
     if (!/[′″]/.test(en[k])) v = v.replace(/\s*[′″]+\s*/g, ' ').trim();
     // Santali: MT wrote the full stop ᱾ where English has a colon before a value.

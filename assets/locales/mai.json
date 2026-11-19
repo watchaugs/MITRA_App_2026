@@ -440,7 +440,7 @@
   "student_mastered_pct": "निपुण {pct}%",
   "student_locked_title_score_pct_on_the": "बन्द: {title}। अनलॉक करबाक लेल पिछला मॉड्यूल पर {need}% स्कोर करू।",
   "ar_point_camera_at_page": "पाठ्यपुस्तक पृष्ठ पर कैमरा लगाउ",
-  "ar_page_found_placing": "मॉडल राखि कऽ पेज भेटल…",
+  "ar_page_found_placing": "पेज भेटल, मॉडल राखल जा रहल अछि…",
   "ar_keep_page_in_view": "पृष्ठकेँ कैमराक सामने राखू",
   "ar_could_not_load_page_image": "पृष्ठ छवि लोड नहि भऽ सकल। अपन सम्पर्कक जाँच करू।",
   "ar_page_image_not_trackable": "ARCore एहि पृष्ठ छविकेँ नहि चिन्ह सकैत अछि (बहुत कम विवरण)।",

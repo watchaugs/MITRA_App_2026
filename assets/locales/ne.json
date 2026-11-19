@@ -439,7 +439,7 @@
   "student_mastered_pct": "मास्टर्ड {pct}%",
   "student_locked_title_score_pct_on_the": "लक गरिएको: {title}। अनलक गर्न अघिल्लो मोड्युलमा {need}% स्कोर गर्नुहोस्।",
   "ar_point_camera_at_page": "पाठ्यपुस्तक पृष्ठमा क्यामेरा थिच्नुहोस्",
-  "ar_page_found_placing": "पृष्ठ फेला पर्यो, मोडेल राख्दा…",
+  "ar_page_found_placing": "पृष्ठ फेला पर्यो, मोडेल राख्दै…",
   "ar_keep_page_in_view": "पृष्ठलाई क्यामेराको अगाडि राख्नुहोस्",
   "ar_could_not_load_page_image": "पृष्ठ छवि लोड गर्न सकिएन। आफ्नो जडान जाँच गर्नुहोस्।",
   "ar_page_image_not_trackable": "ARCore ले यो पृष्ठ छवि चिन्न सक्दैन (धेरै थोरै विवरणहरू)।",

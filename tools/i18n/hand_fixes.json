@@ -130,7 +130,9 @@
     "txt_social_science": "सामाजिक विज्ञान",
     "txt_you_earn_xp_by_completing_quizzes_and_viewing_3d_ar_lessons_": "प्रश्नोत्तरी पूरी करके और 3D AR पाठ देखकर आप XP कमाते हैं। आपके कुल XP आपकी प्रोफ़ाइल पर दिखते हैं।",
     "auth_change_number_resend_otp": "← नंबर बदलें / OTP फिर से भेजें",
-    "auth_otp_sent_to_91_v1_xxxxxxx": "💬 OTP +91 {v1}XXXXXXX पर भेजा गया"
+    "auth_otp_sent_to_91_v1_xxxxxxx": "💬 OTP +91 {v1}XXXXXXX पर भेजा गया",
+    "common_syncing_1_item": "1 आइटम सिंक हो रहा है…",
+    "common_syncing_n_items": "{count} आइटम सिंक हो रहे हैं…"
   },
   "as": {
     "auth_send_otp": "OTP পঠিয়াওক →",
@@ -176,7 +178,9 @@
     "settings_change_class": "শ্রেণী পরিবর্তন করুন",
     "settings_tap_to_select_a_new_class": "নতুন শ্রেণী নির্বাচন করতে ট্যাপ করুন",
     "teacher_class_average": "ক্লাসের গড়",
-    "auth_step_4_of_4": "ধাপ 4 / 4"
+    "auth_step_4_of_4": "ধাপ 4 / 4",
+    "terr_checking": "আপনার অবস্থান পরীক্ষা করা হচ্ছে…",
+    "ar_page_found_placing": "পাতা পাওয়া গেছে, মডেল বসানো হচ্ছে…"
   },
   "brx": {
     "auth_send_otp": "OTP हर →",
@@ -214,7 +218,9 @@
     "quiz_see_results": "પરિણામ જુઓ →",
     "ar_scan_textbook_page_2": "📄 પાઠ્યપુસ્તકનું પાનું સ્કેન કરો",
     "teacher_class_average": "વર્ગની સરેરાશ",
-    "auth_step_4_of_4": "પગલું 4 / 4"
+    "auth_step_4_of_4": "પગલું 4 / 4",
+    "terr_checking": "તમારું સ્થાન તપાસી રહ્યા છીએ…",
+    "ar_page_found_placing": "પાનું મળ્યું, મોડેલ મૂકી રહ્યા છીએ…"
   },
   "kn": {
     "auth_send_otp": "OTP ಕಳುಹಿಸಿ →",
@@ -236,7 +242,9 @@
     "txt_geography": "ಭೂಗೋಳಶಾಸ್ತ್ರ",
     "teacher_assign": "ತರಗತಿಗೆ ನಿಯೋಜಿಸಿ",
     "auth_step_4_of_4": "ಹಂತ 4 / 4",
-    "fun_heroes_empty": "ನಿಮ್ಮ ಪಾಠಗಳು ಲೋಡ್ ಆದಾಗ ನಿಮ್ಮ ನಾಯಕರು ಇಲ್ಲಿ ಕಾಣಿಸಿಕೊಳ್ಳುತ್ತಾರೆ."
+    "fun_heroes_empty": "ನಿಮ್ಮ ಪಾಠಗಳು ಲೋಡ್ ಆದಾಗ ನಿಮ್ಮ ನಾಯಕರು ಇಲ್ಲಿ ಕಾಣಿಸಿಕೊಳ್ಳುತ್ತಾರೆ.",
+    "student_loading_your_lessons": "ನಿಮ್ಮ ಪಾಠಗಳನ್ನು ಲೋಡ್ ಮಾಡಲಾಗುತ್ತಿದೆ…",
+    "ar_page_found_placing": "ಪುಟ ಸಿಕ್ಕಿದೆ, ಮಾದರಿಯನ್ನು ಇರಿಸಲಾಗುತ್ತಿದೆ…"
   },
   "ks": {
     "teacher_target_80": "ہدف: 80%"
@@ -261,7 +269,8 @@
     "settings_tap_to_select_a_new_class": "नव कक्षा चुनबाक लेल दबाउ",
     "teacher_class_average": "कक्षाक औसत",
     "auth_step_4_of_4": "चरण 4 / 4",
-    "fun_heroes_empty": "जखन अहाँक पाठ लोड होइत अछि तखन अहाँक नायक एतय देखाइत छथि।"
+    "fun_heroes_empty": "जखन अहाँक पाठ लोड होइत अछि तखन अहाँक नायक एतय देखाइत छथि।",
+    "ar_page_found_placing": "पेज भेटल, मॉडल राखल जा रहल अछि…"
   },
   "ml": {
     "auth_send_otp": "OTP അയയ്ക്കുക →",
@@ -286,7 +295,9 @@
     "settings_change_class": "ക്ലാസ് മാറ്റുക",
     "settings_tap_to_select_a_new_class": "പുതിയ ക്ലാസ് തിരഞ്ഞെടുക്കാൻ ടാപ്പ് ചെയ്യുക",
     "teacher_class_average": "ക്ലാസ് ശരാശരി",
-    "auth_step_4_of_4": "ഘട്ടം 4 / 4"
+    "auth_step_4_of_4": "ഘട്ടം 4 / 4",
+    "student_downloading_over_wi_fi": "വൈഫൈ വഴി ഡൗൺലോഡ് ചെയ്യുന്നു…",
+    "ar_page_found_placing": "പേജ് കണ്ടെത്തി, മോഡൽ സ്ഥാപിക്കുന്നു…"
   },
   "mni": {
     "auth_update_mitra_to_continue": "ꯃꯈꯥ ꯆꯠꯊꯅꯕ MITRA ꯑꯞꯗꯦꯠ ꯇꯧ"
@@ -312,7 +323,10 @@
     "teacher_class_average": "वर्गाची सरासरी",
     "auth_step_4_of_4": "पायरी 4 / 4",
     "auth_update_mitra_to_continue": "सुरू ठेवण्यासाठी MITRA अपडेट करा",
-    "fun_heroes_empty": "तुमचे धडे लोड झाल्यावर तुमचे नायक येथे दिसतात."
+    "fun_heroes_empty": "तुमचे धडे लोड झाल्यावर तुमचे नायक येथे दिसतात.",
+    "auth_detecting_location": "ठिकाण शोधत आहोत…",
+    "student_loading_your_lessons": "तुमचे धडे लोड होत आहेत…",
+    "ar_page_found_placing": "पृष्ठ सापडले, मॉडेल ठेवत आहोत…"
   },
   "ne": {
     "auth_send_otp": "OTP पठाउनुहोस् →",
@@ -337,7 +351,8 @@
     "settings_change_class": "कक्षा परिवर्तन गर्नुहोस्",
     "settings_tap_to_select_a_new_class": "नयाँ कक्षा चयन गर्न ट्याप गर्नुहोस्",
     "teacher_class_average": "कक्षा औसत",
-    "auth_step_4_of_4": "चरण 4 / 4"
+    "auth_step_4_of_4": "चरण 4 / 4",
+    "ar_page_found_placing": "पृष्ठ फेला पर्यो, मोडेल राख्दै…"
   },
   "or": {
     "auth_send_otp": "OTP ପଠାନ୍ତୁ →",
@@ -360,7 +375,12 @@
     "settings_change_class": "ଶ୍ରେଣୀ ପରିବର୍ତ୍ତନ କରନ୍ତୁ",
     "settings_tap_to_select_a_new_class": "ନୂଆ ଶ୍ରେଣୀ ବାଛିବା ପାଇଁ ଟ୍ୟାପ୍ କରନ୍ତୁ",
     "teacher_class_average": "ଶ୍ରେଣୀ ହାରାହାରି",
-    "auth_step_4_of_4": "ପର୍ଯ୍ୟାୟ 4 / 4"
+    "auth_step_4_of_4": "ପର୍ଯ୍ୟାୟ 4 / 4",
+    "terr_checking": "ଆପଣଙ୍କ ଅବସ୍ଥିତି ଯାଞ୍ଚ କରାଯାଉଛି…",
+    "auth_detecting_location": "ଅବସ୍ଥାନ ଚିହ୍ନଟ କରାଯାଉଛି…",
+    "student_downloading_over_wi_fi": "ୱାଇ-ଫାଇ ମାଧ୍ୟମରେ ଡାଉନଲୋଡ୍ ହେଉଛି…",
+    "student_loading_your_lessons": "ଆପଣଙ୍କ ପାଠ ଲୋଡ ହେଉଛି…",
+    "ar_page_found_placing": "ପୃଷ୍ଠା ମିଳିଲା, ମଡେଲ ରଖାଯାଉଛି…"
   },
   "pa": {
     "auth_send_otp": "OTP ਭੇਜੋ →",
@@ -387,7 +407,11 @@
     "fun_heroes_empty": "ਜਦੋਂ ਤੁਹਾਡੇ ਸਬਕ ਲੋਡ ਹੁੰਦੇ ਹਨ ਤਾਂ ਤੁਹਾਡੇ ਹੀਰੋ ਇੱਥੇ ਦਿਖਾਈ ਦਿੰਦੇ ਹਨ।",
     "ar_could_not_load_the_model_in": "ਮਾਡਲ ਨੂੰ AR ਵਿੱਚ ਲੋਡ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਿਆ। ਪਾਠ ਤੋਂ 3D ਦ੍ਰਿਸ਼ ਦੀ ਕੋਸ਼ਿਸ਼ ਕਰੋ, ਜਾਂ ਇੱਕ ਹਲਕਾ ਮਾਡਲ ਦੁਬਾਰਾ ਅਪਲੋਡ ਕਰੋ।",
     "ar_page_image_not_trackable": "ARCore ਇਸ ਸਫ਼ੇ ਦੀ ਤਸਵੀਰ ਨੂੰ ਪਛਾਣ ਨਹੀਂ ਸਕਦਾ (ਬਹੁਤ ਘੱਟ ਵੇਰਵੇ)।",
-    "student_3d_lesson_title": "3D ਸਬਕ: {title}"
+    "student_3d_lesson_title": "3D ਸਬਕ: {title}",
+    "terr_checking": "ਤੁਹਾਡੇ ਟਿਕਾਣੇ ਦੀ ਜਾਂਚ ਹੋ ਰਹੀ ਹੈ…",
+    "auth_detecting_location": "ਟਿਕਾਣੇ ਦਾ ਪਤਾ ਲਗਾਇਆ ਜਾ ਰਿਹਾ ਹੈ…",
+    "student_loading_your_lessons": "ਤੁਹਾਡੇ ਸਬਕ ਲੋਡ ਹੋ ਰਹੇ ਹਨ…",
+    "ar_page_found_placing": "ਸਫ਼ਾ ਮਿਲ ਗਿਆ, ਮਾਡਲ ਰੱਖਿਆ ਜਾ ਰਿਹਾ ਹੈ…"
   },
   "sa": {
     "auth_send_otp": "OTP प्रेषयतु →",
@@ -437,7 +461,9 @@
     "settings_change_class": "வகுப்பை மாற்றவும்",
     "settings_tap_to_select_a_new_class": "புதிய வகுப்பைத் தேர்ந்தெடுக்க தட்டவும்",
     "teacher_class_average": "வகுப்பு சராசரி",
-    "auth_step_4_of_4": "படி 4 / 4"
+    "auth_step_4_of_4": "படி 4 / 4",
+    "terr_checking": "உங்கள் இருப்பிடத்தைச் சரிபார்க்கிறோம்…",
+    "auth_detecting_location": "இருப்பிடத்தைக் கண்டறிகிறோம்…"
   },
   "te": {
     "auth_send_otp": "OTP పంపండి →",
@@ -460,7 +486,10 @@
     "settings_change_class": "తరగతిని మార్చండి",
     "settings_tap_to_select_a_new_class": "కొత్త తరగతిని ఎంచుకోవడానికి నొక్కండి",
     "teacher_class_average": "తరగతి సగటు",
-    "auth_step_4_of_4": "దశ 4 / 4"
+    "auth_step_4_of_4": "దశ 4 / 4",
+    "terr_checking": "మీ స్థానాన్ని తనిఖీ చేస్తున్నాం…",
+    "auth_detecting_location": "స్థానాన్ని గుర్తిస్తున్నాం…",
+    "ar_page_found_placing": "పేజీ దొరికింది, నమూనాను ఉంచుతున్నాం…"
   },
   "ur": {
     "auth_send_otp": "OTP بھیجیں",
@@ -485,6 +514,8 @@
     "teacher_class_average": "جماعت کی اوسط",
     "auth_step_4_of_4": "مرحلہ 4 / 4",
     "auth_update_mitra_to_continue": "جاری رکھنے کے لیے MITRA اپ ڈیٹ کریں",
-    "fun_heroes_empty": "جب آپ کے سبق لوڈ ہوتے ہیں تو آپ کے ہیرو یہاں ظاہر ہوتے ہیں۔"
+    "fun_heroes_empty": "جب آپ کے سبق لوڈ ہوتے ہیں تو آپ کے ہیرو یہاں ظاہر ہوتے ہیں۔",
+    "auth_detecting_location": "مقام کا پتہ لگایا جا رہا ہے…",
+    "ar_page_found_placing": "صفحہ مل گیا، ماڈل رکھا جا رہا ہے…"
   }
 }
