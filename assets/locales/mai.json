@@ -544,5 +544,7 @@
   "ar_gesture_turn_body": "एकरा घुरयबाक लेल एकटा अँगुलीसँ खींचि लिअ।",
   "ar_gesture_zoom_title": "ज़ूम इन या आउट करू",
   "ar_gesture_zoom_body": "एकरा पैघ वा छोट बनेबाक लेल दूटा अँगुलीसँ चिमटी लगाउ।",
-  "ar_gesture_move_body": "एकरा स्क्रीन पर घुमयबाक लेल दूटा अँगुलीसँ खींचि लिअ।"
+  "ar_gesture_move_body": "एकरा स्क्रीन पर घुमयबाक लेल दूटा अँगुलीसँ खींचि लिअ।",
+  "terr_open_location_settings": "स्थानक विन्यास खोलू",
+  "terr_allow_location": "MITRA लेल स्थानक अनुमति दियौक"
 }

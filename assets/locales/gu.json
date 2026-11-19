@@ -545,5 +545,7 @@
   "ar_gesture_turn_body": "તેને ફરતે ફેરવવા માટે એક આંગળીથી ખેંચો.",
   "ar_gesture_zoom_title": "ઝૂમ ઇન અથવા આઉટ કરો",
   "ar_gesture_zoom_body": "તેને મોટું કે નાનું બનાવવા માટે બે આંગળીઓથી ચપટી કરો.",
-  "ar_gesture_move_body": "તેને સ્ક્રીન પર ખસેડવા માટે બે આંગળીઓથી ખેંચો."
+  "ar_gesture_move_body": "તેને સ્ક્રીન પર ખસેડવા માટે બે આંગળીઓથી ખેંચો.",
+  "terr_open_location_settings": "સ્થાન સુયોજનો ખોલો",
+  "terr_allow_location": "MITRA માટે સ્થાનને મંજૂરી આપો"
 }

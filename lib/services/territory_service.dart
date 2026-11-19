@@ -36,6 +36,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../constants/india_states.dart';
 import 'api_service.dart';
 
 enum TerritoryStatus {
@@ -156,8 +157,9 @@ class TerritoryService {
   static const Duration _timeout = Duration(seconds: 20);
   static const int _defaultGraceDays = 7;
 
-  // "Jammu & Kashmir" == "jammu and kashmir" (case, spaces, & vs and).
-  static String norm(String s) => s
+  // "Jammu & Kashmir" == "jammu and kashmir" (case, spaces, & vs and), and a
+  // state code or older spelling ("GJ") counts as its official name.
+  static String norm(String s) => (indiaStateName(s) ?? s)
       .trim()
       .toLowerCase()
       .replaceAll('&', 'and')
@@ -294,18 +296,25 @@ class TerritoryService {
   }
 
   // MITRA API calls need the sign-in token. Right after sign-in it is saved a
-  // moment later; calling before that would get a 401, and a 401 signs the
-  // student out. So wait for it (up to 15 s); without it, skip the server.
+  // moment later, so wait a little for it (up to 5 s). Still none → the phone
+  // is signed in but lost its token (e.g. a session ended on the server):
+  // get a new one from the phone's Firebase sign-in, as signing in does.
+  // Without this the check could never reach the server and the student
+  // stayed on "Turn on location" until the app data was wiped.
   static Future<bool> _apiReady() async {
     const storage = FlutterSecureStorage();
-    for (int i = 0; i < 30; i++) {
+    for (int i = 0; i < 10; i++) {
       try {
         final t = await storage.read(key: 'mitra_access_token');
         if (t != null && t.isNotEmpty) return true;
       } catch (_) {}
       await Future<void>.delayed(const Duration(milliseconds: 500));
     }
-    return false;
+    final r = await ApiService.instance.renewTokens();
+    if (r.token == null) {
+      debugPrint('📍 Territory: no MITRA sign-in token — server check skipped');
+    }
+    return r.token != null;
   }
 
   // true = inside home, false = outside, null = couldn't tell.
@@ -421,6 +430,7 @@ class TerritoryService {
     final stale = savedAt == null ||
         DateTime.now().difference(savedAt) >= _boundaryMaxAge;
     if (stale && await _apiReady()) {
+      debugPrint('📍 Territory: downloading the $homeState boundary');
       try {
         final res = await GeofenceAPI.territory(homeState);
         if (res.data is Map) {

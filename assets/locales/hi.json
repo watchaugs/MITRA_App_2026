@@ -546,5 +546,7 @@
   "ar_gesture_turn_body": "इसे घुमाने के लिए एक उंगली से खींचें।",
   "ar_gesture_zoom_title": "ज़ूम इन या आउट करें",
   "ar_gesture_zoom_body": "इसे बड़ा या छोटा बनाने के लिए दो उंगलियों से चुटकी लें।",
-  "ar_gesture_move_body": "इसे स्क्रीन पर ले जाने के लिए दो उंगलियों से खींचें।"
+  "ar_gesture_move_body": "इसे स्क्रीन पर ले जाने के लिए दो उंगलियों से खींचें।",
+  "terr_open_location_settings": "स्थान सेटिंग खोलें",
+  "terr_allow_location": "MITRA के लिए स्थान की अनुमति दें"
 }

@@ -544,5 +544,7 @@
   "ar_gesture_turn_body": "ते फिरवण्यासाठी एका बोटाने खेचा.",
   "ar_gesture_zoom_title": "झूम इन किंवा आउट करा",
   "ar_gesture_zoom_body": "ते मोठे किंवा लहान करण्यासाठी दोन बोटांनी चिमटा मारा.",
-  "ar_gesture_move_body": "ते पडद्यावर हलवण्यासाठी दोन बोटांनी ओढा."
+  "ar_gesture_move_body": "ते पडद्यावर हलवण्यासाठी दोन बोटांनी ओढा.",
+  "terr_open_location_settings": "स्थान सेटिंग्ज उघडा",
+  "terr_allow_location": "MITRA साठी स्थानास परवानगी द्या"
 }

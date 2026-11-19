@@ -8,6 +8,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../constants/colors.dart';
@@ -35,6 +36,8 @@ class TerritoryLockScreen extends ConsumerWidget {
 
     final unsaved = reason == 'unsaved';
     final checking = geoAsync.isLoading;
+    final needLocation =
+        !unsaved && !checking && geo?.status == GeoStatus.gpsUnavailable;
     final String icon;
     final String title;
     final String body;
@@ -142,6 +145,7 @@ class TerritoryLockScreen extends ConsumerWidget {
                     style: const TextStyle(
                         fontFamily: 'Baloo2', fontWeight: FontWeight.w700)),
               ),
+            if (needLocation) const _LocationSettingsButton(),
           ])),
           if (!unsaved) ...[
             // ── Your data rights (always available, by law) ──
@@ -180,6 +184,103 @@ class TerritoryLockScreen extends ConsumerWidget {
             ),
           ],
         ],
+      ),
+    );
+  }
+}
+
+// Shown under "Check again" when the location can't be confirmed: opens the
+// one phone setting that is blocking it — the phone's location switch, or
+// MITRA's location permission (after "Don't allow" Android stops asking, so
+// toggling location alone never helps). Hidden when both are fine.
+class _LocationSettingsButton extends ConsumerStatefulWidget {
+  const _LocationSettingsButton();
+
+  @override
+  ConsumerState<_LocationSettingsButton> createState() =>
+      _LocationSettingsButtonState();
+}
+
+enum _Blocker { none, serviceOff, permissionAsk, permissionBlocked }
+
+class _LocationSettingsButtonState
+    extends ConsumerState<_LocationSettingsButton> with WidgetsBindingObserver {
+  _Blocker _blocker = _Blocker.none;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _read();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  // Back from the phone's settings → look again.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _read();
+  }
+
+  Future<void> _read() async {
+    var b = _Blocker.none;
+    try {
+      if (!await Geolocator.isLocationServiceEnabled()) {
+        b = _Blocker.serviceOff;
+      } else {
+        final p = await Geolocator.checkPermission();
+        if (p == LocationPermission.deniedForever) {
+          b = _Blocker.permissionBlocked;
+        } else if (p == LocationPermission.denied) {
+          b = _Blocker.permissionAsk;
+        }
+      }
+    } catch (_) {}
+    if (mounted && b != _blocker) setState(() => _blocker = b);
+  }
+
+  Future<void> _fix() async {
+    try {
+      switch (_blocker) {
+        case _Blocker.serviceOff:
+          await Geolocator.openLocationSettings();
+          break;
+        case _Blocker.permissionBlocked:
+          await Geolocator.openAppSettings();
+          break;
+        case _Blocker.permissionAsk:
+          final p = await Geolocator.requestPermission();
+          if (p == LocationPermission.always ||
+              p == LocationPermission.whileInUse) {
+            recheckTerritory(ref);
+          }
+          break;
+        case _Blocker.none:
+          break;
+      }
+    } catch (_) {}
+    await _read();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_blocker == _Blocker.none) return const SizedBox.shrink();
+    final label = _blocker == _Blocker.serviceOff
+        ? context.tr(
+            ref, 'terr_open_location_settings', 'Open location settings')
+        : context.tr(ref, 'terr_allow_location', 'Allow location for MITRA');
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: TextButton.icon(
+        onPressed: _fix,
+        icon: const Icon(Icons.settings_rounded, size: 18),
+        label: Text(label,
+            style: const TextStyle(
+                fontFamily: 'Baloo2', fontWeight: FontWeight.w700)),
       ),
     );
   }

@@ -4,6 +4,7 @@
 // ═══════════════════════════════════════════════════════
 
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -107,70 +108,119 @@ class ApiService {
             return;
           }
 
-          // Try silent token refresh
-          try {
-            final refreshToken =
-                await _storage.read(key: 'mitra_refresh_token');
-
-            // ✨ PERMANENT FIX 1: Don't ping the server if the refresh token is completely gone
-            if (refreshToken == null || refreshToken.isEmpty) {
-              throw Exception('Refresh token missing or expired');
-            }
-
-            // 🚨 FIX 2: Added the CORS Disguise to the refresh mechanism as well
-            final refreshDio = Dio(BaseOptions(headers: {
-              'Content-Type': 'application/json',
-              'Origin': _origin,
-            }));
-
-            final res = await refreshDio.post(
-              '$baseUrl/api/auth/refresh',
-              // 🚨 FIX 3: Changed 'refreshToken' to 'refresh_token' to match backend requirements
-              data: {'refresh_token': refreshToken},
-            );
-
-            final newToken = res.data?['access_token'] as String?;
-            if (newToken == null) {
-              throw Exception('Invalid token received');
-            }
-            await _storage.write(key: 'mitra_access_token', value: newToken);
-
-            // CRITICAL: the backend ROTATES the refresh token on every refresh
-            // and revokes the old one. We MUST persist the new refresh token —
-            // otherwise the next refresh sends the now-revoked old token, which
-            // the server treats as reuse, revokes the whole session, and signs
-            // the user out (every ~8h when the access token expires). This is
-            // the fix for "the app logs me out after a few hours / daily".
-            final newRefresh = res.data?['refresh_token'] as String?;
-            if (newRefresh != null && newRefresh.isNotEmpty) {
-              await _storage.write(
-                  key: 'mitra_refresh_token', value: newRefresh);
-            }
-
-            // Retry original request with new token
-            final opts = error.requestOptions;
-            opts.headers['Authorization'] = 'Bearer $newToken';
-            final retryRes = await _dio.fetch(opts);
-            handler.resolve(retryRes);
-            return;
-          } catch (_) {
-            // ✨ PERMANENT FIX 2: Graceful Session Expiration (Auto-Logout)
-            // Wipe the dead tokens so the app knows we are unauthenticated
-            await _storage.delete(key: 'mitra_access_token');
-            await _storage.delete(key: 'mitra_refresh_token');
-
-            // Force the app back to the login screen using your global router key!
-            if (rootNavigatorKey.currentContext != null) {
-              rootNavigatorKey.currentContext!.go('/login');
-            }
-
+          // Already retried once with a new token → give up on this call.
+          final opts = error.requestOptions;
+          if (opts.extra['mitra_retried'] == true) {
             handler.reject(error);
             return;
           }
+          // Another call may have renewed the tokens while this one was in
+          // flight: then just retry with the new token (no second refresh —
+          // the server treats a reused refresh token as theft and ends the
+          // whole session, which used to leave the app signed in with no
+          // token and stuck on the location screen).
+          final sent = '${opts.headers['Authorization'] ?? ''}';
+          final current = await _storage.read(key: 'mitra_access_token');
+          final renewal = (current != null &&
+                  current.isNotEmpty &&
+                  sent != 'Bearer $current')
+              ? (token: current, signedOut: false)
+              : await renewTokens();
+          final token = renewal.token;
+
+          if (token == null && !renewal.signedOut) {
+            // No network for the renewal: keep the tokens, fail this call.
+            handler.reject(error);
+            return;
+          }
+          if (token == null) {
+            // Signed out for real (refresh and Firebase session both
+            // rejected): wipe the dead tokens and go to sign-in.
+            await _storage.delete(key: 'mitra_access_token');
+            await _storage.delete(key: 'mitra_refresh_token');
+            if (rootNavigatorKey.currentContext != null) {
+              rootNavigatorKey.currentContext!.go('/login');
+            }
+            handler.reject(error);
+            return;
+          }
+
+          // Retry the original request once with the new token. A failure
+          // here is that request's own error — the tokens stay.
+          opts.headers['Authorization'] = 'Bearer $token';
+          opts.extra['mitra_retried'] = true;
+          try {
+            handler.resolve(await _dio.fetch(opts));
+          } on DioException catch (e) {
+            handler.reject(e);
+          }
+          return;
         }
         handler.reject(error);
       },
     ));
+  }
+
+  // One renewal at a time: calls that fail together share it.
+  Future<({String? token, bool signedOut})>? _renewing;
+
+  /// New MITRA tokens for the signed-in student: first the refresh token,
+  /// then — if that is gone or rejected — the Firebase sign-in the phone
+  /// still holds (the same exchange as signing in). `token` is the new access
+  /// token; when it is null, `signedOut` says the server rejected both (true)
+  /// rather than the phone being offline (false: keep the old tokens).
+  Future<({String? token, bool signedOut})> renewTokens() =>
+      _renewing ??= _renew().whenComplete(() => _renewing = null);
+
+  Future<({String? token, bool signedOut})> _renew() async {
+    final plain = Dio(BaseOptions(
+      baseUrl: _dio.options.baseUrl,
+      connectTimeout: const Duration(seconds: 15),
+      receiveTimeout: const Duration(seconds: 15),
+      headers: {'Content-Type': 'application/json', 'Origin': _origin},
+    ));
+    Future<String?> save(Response res) async {
+      final at = res.data is Map ? res.data['access_token'] as String? : null;
+      if (at == null || at.isEmpty) return null;
+      await _storage.write(key: 'mitra_access_token', value: at);
+      // The server ROTATES the refresh token on every use and revokes the
+      // old one, so the new one must be saved.
+      final rt = res.data['refresh_token'] as String?;
+      if (rt != null && rt.isNotEmpty) {
+        await _storage.write(key: 'mitra_refresh_token', value: rt);
+      }
+      return at;
+    }
+
+    // The server answered (any HTTP status) = a real rejection; no answer =
+    // offline / timeout.
+    bool answered(Object e) => e is DioException && e.response != null;
+    var offline = false;
+    try {
+      final rt = await _storage.read(key: 'mitra_refresh_token');
+      if (rt != null && rt.isNotEmpty) {
+        final t = await save(
+            await plain.post('/api/auth/refresh', data: {'refresh_token': rt}));
+        if (t != null) return (token: t, signedOut: false);
+      }
+    } catch (e) {
+      debugPrint('🔑 Token refresh failed: $e');
+      if (!answered(e)) offline = true;
+    }
+    final fu = FirebaseAuth.instance.currentUser;
+    if (fu == null) return (token: null, signedOut: !offline);
+    try {
+      final idToken = await fu.getIdToken();
+      final t = await save(await plain.post('/api/auth/firebase',
+          data: {'id_token': idToken, 'role': 'student'}));
+      if (t != null) {
+        debugPrint('🔑 New sign-in token from the Firebase session');
+      }
+      return (token: t, signedOut: t == null && !offline);
+    } catch (e) {
+      debugPrint('🔑 Firebase token exchange failed: $e');
+      return (token: null, signedOut: !offline && answered(e));
+    }
   }
 
   Dio get dio => _dio;

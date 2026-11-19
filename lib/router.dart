@@ -114,6 +114,8 @@ class _AuthRefresh extends ChangeNotifier {
 bool _openWhenLocked(String path, MitraUser? user) {
   if (path == '/student/locked' || path.startsWith('/legal/')) return true;
   if (path == '/consent' || path == '/language') return true;
+  // Sign-in again (sent here when the session's tokens are gone for good).
+  if (path == '/login') return true;
   // First-time setup only: an existing home state can't be changed here
   // (moving state = re-register).
   final noHomeYet = (user?.assignedState ?? '').trim().isEmpty;

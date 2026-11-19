@@ -536,5 +536,7 @@
   "ar_gesture_turn_body": "ꯈꯨꯠ ꯑꯃꯅ ꯆꯤꯡꯁꯤꯟꯗꯨꯅ ꯃꯗꯨ ꯀꯣꯏꯁꯤꯜꯂꯤ ꯫",
   "ar_gesture_zoom_title": "ꯖꯨꯝ ꯏꯟ ꯅꯠꯇ ꯭ ꯔꯒ ꯑꯥꯎꯠ ꯇꯧ",
   "ar_gesture_zoom_body": "ꯃꯁꯤ ꯍꯦꯟꯅ ꯆꯥꯎꯊꯣꯛꯅꯕ ꯅꯠꯇ ꯭ ꯔꯒ ꯍꯦꯟꯅ ꯄꯤꯛꯄ ꯑꯣꯏꯍꯟꯅꯕꯒꯤꯗꯃꯛ ꯈꯨꯠ ꯑꯅꯤꯅ ꯄꯤꯟꯆ ꯇꯧ ꯫",
-  "ar_gesture_move_body": "ꯈꯨꯠ ꯑꯅꯤꯅ ꯅꯝꯗꯨꯅ ꯁ ꯭ ꯀ ꯭ ꯔꯤꯟꯗ ꯅꯝꯊꯣꯛꯅꯕ ꯊꯥꯎ ꯫"
+  "ar_gesture_move_body": "ꯈꯨꯠ ꯑꯅꯤꯅ ꯅꯝꯗꯨꯅ ꯁ ꯭ ꯀ ꯭ ꯔꯤꯟꯗ ꯅꯝꯊꯣꯛꯅꯕ ꯊꯥꯎ ꯫",
+  "terr_open_location_settings": "ꯃꯐꯝꯒꯤ ꯁꯦꯇꯤꯡꯁ ꯍꯥꯡꯗꯣꯛꯎ",
+  "terr_allow_location": "ꯃꯐꯝ ꯑꯗꯨ MITRA ꯒꯤꯗꯃꯛ ꯑꯌꯥꯕ ꯄꯤꯌꯨ"
 }

@@ -545,5 +545,7 @@
   "ar_gesture_turn_body": "Drag with one finger to turn it around.",
   "ar_gesture_zoom_title": "Zoom",
   "ar_gesture_zoom_body": "Pinch with two fingers to make it bigger or smaller.",
-  "ar_gesture_move_body": "Drag with two fingers to move it on the screen."
+  "ar_gesture_move_body": "Drag with two fingers to move it on the screen.",
+  "terr_open_location_settings": "Open location settings",
+  "terr_allow_location": "Allow location for MITRA"
 }
