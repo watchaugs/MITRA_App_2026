@@ -545,5 +545,7 @@
   "ar_gesture_turn_body": "ਇਸ ਨੂੰ ਮੋਡ਼ਣ ਲਈ ਇੱਕ ਉਂਗਲੀ ਨਾਲ ਖਿੱਚੋ।",
   "ar_gesture_zoom_title": "ਜ਼ੂਮ ਇਨ ਜਾਂ ਆਊਟ ਕਰੋ",
   "ar_gesture_zoom_body": "ਇਸ ਨੂੰ ਵੱਡਾ ਜਾਂ ਛੋਟਾ ਬਣਾਉਣ ਲਈ ਦੋ ਉਂਗਲਾਂ ਨਾਲ ਪਿੰਚ ਕਰੋ।",
-  "ar_gesture_move_body": "ਇਸ ਨੂੰ ਸਕਰੀਨ ਉੱਤੇ ਲਿਜਾਣ ਲਈ ਦੋ ਉਂਗਲਾਂ ਨਾਲ ਖਿੱਚੋ।"
+  "ar_gesture_move_body": "ਇਸ ਨੂੰ ਸਕਰੀਨ ਉੱਤੇ ਲਿਜਾਣ ਲਈ ਦੋ ਉਂਗਲਾਂ ਨਾਲ ਖਿੱਚੋ।",
+  "terr_open_location_settings": "ਸਥਾਨ ਸੈਟਿੰਗਾਂ ਖੋਲ੍ਹੋ",
+  "terr_allow_location": "MITRA ਲਈ ਟਿਕਾਣਾ ਮਨਜ਼ੂਰ ਕਰੋ"
 }
