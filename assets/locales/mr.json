@@ -546,5 +546,8 @@
   "ar_gesture_zoom_body": "ते मोठे किंवा लहान करण्यासाठी दोन बोटांनी चिमटा मारा.",
   "ar_gesture_move_body": "ते पडद्यावर हलवण्यासाठी दोन बोटांनी ओढा.",
   "terr_open_location_settings": "स्थान सेटिंग्ज उघडा",
-  "terr_allow_location": "MITRA साठी स्थानास परवानगी द्या"
+  "terr_allow_location": "MITRA साठी स्थानास परवानगी द्या",
+  "fun_hq_tier_next": "{pct}% साध्य केले · {left}% अधिक ते {rank}",
+  "fun_hq_tier_max": "{pct}% ने साध्य केले · सर्वोच्च रँक!",
+  "fun_costume_full_subject": "पूर्णपणे योग्य-सर्व {subject} पूर्ण झाले!"
 }

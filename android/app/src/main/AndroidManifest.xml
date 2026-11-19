@@ -34,6 +34,8 @@
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:usesCleartextTraffic="false"
+        android:allowBackup="false"
+        tools:replace="android:allowBackup"
         android:enableOnBackInvokedCallback="false"
         android:networkSecurityConfig="@xml/network_security_config">
         <!-- model_viewer_plus renders WebGL inside a WebView. Impeller (Vulkan)

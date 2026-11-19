@@ -545,5 +545,8 @@
   "ar_gesture_zoom_body": "अङ्गुलिद्वयेन पिञ्च् कुर्वन्तु येन तत् बृहत्तरं वा लघुतरं वा भवेत्।",
   "ar_gesture_move_body": "अङ्गुलिद्वयेन तान् परदायाः उपरि चालयितुं चालयतु।",
   "terr_open_location_settings": "स्थान-विन्यासान् उद्घाटयतु",
-  "terr_allow_location": "MITRA कृते स्थानं अनुमन्यताम्"
+  "terr_allow_location": "MITRA कृते स्थानं अनुमन्यताम्",
+  "fun_hq_tier_next": "{pct}% प्राप्तं · {left}% अधिकं {rank} प्रति",
+  "fun_hq_tier_max": "{pct}% प्राप्तम् · शीर्षपदम्!",
+  "fun_costume_full_subject": "पूर्णतया उपयुक्तं-सर्वं {subject} समाप्तम्!"
 }

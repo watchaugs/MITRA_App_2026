@@ -74,7 +74,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     final u = ref.read(currentUserProvider);
     _name = TextEditingController(text: u?.fullName ?? '');
     _avatar = u?.avatarEmoji ?? '👨‍🎓';
-    _lang = u?.languagePreference ?? 'hi';
+    // No saved choice → the language on screen now (never a silent Hindi).
+    _lang = u?.languagePreference ?? ref.read(translationProvider).langCode;
     _gender = u?.gender ?? '';
     _mobileOwner = u?.mobileBelongsTo ?? '';
     _class = u?.classGrade ?? '';

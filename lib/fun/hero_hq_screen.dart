@@ -12,7 +12,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../providers/tr_ext.dart';
-import '../screens/student/learn_screen.dart';
 import '../services/achievement_engine.dart';
 import '../stores/auth_store.dart';
 import '../theme/theme_provider.dart';
@@ -87,15 +86,19 @@ class HeroHqScreen extends ConsumerWidget {
     final ts = ThemeHelper.ctxTextSecondary(context);
     final hl = Theme.of(context).colorScheme.primary;
     final profile = ref.watch(studentProfileProvider).valueOrNull;
-    final xp = profile?.totalXp ?? 0;
     final streak = profile?.currentStreakDays ?? 0;
-    final badges = profile?.unlockedBadges ?? const <String>[];
-    final rank = rankForXp(xp), next = nextRank(xp);
+    // Tier = achieved ÷ expected across all the student's content (not XP).
+    final overall = ref.watch(overallAchievementProvider);
+    final share = overall?.share ?? 0;
+    final rankIdx = overall?.level ?? 0;
+    final rank = kHeroRanks[rankIdx];
+    final next =
+        rankIdx + 1 < kHeroRanks.length ? kHeroRanks[rankIdx + 1] : null;
+    final pct = (share * 100).floor();
     final gender = heroGenderFor(ref.watch(currentUserProvider)?.gender);
     final lead = ref.watch(leadHeroProvider);
     final allSubjects =
-        ref.watch(arCatalogProvider).valueOrNull?.bySubject.keys.toList() ??
-            const <String>[];
+        ref.watch(studentContentProvider)?.subjects ?? const <String>[];
     final subjects = ref.watch(metSubjectsProvider);
     final hidden = allSubjects.length - subjects.length;
     final prog = ref.watch(subjectHeroProgressProvider).valueOrNull ?? const {};
@@ -104,7 +107,9 @@ class HeroHqScreen extends ConsumerWidget {
     final newCards = cards.where((c) => c.isNew).length;
     final rankProgress = next == null
         ? 1.0
-        : ((xp - rank.minXp) / (next.minXp - rank.minXp)).clamp(0.0, 1.0);
+        : ((share - kAchievementSteps[rankIdx]) /
+                (kAchievementSteps[rankIdx + 1] - kAchievementSteps[rankIdx]))
+            .clamp(0.0, 1.0);
     String rankName(HeroRank r) =>
         context.tr(ref, 'tier_${r.name.toLowerCase()}', r.name);
 
@@ -187,12 +192,13 @@ class HeroHqScreen extends ConsumerWidget {
                     const SizedBox(height: 4),
                     Text(
                       next == null
-                          ? context.trp(ref, 'fun_hq_rank_max',
-                              '{xp} XP · top rank!', {'xp': '$xp'})
-                          : context.trp(ref, 'fun_hq_rank_next',
-                              '{xp} XP · {left} XP to {rank}', {
-                              'xp': '$xp',
-                              'left': '${next.minXp - xp}',
+                          ? context.trp(ref, 'fun_hq_tier_max',
+                              '{pct}% achieved · top rank!', {'pct': '$pct'})
+                          : context.trp(ref, 'fun_hq_tier_next',
+                              '{pct}% achieved · {left}% more to {rank}', {
+                              'pct': '$pct',
+                              'left':
+                                  '${(kAchievementSteps[rankIdx + 1] * 100).round() - pct}',
                               'rank': rankName(next)
                             }),
                       style: TextStyle(
@@ -288,11 +294,11 @@ class HeroHqScreen extends ConsumerWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              for (final r in kHeroRanks)
+              for (var i = 0; i < kHeroRanks.length; i++)
                 _Medal(
-                    rank: r,
-                    earned: badges.contains(r.badgeId) || xp >= r.minXp,
-                    label: rankName(r),
+                    rank: kHeroRanks[i],
+                    earned: i <= rankIdx,
+                    label: rankName(kHeroRanks[i]),
                     hl: hl),
             ],
           ),

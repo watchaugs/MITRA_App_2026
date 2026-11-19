@@ -16,8 +16,10 @@
 //     student's own saved set (if any) is loaded back. The cloud merge then
 //     runs on the right student's data.
 //
-// Device settings (theme, app language, data saver, AR coach marks, sync
-// timers, the dashboard's mastery %) are not per student and are left alone.
+// The app language (app_lang) is per student too: a new student starts in
+// English until they pick on the language page; a returning one gets theirs.
+// Device settings (theme, data saver, AR coach marks, sync timers, the
+// dashboard's mastery %) are not per student and are left alone.
 // Queued uploads are tagged per student already (quiz attempts, telemetry).
 // ═══════════════════════════════════════════════════════════════════════════
 import 'dart:convert';
@@ -57,7 +59,8 @@ class DeviceOwner {
       k == 'consentDate' ||
       k == 'consentPendingGrant' ||
       k == 'consentWithdrawn' ||
-      k == 'classLockedAt';
+      k == 'classLockedAt' ||
+      k == 'app_lang';
 
   /// Makes [uid]'s progress the live set. Runs one at a time. Returns true
   /// when the live data changed (screens reading prefs should refresh).

@@ -32,6 +32,7 @@ import '../services/api_service.dart'; // ConsentAPI (pending consent retry)
 import '../services/progress_sync_service.dart';
 import '../services/telemetry_batch_buffer.dart';
 import '../services/territory_service.dart'; // TerritoryGate (home-state rule)
+import '../providers/translation_provider.dart';
 import '../theme/theme_provider.dart'; // sharedPreferencesProvider
 import 'device_owner.dart';
 import 'module_progress_store.dart'; // moduleProgressTickProvider
@@ -282,6 +283,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
     } catch (e) {
       debugPrint('⚠️ Progress owner switch failed: $e');
     }
+    // This student's own language choice (English if they haven't picked).
+    try {
+      await ref.read(translationProvider.notifier).restoreSaved();
+    } catch (_) {}
   }
 
   void _subscribeFCMTopics(MitraUser user) {
@@ -407,6 +412,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
     // Stop tagging events with the student who just left.
     TelemetryService.current = null;
     TerritoryGate.end();
+    // Intro and sign-in are English; the choice stays with this student.
+    ref.read(translationProvider.notifier).showEnglish();
     ref.read(telemetryServiceProvider.notifier).state = null;
     state = const AuthState(isLoggedIn: false, isLoading: false);
   }

@@ -547,5 +547,8 @@
   "ar_gesture_zoom_body": "ਇਸ ਨੂੰ ਵੱਡਾ ਜਾਂ ਛੋਟਾ ਬਣਾਉਣ ਲਈ ਦੋ ਉਂਗਲਾਂ ਨਾਲ ਪਿੰਚ ਕਰੋ।",
   "ar_gesture_move_body": "ਇਸ ਨੂੰ ਸਕਰੀਨ ਉੱਤੇ ਲਿਜਾਣ ਲਈ ਦੋ ਉਂਗਲਾਂ ਨਾਲ ਖਿੱਚੋ।",
   "terr_open_location_settings": "ਸਥਾਨ ਸੈਟਿੰਗਾਂ ਖੋਲ੍ਹੋ",
-  "terr_allow_location": "MITRA ਲਈ ਟਿਕਾਣਾ ਮਨਜ਼ੂਰ ਕਰੋ"
+  "terr_allow_location": "MITRA ਲਈ ਟਿਕਾਣਾ ਮਨਜ਼ੂਰ ਕਰੋ",
+  "fun_hq_tier_next": "{pct}% ਪ੍ਰਾਪਤ ਕੀਤਾ · {left}% ਤੋਂ {rank} ਵੱਧ",
+  "fun_hq_tier_max": "{pct}% ਪ੍ਰਾਪਤ ਕੀਤਾ · ਸਿਖਰਲਾ ਦਰਜਾ!",
+  "fun_costume_full_subject": "ਪੂਰੀ ਤਰ੍ਹਾਂ ਅਨੁਕੂਲ-ਸਾਰੇ {subject} ਹੋ ਗਏ!"
 }

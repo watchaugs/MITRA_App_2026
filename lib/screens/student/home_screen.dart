@@ -19,6 +19,7 @@ import '../../services/quotes_service.dart';
 import '../../services/brain_spark_service.dart';
 import '../../services/achievement_engine.dart';
 import 'widgets/sponsor_banner.dart';
+import '../../fun/fun_progress.dart' show overallAchievementProvider;
 import '../../fun/hero_power_card.dart';
 import '../../providers/translation_provider.dart';
 import 'learn_screen.dart' show arCatalogProvider, subjectTilesFor;
@@ -309,11 +310,10 @@ class HomeScreen extends ConsumerWidget {
                     final totalXp = profile?.totalXp ?? 0;
                     final streakDays = profile?.currentStreakDays ?? 0;
 
-                    // Calculate the live tier based on XP
-                    final currentTier = _galacticTiers.firstWhere(
-                      (t) => totalXp >= t.minXp && totalXp < t.maxXp,
-                      orElse: () => _galacticTiers.last,
-                    );
+                    // Tier = achieved ÷ expected across all the student's
+                    // content (fun_progress.dart), same as Hero HQ.
+                    final currentTier = _galacticTiers[
+                        ref.watch(overallAchievementProvider)?.level ?? 0];
 
                     return Row(
                       crossAxisAlignment: CrossAxisAlignment.center,

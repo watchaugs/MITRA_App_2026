@@ -13,6 +13,7 @@
 // the rest of the app is too. The pick is persisted (app_lang) so returning
 // users keep it. DPDP: consent is presented in a language the student selected.
 // ═══════════════════════════════════════════════════════════════════════════
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -20,9 +21,11 @@ import 'package:go_router/go_router.dart';
 import '../../constants/colors.dart';
 import '../../providers/translation_provider.dart';
 import '../../providers/consent_i18n.dart';
+import '../../stores/auth_store.dart';
 import 'state_language_map.dart';
 
 import '../../providers/tr_ext.dart';
+
 // Native display names for every code we support (matches the JSON packs).
 const Map<String, String> kLangNativeNames = {
   'en': 'English',
@@ -52,12 +55,29 @@ const Map<String, String> kLangNativeNames = {
 
 // English names, for the subtitle under each option.
 const Map<String, String> kLangEnglishNames = {
-  'en': 'English', 'hi': 'Hindi', 'bn': 'Bengali', 'mr': 'Marathi',
-  'te': 'Telugu', 'ta': 'Tamil', 'gu': 'Gujarati', 'ur': 'Urdu',
-  'kn': 'Kannada', 'or': 'Odia', 'ml': 'Malayalam', 'pa': 'Punjabi',
-  'as': 'Assamese', 'mai': 'Maithili', 'ne': 'Nepali', 'kok': 'Konkani',
-  'sa': 'Sanskrit', 'doi': 'Dogri', 'brx': 'Bodo', 'sd': 'Sindhi',
-  'ks': 'Kashmiri', 'mni': 'Manipuri', 'sat': 'Santali',
+  'en': 'English',
+  'hi': 'Hindi',
+  'bn': 'Bengali',
+  'mr': 'Marathi',
+  'te': 'Telugu',
+  'ta': 'Tamil',
+  'gu': 'Gujarati',
+  'ur': 'Urdu',
+  'kn': 'Kannada',
+  'or': 'Odia',
+  'ml': 'Malayalam',
+  'pa': 'Punjabi',
+  'as': 'Assamese',
+  'mai': 'Maithili',
+  'ne': 'Nepali',
+  'kok': 'Konkani',
+  'sa': 'Sanskrit',
+  'doi': 'Dogri',
+  'brx': 'Bodo',
+  'sd': 'Sindhi',
+  'ks': 'Kashmiri',
+  'mni': 'Manipuri',
+  'sat': 'Santali',
 };
 
 /// Returns the ordered list of language codes to offer for a given state:
@@ -65,7 +85,9 @@ const Map<String, String> kLangEnglishNames = {
 List<String> languagesForState(String? state) {
   final regional = consentLangForState(state); // 'en' when unknown/unmapped
   final out = <String>[];
-  if (regional != 'hi' && regional != 'en' && kLangNativeNames.containsKey(regional)) {
+  if (regional != 'hi' &&
+      regional != 'en' &&
+      kLangNativeNames.containsKey(regional)) {
     out.add(regional);
   }
   out.add('hi');
@@ -110,6 +132,17 @@ class _LanguageScreenState extends ConsumerState<LanguageScreen> {
     // the chosen language.
     await ref.read(translationProvider.notifier).loadLanguagePack(code);
     await ref.read(consentI18nProvider.notifier).load(code);
+    // Keep the profile in step with the pick (Edit Profile, quiz records).
+    final user = ref.read(currentUserProvider);
+    if (user != null && user.languagePreference != code) {
+      ref
+          .read(authProvider.notifier)
+          .updateUser(user.copyWith(languagePreference: code));
+      FirebaseFirestore.instance
+          .collection('app_users')
+          .doc(user.id)
+          .update({'language_preference': code}).catchError((_) {});
+    }
     if (!mounted) return;
     setState(() => _applying = false);
     context.go(widget.nextRoute);
@@ -141,8 +174,13 @@ class _LanguageScreenState extends ConsumerState<LanguageScreen> {
               const SizedBox(height: 8),
               Text(
                 widget.state != null && widget.state!.isNotEmpty
-                    ? context.trp(ref, 'language_subtitle_state', 'For {state}. You can change this later in Settings.', {'state': '${widget.state}'})
-                    : context.tr(ref, 'language_subtitle_generic', 'You can change this later in Settings.'),
+                    ? context.trp(
+                        ref,
+                        'language_subtitle_state',
+                        'For {state}. You can change this later in Settings.',
+                        {'state': '${widget.state}'})
+                    : context.tr(ref, 'language_subtitle_generic',
+                        'You can change this later in Settings.'),
                 style: TextStyle(
                   fontFamily: 'Mukta',
                   color: Colors.white.withValues(alpha: 0.6),
@@ -167,7 +205,9 @@ class _LanguageScreenState extends ConsumerState<LanguageScreen> {
                           ? context.tr(ref, 'badge_region', 'Your region')
                           : (code == 'hi'
                               ? context.tr(ref, 'badge_national', 'National')
-                              : (code == 'en' ? context.tr(ref, 'badge_default', 'Default') : null)),
+                              : (code == 'en'
+                                  ? context.tr(ref, 'badge_default', 'Default')
+                                  : null)),
                       selected: selected,
                       onTap: () => setState(() => _selected = code),
                     );

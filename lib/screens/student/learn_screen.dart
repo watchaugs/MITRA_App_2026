@@ -432,6 +432,45 @@ List<Map<String, dynamic>> subjectTilesFor(
   return out;
 }
 
+/// What the Learn screen lists for this student, by subject: lessons of their
+/// own class (Curriculum Map) in their language, not "coming soon", and the
+/// quizzes shown with them (a quiz linked in their class's map sits under that
+/// map subject). Missions, subject heroes and hero cards read this too, so
+/// nothing from another class or language shows up there.
+class StudentContent {
+  final Map<String, List<ArLessonRec>> lessons; // subject → lessons
+  final Map<String, List<QuizSummary>> quizzes; // subject → quizzes
+  const StudentContent(this.lessons, this.quizzes);
+
+  /// Subjects with a lesson or a quiz, lessons' subjects first.
+  List<String> get subjects =>
+      {...lessons.keys, ...quizzes.keys}.toList(growable: false);
+  Iterable<ArLessonRec> get allLessons => lessons.values.expand((l) => l);
+  Iterable<QuizSummary> get allQuizzes => quizzes.values.expand((q) => q);
+}
+
+StudentContent studentContentFor(
+    ArCatalog catalog, List<QuizSummary> quizzes, String myClass, String lang) {
+  final lessons = <String, List<ArLessonRec>>{};
+  for (final e in catalog.bySubject.entries) {
+    final mine = e.value
+        .where((l) =>
+            !l.locked &&
+            (l.languageTag == lang || l.languageTag == 'all') &&
+            _sameClass(l.classTag, myClass))
+        .toList();
+    if (mine.isNotEmpty) lessons[e.key] = mine;
+  }
+  final tree = _treeSubjectByQuiz(catalog, catalog.bySubject, myClass);
+  final bySubject = <String, List<QuizSummary>>{};
+  for (final q in quizzes) {
+    if (q.languageTag != lang && q.languageTag != 'all') continue;
+    if (!tree.containsKey(q.id) && !_sameClass(q.className, myClass)) continue;
+    (bySubject[_quizSubject(q, tree)] ??= <QuizSummary>[]).add(q);
+  }
+  return StudentContent(lessons, bySubject);
+}
+
 /// Rule 1 dialog: tapping a quiz before the AR is watched enough opens this.
 /// Offers an "Open AR module" action that jumps straight to the AR content.
 Future<void> _showWatchArFirstDialog(

@@ -548,5 +548,8 @@
   "ar_gesture_zoom_body": "इसे बड़ा या छोटा करने के लिए दो उंगलियों से पिंच करें।",
   "ar_gesture_move_body": "इसे स्क्रीन पर ले जाने के लिए दो उंगलियों से खींचें।",
   "terr_open_location_settings": "स्थान सेटिंग खोलें",
-  "terr_allow_location": "MITRA के लिए स्थान की अनुमति दें"
+  "terr_allow_location": "MITRA के लिए स्थान की अनुमति दें",
+  "fun_hq_tier_next": "{pct}% प्राप्त किया गया · {left}% से {rank}% अधिक",
+  "fun_hq_tier_max": "{pct}% प्राप्त · शीर्ष रैंक!",
+  "fun_costume_full_subject": "पूरी तरह से उपयुक्त-सभी {subject} हो गए!"
 }

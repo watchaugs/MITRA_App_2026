@@ -547,5 +547,8 @@
   "ar_gesture_zoom_body": "તેને મોટું કે નાનું બનાવવા માટે બે આંગળીઓથી ચપટી કરો.",
   "ar_gesture_move_body": "તેને સ્ક્રીન પર ખસેડવા માટે બે આંગળીઓથી ખેંચો.",
   "terr_open_location_settings": "સ્થાન સુયોજનો ખોલો",
-  "terr_allow_location": "MITRA માટે સ્થાનને મંજૂરી આપો"
+  "terr_allow_location": "MITRA માટે સ્થાનને મંજૂરી આપો",
+  "fun_hq_tier_next": "{pct}% પ્રાપ્ત થયેલ · {left}% થી {rank}% વધુ",
+  "fun_hq_tier_max": "{pct}% હાંસલ · ટોચનું સ્થાન!",
+  "fun_costume_full_subject": "સંપૂર્ણપણે બંધબેસતા-બધા {subject} થઈ ગયા!"
 }

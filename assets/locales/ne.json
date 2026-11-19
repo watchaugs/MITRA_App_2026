@@ -547,5 +547,8 @@
   "ar_gesture_zoom_body": "यसलाई ठुलो वा सानो बनाउनका लागि दुईवटा औँलाले पिन्च गर्नुहोस्।",
   "ar_gesture_move_body": "यसलाई स्क्रिनमा सार्न दुई औँलाले तान्नुहोस्।",
   "terr_open_location_settings": "स्थान सेटिङहरू खोल्नुहोस्",
-  "terr_allow_location": "MITRA का लागि स्थान अनुमति दिनुहोस्"
+  "terr_allow_location": "MITRA का लागि स्थान अनुमति दिनुहोस्",
+  "fun_hq_tier_next": "{pct}% प्राप्त · {left}% बढीबाट {rank}",
+  "fun_hq_tier_max": "{pct}% प्राप्त · शीर्ष श्रेणी!",
+  "fun_costume_full_subject": "पूर्ण रूपमा उपयुक्त-सबै {subject} सम्पन्न भयो!"
 }

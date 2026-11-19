@@ -546,5 +546,8 @@
   "ar_gesture_zoom_body": "ଏହାକୁ ବଡ଼ କିମ୍ବା ଛୋଟ କରିବା ପାଇଁ ଦୁଇଟି ଆଙ୍ଗୁଳି ସହିତ ପିଞ୍ଚ କରନ୍ତୁ |",
   "ar_gesture_move_body": "ଏହାକୁ ପରଦାରେ ଘୁଞ୍ଚାଇବା ପାଇଁ ଦୁଇଟି ଆଙ୍ଗୁଳି ସହିତ ଟାଣି ନିଅନ୍ତୁ।",
   "terr_open_location_settings": "ଅବସ୍ଥାନ ବିନ୍ୟାସଗୁଡ଼ିକୁ ଖୋଲନ୍ତୁ",
-  "terr_allow_location": "MITRA ପାଇଁ ଅବସ୍ଥାନକୁ ଅନୁମତି ଦିଅନ୍ତୁ"
+  "terr_allow_location": "MITRA ପାଇଁ ଅବସ୍ଥାନକୁ ଅନୁମତି ଦିଅନ୍ତୁ",
+  "fun_hq_tier_next": "{pct}% ହାସଲ · {left}% କୁ {rank} କୁ ଅଧିକ",
+  "fun_hq_tier_max": "{pct}% ହାସଲ · ଶୀର୍ଷ ମାନ୍ୟତା!",
+  "fun_costume_full_subject": "ସମ୍ପୂର୍ଣ୍ଣ ରୂପେ ଉପଯୁକ୍ତ-ସମସ୍ତ {subject} ସମାପ୍ତ!"
 }

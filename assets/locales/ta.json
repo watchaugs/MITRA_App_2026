@@ -546,5 +546,8 @@
   "ar_gesture_zoom_body": "அதை பெரிதாகவோ சிறியதாகவோ செய்ய இரண்டு விரல்களால் பிஞ்ச் செய்யுங்கள்.",
   "ar_gesture_move_body": "திரையில் நகர்த்த இரண்டு விரல்களால் இழுக்கவும்.",
   "terr_open_location_settings": "இருப்பிட அமைப்புகளைத் திறக்கவும்",
-  "terr_allow_location": "MITRA க்கான இருப்பிடத்தை அனுமதி"
+  "terr_allow_location": "MITRA க்கான இருப்பிடத்தை அனுமதி",
+  "fun_hq_tier_next": "{pct}% அடைந்தது · {left}% அதிகமாக {rank} க்கு",
+  "fun_hq_tier_max": "{pct}% அடைந்தது · முதலிடம்!",
+  "fun_costume_full_subject": "முழுமையாக பொருந்தியது-அனைத்தும் {subject} முடிந்தது!"
 }

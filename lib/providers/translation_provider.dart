@@ -1,5 +1,6 @@
 import 'package:flutter/services.dart'
     show rootBundle; // ✨ Required to read local bundled files
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
@@ -37,13 +38,35 @@ class TranslationNotifier extends Notifier<TranslationState> {
     return TranslationState();
   }
 
-  // Load the user's previously saved language choice on app startup
+  // Load the signed-in student's saved language on app startup. Signed out
+  // (intro, sign-in) the app is always English: another language appears only
+  // after the student picks it on the language page.
   Future<void> _loadCachedLanguage() async {
+    try {
+      if (FirebaseAuth.instance.currentUser == null) return;
+    } catch (_) {
+      return; // Firebase not ready → English; sign-in restores the choice
+    }
+    await restoreSaved();
+  }
+
+  /// The language this student picked (kept with their data on this phone by
+  /// DeviceOwner), or English when they haven't picked one. Called after
+  /// sign-in, once their data is in place.
+  Future<void> restoreSaved() async {
     final prefs = await SharedPreferences.getInstance();
     final savedLang = prefs.getString('app_lang') ?? 'en';
+    if (savedLang == 'en') {
+      showEnglish();
+    } else if (savedLang != state.langCode) {
+      await loadLanguagePack(savedLang);
+    }
+  }
 
-    if (savedLang != 'en') {
-      await loadLanguagePack(savedLang); // Instantly load the local file
+  /// English on screen without forgetting the student's choice (sign-out).
+  void showEnglish() {
+    if (state.langCode != 'en' || state.strings.isNotEmpty) {
+      state = TranslationState();
     }
   }
 

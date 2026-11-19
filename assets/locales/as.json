@@ -546,5 +546,8 @@
   "ar_gesture_zoom_body": "ইয়াক ডাঙৰ বা সৰু কৰিবলৈ দুটা আঙুলিৰে পিঞ্চ কৰক।",
   "ar_gesture_move_body": "ইয়াক পৰ্দাত স্থানান্তৰ কৰিবলৈ দুটা আঙুলিৰে টানি আনক।",
   "terr_open_location_settings": "অৱস্থানৰ সংহতিসমূহ খোলক",
-  "terr_allow_location": "MITRA ৰ বাবে অৱস্থানৰ অনুমতি দিয়ক"
+  "terr_allow_location": "MITRA ৰ বাবে অৱস্থানৰ অনুমতি দিয়ক",
+  "fun_hq_tier_next": "{pct}% প্ৰাপ্ত · {left}% অধিকৰ পৰা {rank} লৈ",
+  "fun_hq_tier_max": "{pct}% প্ৰাপ্ত · শীৰ্ষ স্থান!",
+  "fun_costume_full_subject": "সম্পূৰ্ণৰূপে খাপ খাইছে-সকলো {subject} সম্পূৰ্ণ হৈছে!"
 }

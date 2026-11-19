@@ -8,7 +8,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../providers/tr_ext.dart';
-import '../screens/student/learn_screen.dart';
 import '../stores/auth_store.dart';
 import '../theme/theme_provider.dart';
 import '../widgets/mitra_scaffold.dart';
@@ -40,8 +39,7 @@ class HeroGalleryScreen extends ConsumerWidget {
     final ts = ThemeHelper.ctxTextSecondary(context);
     final gender = heroGenderFor(ref.watch(currentUserProvider)?.gender);
     final allSubjects =
-        ref.watch(arCatalogProvider).valueOrNull?.bySubject.keys.toList() ??
-            const <String>[];
+        ref.watch(studentContentProvider)?.subjects ?? const <String>[];
     final subjects = ref.watch(metSubjectsProvider);
     final hidden = allSubjects.length - subjects.length;
     final prog = ref.watch(subjectHeroProgressProvider).valueOrNull ?? const {};
@@ -194,9 +192,14 @@ class HeroGalleryScreen extends ConsumerWidget {
                 ),
               const SizedBox(height: 6),
               Text(
+                // Subject achievement only — tier names are for the overall
+                // rank, not a subject hero.
                 level >= 4
-                    ? context.tr(ref, 'fun_costume_full',
-                        'Fully suited up — a true Gyani hero!')
+                    ? context.trp(
+                        ref,
+                        'fun_costume_full_subject',
+                        'Fully suited up — all of {subject} done!',
+                        {'subject': context.trText(ref, subject)})
                     : context.trp(
                         ref,
                         'fun_costume_next',

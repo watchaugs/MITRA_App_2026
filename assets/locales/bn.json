@@ -547,5 +547,8 @@
   "ar_gesture_zoom_body": "দুটি আঙুল দিয়ে পিঞ্চ করুন যাতে এটি বড় বা ছোট হয়।",
   "ar_gesture_move_body": "স্ক্রিনে সরানোর জন্য দুটি আঙুল দিয়ে টেনে আনুন।",
   "terr_open_location_settings": "অবস্থান সেটিংস খুলুন",
-  "terr_allow_location": "MITRA-এর জন্য অবস্থানের অনুমতি দিন"
+  "terr_allow_location": "MITRA-এর জন্য অবস্থানের অনুমতি দিন",
+  "fun_hq_tier_next": "{pct}% অর্জিত · {left}% বেশি থেকে {rank}",
+  "fun_hq_tier_max": "{pct}% অর্জিত · শীর্ষ স্থান!",
+  "fun_costume_full_subject": "সম্পূর্ণরূপে উপযুক্ত-সমস্ত {subject} সম্পন্ন!"
 }

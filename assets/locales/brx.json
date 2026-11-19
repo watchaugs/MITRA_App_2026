@@ -545,5 +545,8 @@
   "ar_gesture_zoom_body": "बेखौ गिदिरसिन एबा फिसासिन खालामनो थाखाय मोन्नै आसिजों थुख्राव।",
   "ar_gesture_move_body": "बेखौ फैसालियाव लांफिननो थाखाय मोन्नै आसिजों बोनाय।",
   "terr_open_location_settings": "थावनि सेटिंसखौ खेव",
-  "terr_allow_location": "MITRA नि थाखाय थावनिखौ गनायथि हो"
+  "terr_allow_location": "MITRA नि थाखाय थावनिखौ गनायथि हो",
+  "fun_hq_tier_next": "{pct}% आ मोन्नो हानाय · {left}% निफ्राय {rank} सिम बारायो",
+  "fun_hq_tier_max": "{pct}% जाफुंसारनाय · गोजौ थाखो!",
+  "fun_costume_full_subject": "आबुङै आरजाथाव-गासैबो {subject} जाबाय!"
 }

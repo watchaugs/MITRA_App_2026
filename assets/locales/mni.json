@@ -538,5 +538,8 @@
   "ar_gesture_zoom_body": "ꯃꯁꯤ ꯍꯦꯟꯅ ꯆꯥꯎꯊꯣꯛꯅꯕ ꯅꯠꯇ ꯭ ꯔꯒ ꯍꯦꯟꯅ ꯄꯤꯛꯄ ꯑꯣꯏꯍꯟꯅꯕꯒꯤꯗꯃꯛ ꯈꯨꯠ ꯑꯅꯤꯅ ꯄꯤꯟꯆ ꯇꯧ ꯫",
   "ar_gesture_move_body": "ꯈꯨꯠ ꯑꯅꯤꯅ ꯅꯝꯗꯨꯅ ꯁ ꯭ ꯀ ꯭ ꯔꯤꯟꯗ ꯅꯝꯊꯣꯛꯅꯕ ꯊꯥꯎ ꯫",
   "terr_open_location_settings": "ꯃꯐꯝꯒꯤ ꯁꯦꯇꯤꯡꯁ ꯍꯥꯡꯗꯣꯛꯎ",
-  "terr_allow_location": "ꯃꯐꯝ ꯑꯗꯨ MITRA ꯒꯤꯗꯃꯛ ꯑꯌꯥꯕ ꯄꯤꯌꯨ"
+  "terr_allow_location": "ꯃꯐꯝ ꯑꯗꯨ MITRA ꯒꯤꯗꯃꯛ ꯑꯌꯥꯕ ꯄꯤꯌꯨ",
+  "fun_hq_tier_next": "{pct}% ꯐꯪꯂꯦ · {left}% ꯍꯦꯟꯅ {rank} ꯗ ꯌꯧꯔꯦ",
+  "fun_hq_tier_max": "{pct}% ꯐꯪꯂꯦ · ꯈ ꯭ ꯋꯥꯏꯗꯒꯤ ꯋꯥꯡꯕ ꯊꯥꯛꯇ!",
+  "fun_costume_full_subject": "ꯃꯄꯨꯡꯐꯥꯅ ꯆꯨꯅꯕ-{subject} ꯄꯨꯝꯅꯃꯛ ꯂꯣꯏꯔꯦ!"
 }

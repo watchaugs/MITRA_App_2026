@@ -543,5 +543,8 @@
   "ar_gesture_zoom_body": "ಅದನ್ನು ದೊಡ್ಡದಾಗಿಸಲು ಅಥವಾ ಚಿಕ್ಕದಾಗಿಸಲು ಎರಡು ಬೆರಳುಗಳಿಂದ ಪಿಂಚ್ ಮಾಡಿ.",
   "ar_gesture_move_body": "ಅದನ್ನು ಪರದೆಯ ಮೇಲೆ ಸರಿಸಲು ಎರಡು ಬೆರಳುಗಳಿಂದ ಎಳೆಯಿರಿ.",
   "terr_open_location_settings": "ಸ್ಥಳ ಸೆಟ್ಟಿಂಗ್ಗಳನ್ನು ತೆರೆಯಿರಿ",
-  "terr_allow_location": "MITRA ಗಾಗಿ ಸ್ಥಳವನ್ನು ಅನುಮತಿಸಿ"
+  "terr_allow_location": "MITRA ಗಾಗಿ ಸ್ಥಳವನ್ನು ಅನುಮತಿಸಿ",
+  "fun_hq_tier_next": "{pct}% ಸಾಧಿಸಲಾಗಿದೆ · {left}% ಹೆಚ್ಚು {rank} ಗೆ",
+  "fun_hq_tier_max": "{pct}% ಸಾಧಿಸಿದ · ಉನ್ನತ ಶ್ರೇಣಿ!",
+  "fun_costume_full_subject": "ಸಂಪೂರ್ಣವಾಗಿ ಹೊಂದಿಕೊಳ್ಳುತ್ತದೆ-ಎಲ್ಲವೂ {subject} ಮುಗಿದಿದೆ!"
 }

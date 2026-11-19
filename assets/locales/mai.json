@@ -546,5 +546,8 @@
   "ar_gesture_zoom_body": "एकरा पैघ वा छोट बनेबाक लेल दूटा अँगुलीसँ चिमटी लगाउ।",
   "ar_gesture_move_body": "एकरा स्क्रीन पर घुमयबाक लेल दूटा अँगुलीसँ खींचि लिअ।",
   "terr_open_location_settings": "स्थानक विन्यास खोलू",
-  "terr_allow_location": "MITRA लेल स्थानक अनुमति दियौक"
+  "terr_allow_location": "MITRA लेल स्थानक अनुमति दियौक",
+  "fun_hq_tier_next": "{pct}% प्राप्त भेल · {left}% बेसीसँ {rank} धरि",
+  "fun_hq_tier_max": "{pct}% अर्जित · शीर्ष रैंक!",
+  "fun_costume_full_subject": "पूर्णतया अनुकूल-सब {subject} भऽ गेल!"
 }

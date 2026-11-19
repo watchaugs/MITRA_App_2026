@@ -17,6 +17,7 @@ import '../stores/module_progress_store.dart';
 import '../theme/theme_provider.dart';
 import '../widgets/mitra_scaffold.dart';
 import 'fun_cards.dart';
+import 'fun_progress.dart' show studentContentProvider;
 import 'hero_catalog.dart';
 import 'hero_svg.dart';
 
@@ -33,13 +34,15 @@ class AlbumCard {
 final albumCardsProvider = Provider<List<AlbumCard>>((ref) {
   ref.watch(moduleProgressTickProvider);
   final catalog = ref.watch(arCatalogProvider).valueOrNull;
-  if (catalog == null) return const [];
+  // Only the student's own class and language (as on the Learn screen).
+  final content = ref.watch(studentContentProvider);
+  if (catalog == null || content == null) return const [];
   final store = ref.watch(cardStoreProvider);
   final progress = ref.watch(moduleProgressStoreProvider);
   final unlocked = store.unlocked, seen = store.seen;
   final out = <AlbumCard>[];
-  for (final e in catalog.bySubject.entries) {
-    for (final l in e.value.where((l) => !l.locked)) {
+  for (final e in content.lessons.entries) {
+    for (final l in e.value) {
       final scannable = (catalog.mindById[l.id] ?? '').isNotEmpty ||
           (catalog.targetImageById[l.id] ?? '').isNotEmpty;
       if (!scannable) continue;

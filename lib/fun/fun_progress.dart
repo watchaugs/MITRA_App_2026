@@ -7,6 +7,9 @@
 //   • watched % / best quiz %: ModuleProgressStore (device prefs)
 //   • XP per lesson / quiz: the achievement engine's TopicProgress (Isar)
 //
+// Everything here uses only the student's own content (studentContentProvider:
+// their class's Curriculum Map, their language) — never other classes.
+//
 // TODAY'S GOAL
 //   At the first look of the day we pick up to 3 missions from what is open to
 //   the student right now, following the Learn screen's own unlock chain:
@@ -16,12 +19,23 @@
 //   "revise" mission (replay a lesson or retry a quiz), so the streak can still
 //   grow on a day with no new content.
 //
-// HERO COSTUME (per subject)
+// ACHIEVED vs EXPECTED (subject heroes and the overall tier)
+//   Expected = everything available to this student: each lesson worth 20
+//   (watched to the unlock %), each quiz worth 50 (at 100 %).
+//   Achieved = what they actually did: a lesson's share of the unlock % (66 %
+//   watched of 85 % → 20 × 66/85), a quiz's best score (80 % → 40).
+//   Steps (kAchievementSteps): 0 / 25 / 50 / 75 / 100 % → level 0..4.
+//
+// HERO COSTUME (per subject — a subject achievement, no tier names)
 //   A subject's hero is hidden until the student opens one of its lessons or
 //   answers one of its quiz questions (fun_cards.dart markEngaged).
-//   subject XP = AR XP of its lessons + quiz XP of their linked quizzes.
-//   Share of the subject's possible XP → costume level:
-//   <20% → 0 (20% dressed), <40% → 1, <60% → 2, <80% → 3, else 4 (100%).
+//   That subject's achieved ÷ expected → level → 20 / 40 / 60 / 80 / 100 %
+//   dressed; fully suited only when the whole subject is done.
+//
+// OVERALL TIER (Jigyasu → Gyani — the student across ALL subjects)
+//   All subjects' achieved ÷ all subjects' expected → the same steps:
+//   Jigyasu < 25 %, Anveshak 25 %, Vidwan 50 %, Acharya 75 %, Gyani 100 %.
+//   Medals follow the tier. (XP is still counted and shown as points.)
 // ═══════════════════════════════════════════════════════════════════════════
 import 'dart:convert';
 import 'dart:math' as math;
@@ -34,6 +48,7 @@ import '../models/achievement_models.dart';
 import '../providers/translation_provider.dart';
 import '../screens/student/learn_screen.dart';
 import '../services/achievement_engine.dart';
+import '../stores/auth_store.dart'; // currentUserProvider
 import '../stores/module_progress_store.dart';
 import '../theme/theme_provider.dart'; // sharedPreferencesProvider
 import 'fun_cards.dart'; // engagedIds, CardStore, cardTickProvider
@@ -69,18 +84,35 @@ class Mission {
       );
 }
 
+/// The student's own lessons and quizzes (class + language), or null until
+/// the lesson catalog has loaded.
+final studentContentProvider = Provider<StudentContent?>((ref) {
+  final catalog = ref.watch(arCatalogProvider).valueOrNull;
+  if (catalog == null) return null;
+  final myClass =
+      ref.watch(currentUserProvider.select((u) => u?.classGrade ?? ''));
+  final lang = ref.watch(translationProvider).langCode;
+  final quizzes = ref
+          .watch(quizFeedProvider(ref.watch(quizFilterParamsProvider)))
+          .valueOrNull ??
+      const <QuizSummary>[];
+  return studentContentFor(catalog, quizzes, myClass, lang);
+});
+
 /// Everything open to the student right now, in Learn-screen order.
 List<Mission> openMissions({
   required ArCatalog catalog,
-  required List<QuizSummary> quizzes,
+  required StudentContent content,
   required ModuleProgressStore progress,
   required int threshold,
 }) {
   final out = <Mission>[];
-  for (final e in catalog.bySubject.entries) {
+  // Map links may point at a quiz filed under any of the student's subjects.
+  final anyById = {for (final q in content.allQuizzes) q.id: q};
+  for (final e in content.lessons.entries) {
     final subject = e.key;
-    final lessons = e.value.where((l) => !l.locked).toList();
-    final subjQuizzes = quizzes.where((q) => q.subject == subject).toList();
+    final lessons = e.value;
+    final subjQuizzes = content.quizzes[subject] ?? const <QuizSummary>[];
     final byId = {for (final q in subjQuizzes) q.id: q};
     final byTopic = <String, QuizSummary>{};
     for (final q in subjQuizzes) {
@@ -90,7 +122,7 @@ List<Mission> openMissions({
     // Same matching as the Learn screen: tree link, then id, then topic.
     QuizSummary? quizFor(ArLessonRec ar) {
       for (final qid in catalog.quizIdsByArId[ar.id] ?? const <String>[]) {
-        final q = byId[qid];
+        final q = anyById[qid];
         if (q != null) return q;
       }
       return byId[ar.id] ?? byTopic[_norm(ar.topic)];
@@ -139,31 +171,41 @@ final dailyGoalProvider = Provider<DailyGoal?>((ref) {
   final prefs = ref.watch(sharedPreferencesProvider);
   final progress = ref.watch(moduleProgressStoreProvider);
   final catalog = ref.watch(arCatalogProvider).valueOrNull;
-  if (catalog == null) return null;
+  final content = ref.watch(studentContentProvider);
+  if (catalog == null || content == null) return null;
   final threshold = ref
       .watch(arWatchThresholdProvider)
       .maybeWhen(data: (v) => v, orElse: () => 85);
-  final lang = ref.watch(translationProvider).langCode;
-  final quizzes = (ref
-              .watch(quizFeedProvider(ref.watch(quizFilterParamsProvider)))
-              .valueOrNull ??
-          const <QuizSummary>[])
-      .where((q) => q.languageTag == lang || q.languageTag == 'all')
-      .toList();
+  // While the quiz list is still loading, keep today's quiz missions as saved.
+  final quizzesLoaded = ref
+          .watch(quizFeedProvider(ref.watch(quizFilterParamsProvider)))
+          .valueOrNull !=
+      null;
+  final lessonIds = {for (final l in content.allLessons) l.id};
+  final quizIds = {for (final q in content.allQuizzes) q.id};
+  bool stillMine(Mission m) => switch (m.kind) {
+        MissionKind.watch => lessonIds.contains(m.id),
+        MissionKind.quiz => !quizzesLoaded || quizIds.contains(m.id),
+        MissionKind.revise => true,
+      };
 
   final today = todayYmd();
-  List<Mission> missions;
+  List<Mission> missions = const [];
   if (prefs.getInt(_kGoalDay) == today) {
     try {
       final raw = jsonDecode(prefs.getString(_kGoalItems) ?? '[]') as List;
-      missions = raw.whereType<Map>().map(Mission.fromJson).toList();
+      // Drop anything not in the student's own content (another class or
+      // language — saved by an older version, or before a class change).
+      missions =
+          raw.whereType<Map>().map(Mission.fromJson).where(stillMine).toList();
     } catch (_) {
       missions = const [];
     }
-  } else {
+  }
+  if (missions.isEmpty) {
     final open = openMissions(
         catalog: catalog,
-        quizzes: quizzes,
+        content: content,
         progress: progress,
         threshold: threshold);
     missions = open.isEmpty
@@ -196,35 +238,72 @@ bool takeGoalCelebration(SharedPreferences prefs, DailyGoal g) {
   return true;
 }
 
+// ── Achievement levels ──────────────────────────────────────────────────────
+/// Achieved ÷ expected needed for level 0..4 (costume 20..100 % dressed;
+/// tier Jigyasu..Gyani).
+const List<double> kAchievementSteps = [0, .25, .50, .75, 1.0];
+
+/// Level 0..4 for a share of the expected outcome.
+int achievementLevel(double share) {
+  // 0.999: everything done, allowing for rounding.
+  final s = share >= .999 ? 1.0 : share;
+  var lvl = 0;
+  for (var i = 0; i < kAchievementSteps.length; i++) {
+    if (s >= kAchievementSteps[i]) lvl = i;
+  }
+  return lvl;
+}
+
 // ── Hero costume per subject ────────────────────────────────────────────────
+
 class SubjectHeroProgress {
   final String subject;
-  final int xp, maxXp;
+  final double achieved, expected; // see the header for the weights
 
   /// false until the student opens a lesson or answers a quiz question in
   /// this subject. A hidden hero is not shown anywhere.
   final bool engaged;
-  const SubjectHeroProgress(this.subject, this.xp, this.maxXp,
+  const SubjectHeroProgress(this.subject, this.achieved, this.expected,
       {this.engaged = false});
 
-  double get share => maxXp <= 0 ? 0 : (xp / maxXp).clamp(0.0, 1.0);
-  int get level => share < .2
-      ? 0
-      : share < .4
-          ? 1
-          : share < .6
-              ? 2
-              : share < .8
-                  ? 3
-                  : 4;
+  double get share =>
+      expected <= 0 ? 0 : (achieved / expected).clamp(0.0, 1.0).toDouble();
+  int get level => achievementLevel(share);
 }
 
-/// subject → hero progress, for every subject in the lesson catalog.
+/// The student across ALL their subjects: achieved ÷ expected → tier level
+/// 0..4 (Jigyasu..Gyani, kHeroRanks order).
+class OverallAchievement {
+  final double achieved, expected;
+  const OverallAchievement(this.achieved, this.expected);
+
+  double get share =>
+      expected <= 0 ? 0 : (achieved / expected).clamp(0.0, 1.0).toDouble();
+  int get level => achievementLevel(share);
+}
+
+/// Null until the lessons have loaded.
+final overallAchievementProvider = Provider<OverallAchievement?>((ref) {
+  final prog = ref.watch(subjectHeroProgressProvider).valueOrNull;
+  if (prog == null) return null;
+  double a = 0, e = 0;
+  for (final p in prog.values) {
+    a += p.achieved;
+    e += p.expected;
+  }
+  return OverallAchievement(a, e);
+});
+
+/// subject → hero progress, for every subject in the student's own content.
 final subjectHeroProgressProvider =
     FutureProvider<Map<String, SubjectHeroProgress>>((ref) async {
   ref.watch(studentProfileProvider); // recompute whenever XP changes
   final catalog = ref.watch(arCatalogProvider).valueOrNull;
-  if (catalog == null) return const {};
+  final content = ref.watch(studentContentProvider);
+  if (catalog == null || content == null) return const {};
+  final threshold = ref
+      .watch(arWatchThresholdProvider)
+      .maybeWhen(data: (v) => v, orElse: () => 85);
   ref.watch(cardTickProvider); // a lesson opened / page scanned
   ref.watch(moduleProgressTickProvider); // a quiz finished
   final prefs = ref.watch(sharedPreferencesProvider);
@@ -248,21 +327,22 @@ final subjectHeroProgressProvider =
       mps.bestPct(id) > 0 ||
       (byTopic[id]?.quizXpEarned ?? 0) > 0;
   final out = <String, SubjectHeroProgress>{};
-  for (final e in catalog.bySubject.entries) {
-    int xp = 0, max = 0;
+  final t = math.max(threshold, 1);
+  for (final subject in content.subjects) {
+    double got = 0, expected = 0;
     bool engaged = false;
-    for (final l in e.value) {
-      final qids = catalog.quizIdsByArId[l.id] ?? const <String>[];
-      if (!engaged) engaged = lessonTouched(l.id) || qids.any(quizTouched);
-      if (l.locked) continue;
-      max += kArXp;
-      xp += math.min(byTopic[l.id]?.arXpEarned ?? 0, kArXp);
-      for (final qid in qids) {
-        max += kQuizXp;
-        xp += math.min(byTopic[qid]?.quizXpEarned ?? 0, kQuizXp);
-      }
+    for (final l in content.lessons[subject] ?? const <ArLessonRec>[]) {
+      engaged = engaged || lessonTouched(l.id);
+      expected += kArXp;
+      got += kArXp * (mps.arWatchedPct(l.id) / t).clamp(0.0, 1.0).toDouble();
     }
-    out[e.key] = SubjectHeroProgress(e.key, xp, max, engaged: engaged);
+    for (final q in content.quizzes[subject] ?? const <QuizSummary>[]) {
+      engaged = engaged || quizTouched(q.id);
+      expected += kQuizXp;
+      got += kQuizXp * (mps.bestPct(q.id) / 100).clamp(0.0, 1.0).toDouble();
+    }
+    out[subject] =
+        SubjectHeroProgress(subject, got, expected, engaged: engaged);
   }
   return out;
 });
@@ -271,8 +351,8 @@ final subjectHeroProgressProvider =
 /// quiz question there), in catalog order. Other heroes stay hidden.
 final metSubjectsProvider = Provider<List<String>>((ref) {
   final prog = ref.watch(subjectHeroProgressProvider).valueOrNull ?? const {};
-  final subjects = ref.watch(arCatalogProvider).valueOrNull?.bySubject.keys ??
-      const <String>[];
+  final subjects =
+      ref.watch(studentContentProvider)?.subjects ?? const <String>[];
   return subjects.where((s) => prog[s]?.engaged ?? false).toList();
 });
 

@@ -546,5 +546,8 @@
   "ar_gesture_zoom_body": "దాన్ని పెద్దదిగా లేదా చిన్నదిగా చేయడానికి రెండు వేళ్ళతో పించ్ చేయండి.",
   "ar_gesture_move_body": "దాన్ని తెరపైకి తరలించడానికి రెండు వేళ్ళతో లాగండి.",
   "terr_open_location_settings": "స్థాన అమరికలను తెరవండి",
-  "terr_allow_location": "MITRA స్థానాన్ని అనుమతించండి"
+  "terr_allow_location": "MITRA స్థానాన్ని అనుమతించండి",
+  "fun_hq_tier_next": "{pct}% సాధించబడింది · {left}% ఎక్కువ {rank} కు",
+  "fun_hq_tier_max": "{pct}% సాధించిన · అగ్రస్థానం!",
+  "fun_costume_full_subject": "పూర్తిగా సరిపోతుంది-అన్నీ {subject} పూర్తయ్యాయి!"
 }

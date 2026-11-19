@@ -19,6 +19,7 @@ import '../services/achievement_engine.dart';
 import '../stores/auth_store.dart';
 import '../theme/theme_provider.dart'; // sharedPreferencesProvider
 import 'fun_cards.dart';
+import 'fun_progress.dart' show overallAchievementProvider;
 import 'hero_catalog.dart';
 import 'hero_hq_screen.dart';
 import 'hero_view.dart';
@@ -135,7 +136,7 @@ class ParentCard extends ConsumerWidget {
     final cards = CardStore(prefs).unlockedThisWeek();
     final xp = profile?.totalXp ?? 0;
     final streak = profile?.currentStreakDays ?? 0;
-    final rank = rankForXp(xp);
+    final rank = kHeroRanks[ref.watch(overallAchievementProvider)?.level ?? 0];
     final lead = ref.watch(leadHeroProvider);
     final gender = heroGenderFor(user?.gender);
 

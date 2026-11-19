@@ -544,5 +544,8 @@
   "ar_gesture_zoom_body": "അത് വലുതോ ചെറുതോ ആക്കാൻ രണ്ട് വിരലുകൾ കൊണ്ട് പിഞ്ച് ചെയ്യുക.",
   "ar_gesture_move_body": "സ്ക്രീനിൽ നീക്കാൻ രണ്ട് വിരലുകൾ ഉപയോഗിച്ച് വലിച്ചിടുക.",
   "terr_open_location_settings": "ലൊക്കേഷൻ ക്രമീകരണങ്ങൾ തുറക്കുക",
-  "terr_allow_location": "MITRA-നുള്ള സ്ഥാനം അനുവദിക്കുക"
+  "terr_allow_location": "MITRA-നുള്ള സ്ഥാനം അനുവദിക്കുക",
+  "fun_hq_tier_next": "{pct}% കൈവരിച്ചത് · {left}% കൂടുതൽ {rank} ലേക്ക്",
+  "fun_hq_tier_max": "{pct}% നേടിയ · ഉയർന്ന റാങ്ക്!",
+  "fun_costume_full_subject": "പൂർണ്ണമായും അനുയോജ്യമായത്-എല്ലാം {subject} പൂർത്തിയായി!"
 }

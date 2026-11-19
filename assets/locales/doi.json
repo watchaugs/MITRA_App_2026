@@ -545,5 +545,8 @@
   "ar_gesture_zoom_body": "इसगी बड्डा जां लौह्का बनाने आस्तै द'ऊं उंगलियें कन्नै पिंच करो।",
   "ar_gesture_move_body": "इसगी स्क्रीन पर घुमाने आस्तै द'ऊं उंगलियें कन्नै खींचेओ।",
   "terr_open_location_settings": "थाह्र सेटिंग्स खोल्हो",
-  "terr_allow_location": "MITRA आस्तै थाह्र दी इजाज़त देओ"
+  "terr_allow_location": "MITRA आस्तै थाह्र दी इजाज़त देओ",
+  "fun_hq_tier_next": "{pct}% हासल कीता · {left}% मते कोला {rank} तक्कर",
+  "fun_hq_tier_max": "{pct}% हासल कीता · शीर्श रैंक!",
+  "fun_costume_full_subject": "पूरी चाल्ली कन्नै अनुकूल-सारा {subject} पूरा होई गेआ!"
 }

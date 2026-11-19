@@ -547,5 +547,8 @@
   "ar_gesture_zoom_body": "Pinch with two fingers to make it bigger or smaller.",
   "ar_gesture_move_body": "Drag with two fingers to move it on the screen.",
   "terr_open_location_settings": "Open location settings",
-  "terr_allow_location": "Allow location for MITRA"
+  "terr_allow_location": "Allow location for MITRA",
+  "fun_hq_tier_next": "{pct}% achieved · {left}% more to {rank}",
+  "fun_hq_tier_max": "{pct}% achieved · top rank!",
+  "fun_costume_full_subject": "Fully suited up — all of {subject} done!"
 }

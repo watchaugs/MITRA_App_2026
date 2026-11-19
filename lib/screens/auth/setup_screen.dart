@@ -136,7 +136,8 @@ class SetupScreen extends ConsumerStatefulWidget {
 
 class _SetupScreenState extends ConsumerState<SetupScreen> {
   int _step = 0;
-  String _lang = 'hi';
+  // English until the student picks a language on the language page.
+  String _lang = 'en';
   String _avatar = '👨‍🎓';
   String _cls = '';
   String _gender = '';
@@ -220,7 +221,8 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
     final demographicsOk = widget.classOnly ||
         (_isValidGender(_gender) && _isValidMobileOwner(_mobileBelongsTo));
     if (sanitisedName.isEmpty || !_isValidClass(_cls) || !demographicsOk) {
-      setState(() => _error = ref.trNow('auth_please_fill_all_fields_correctly', 'Please fill all fields correctly.'));
+      setState(() => _error = ref.trNow('auth_please_fill_all_fields_correctly',
+          'Please fill all fields correctly.'));
       return;
     }
 
@@ -307,10 +309,13 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
       }
     } on TimeoutException {
       if (opId != _saveOpId || !mounted) return;
-      setState(() => _error = ref.trNow('auth_server_is_taking_too_long_please', 'Server is taking too long. Please try again.'));
+      setState(() => _error = ref.trNow('auth_server_is_taking_too_long_please',
+          'Server is taking too long. Please try again.'));
     } catch (_) {
       if (opId != _saveOpId || !mounted) return;
-      setState(() => _error = ref.trNow('auth_could_not_save_profile_please_try', 'Could not save profile. Please try again.'));
+      setState(() => _error = ref.trNow(
+          'auth_could_not_save_profile_please_try',
+          'Could not save profile. Please try again.'));
     } finally {
       if (opId == _saveOpId && mounted) setState(() => _saving = false);
     }
@@ -716,7 +721,11 @@ class _AvatarTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return Semantics(
       button: true,
-      label: context.trp(ref, 'auth_avatar_emoji', 'Avatar {emoji}', {'emoji': emoji}) + (isSelected ? context.tr(ref, 'auth_selected_suffix', ', selected') : ''),
+      label: context.trp(
+              ref, 'auth_avatar_emoji', 'Avatar {emoji}', {'emoji': emoji}) +
+          (isSelected
+              ? context.tr(ref, 'auth_selected_suffix', ', selected')
+              : ''),
       selected: isSelected,
       child: Material(
         color: Colors.transparent,
@@ -794,7 +803,8 @@ class _ClassHeader extends ConsumerWidget {
                 SizedBox(width: 10),
                 Expanded(
                     child: Text(
-                  context.tr(ref, 'auth_once_selected_your_class_will_be', 'Once selected, your class will be locked for 90 days. Choose carefully.'),
+                  context.tr(ref, 'auth_once_selected_your_class_will_be',
+                      'Once selected, your class will be locked for 90 days. Choose carefully.'),
                   style: TextStyle(
                     fontFamily: 'Mukta',
                     fontSize: 13,
@@ -848,7 +858,11 @@ class _ClassTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return Semantics(
       button: true,
-      label: context.trp(ref, 'auth_class_number', 'Class {number}', {'number': number.toString()}) + (isSelected ? context.tr(ref, 'auth_selected_suffix', ', selected') : ''),
+      label: context.trp(ref, 'auth_class_number', 'Class {number}',
+              {'number': number.toString()}) +
+          (isSelected
+              ? context.tr(ref, 'auth_selected_suffix', ', selected')
+              : ''),
       selected: isSelected,
       child: Material(
         color: Colors.transparent,
