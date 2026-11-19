@@ -1,13 +1,17 @@
 // ═══════════════════════════════════════════════════════════════════════════
 // Chiku — MITRA's monkey guide.
 //
-// ChikuCorner: Chiku hangs from his vine in a corner, swinging, blinking and
-// curling his tail.
+// ChikuCorner: Chiku hangs from his vine in a corner. Anime cel-shaded look.
+// The swing is a pendulum from the vine's knot above the corner: his body
+// trails the gripping arm, his head stays level, tail and legs follow a beat
+// later, he breathes and blinks, and once per swing he waves and grins. Every
+// motion repeats on the same 4.8 s cycle, so nothing jumps when it loops.
 //
 // celebrateWithChiku(): he lets go, swings across the screen coming up close
-// (zoomed in) while dancing and throwing bananas, then swings back and settles
-// in his corner. Any screen can call it (daily goal done, new card, hero
-// levelled up). Code-drawn, works offline.
+// (zoomed in) while dancing and throwing bananas; when he is closest he squeezes
+// his eyes shut, sticks his tongue out and wiggles a hand at his ear to tease,
+// then swings back and settles in his corner. Any screen can call it (daily
+// goal done, new card, hero levelled up). Code-drawn, works offline.
 // ═══════════════════════════════════════════════════════════════════════════
 import 'dart:async';
 import 'dart:math' as math;
@@ -24,98 +28,162 @@ void celebrateWithChiku() {
   if (_activeCorners.isNotEmpty) _activeCorners.last._onCelebrate();
 }
 
-const double _cw = 120, _ch = 160; // Chiku canvas (storybook style)
+const double _cw = 300, _ch = 410; // Chiku canvas: viewBox 60 90 300 410
 
-// Storybook Chiku: big head, glossy eyes, fur strokes, toothy grin. Three
-// layers (tail behind, body, eyes on top) so the tail can curl and the eyes
-// can blink on their own.
-const String _chikuBody =
-    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 160">'
-    // vine + leaves
-    '<path d="M60 -60 L60 30" stroke="#15803D" stroke-width="4"/>'
-    '<path d="M58 12 C46 7 43 19 56 20Z" fill="#22C55E" stroke="#15803D" stroke-width="1"/>'
-    '<path d="M62 20 C74 15 77 27 64 28Z" fill="#4ADE80" stroke="#15803D" stroke-width="1"/>'
-    // arm up, holding the vine
-    '<path d="M50 92 C46 70 54 50 60 34" stroke="#8A4A1C" stroke-width="7" fill="none" stroke-linecap="round"/>'
-    '<circle cx="60" cy="32" r="4.8" fill="#FAD4AE" stroke="#5B2A0A" stroke-width="1.3"/>'
-    // body, belly, fur strokes
-    '<ellipse cx="60" cy="116" rx="19" ry="21" fill="#A0522D" stroke="#4A2207" stroke-width="1.8"/>'
-    '<ellipse cx="60" cy="121" rx="12" ry="13" fill="#FAD4AE"/>'
-    '<path d="M45 106 l3 -3 M47 112 l3 -3 M73 106 l-3 -3 M71 112 l-3 -3" stroke="#6B3410" stroke-width="1.2" stroke-linecap="round"/>'
-    // arm down + hand
-    '<path d="M76 106 C84 112 88 118 90 126" stroke="#8A4A1C" stroke-width="7" fill="none" stroke-linecap="round"/>'
-    '<circle cx="91" cy="129" r="4.8" fill="#FAD4AE" stroke="#5B2A0A" stroke-width="1.3"/>'
-    // legs + feet
-    '<path d="M51 134 L47 150 M69 134 L73 150" stroke="#8A4A1C" stroke-width="7" stroke-linecap="round"/>'
-    '<ellipse cx="46" cy="152" rx="6" ry="3.5" fill="#FAD4AE" stroke="#5B2A0A" stroke-width="1"/>'
-    '<ellipse cx="74" cy="152" rx="6" ry="3.5" fill="#FAD4AE" stroke="#5B2A0A" stroke-width="1"/>'
-    // ears
-    '<circle cx="32" cy="64" r="11" fill="#A0522D" stroke="#4A2207" stroke-width="1.6"/>'
-    '<circle cx="32" cy="64" r="7" fill="#FAD4AE"/><circle cx="33" cy="65" r="3.5" fill="#E8A87C"/>'
-    '<circle cx="88" cy="64" r="11" fill="#A0522D" stroke="#4A2207" stroke-width="1.6"/>'
-    '<circle cx="88" cy="64" r="7" fill="#FAD4AE"/><circle cx="87" cy="65" r="3.5" fill="#E8A87C"/>'
-    // head + fur tufts
-    '<circle cx="60" cy="64" r="26" fill="#A0522D" stroke="#4A2207" stroke-width="1.8"/>'
-    '<path d="M50 40 l2 4 M58 38 l1 4 M66 39 l-1 4 M72 43 l-2 3" stroke="#6B3410" stroke-width="1.3" stroke-linecap="round"/>'
-    // face
-    '<path d="M40 68 C40 52 52 50 60 57 C68 50 80 52 80 68 C80 86 40 86 40 68Z" fill="#FAD4AE" stroke="#C98B5E" stroke-width="1"/>'
-    '<path d="M45 56 Q51 52 56 56 M64 56 Q69 52 75 56" stroke="#3B1A08" stroke-width="1.8" fill="none" stroke-linecap="round"/>'
-    // nose, grin, tooth, cheeks
-    '<ellipse cx="60" cy="74" rx="2.6" ry="1.6" fill="#5B2A0A"/>'
-    '<path d="M52 78 Q60 86 68 78" stroke="#3B1A08" stroke-width="1.8" fill="#C2410C" stroke-linecap="round"/>'
-    '<rect x="58" y="78.5" width="4" height="3" fill="#FFFFFF"/>'
-    '<ellipse cx="43" cy="75" rx="3.6" ry="2.2" fill="#F9A8D4"/>'
-    '<ellipse cx="77" cy="75" rx="3.6" ry="2.2" fill="#F9A8D4"/>'
-    '</svg>';
+// A point of Chiku's drawing (400 × 600 design space) as an Alignment of the
+// figure's box. The vine's knot (200, 34) sits above the box, out of view.
+Alignment _pt(double x, double y) =>
+    Alignment((x - 60) / 150 - 1, (y - 90) / 205 - 1);
 
-const String _chikuTail =
-    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 160">'
-    '<path d="M78 124 C104 126 110 98 95 90 C87 98 93 110 79 115" stroke="#7A3A12" stroke-width="5.5" fill="none" stroke-linecap="round"/>'
-    '<circle cx="95" cy="90" r="2.6" fill="#7A3A12"/>'
-    '</svg>';
+// Anime cel-shaded Chiku, one SVG per moving part (same canvas, so they stack
+// exactly): vine, tail, legs, body, waving arm, ears, head, eyes, smile, the
+// arm gripping the vine — and the teasing face: eyes squeezed shut, open mouth
+// and a tongue that wags.
+const String _ckVine =
+    r'<svg xmlns="http://www.w3.org/2000/svg" viewBox="60 90 300 410"><path d="M200 0 C 196 60, 206 130, 204 196" stroke="#2F7D32" stroke-width="6" fill="none" stroke-linecap="round"/><path d="M200 44 C 186 38 182 54 198 56 Z M205 110 C 220 102 224 120 207 122 Z M201 158 C 186 152 183 168 199 169 Z" fill="#4ADE80" stroke="#14532D" stroke-width="1.2"/></svg>';
+const String _ckTail =
+    r'<svg xmlns="http://www.w3.org/2000/svg" viewBox="60 90 300 410"><path d="M238 392 C 296 404, 326 360, 306 326 C 292 304, 266 312, 274 332 C 280 344, 292 340, 290 332" stroke="#2A140A" stroke-width="14.0" fill="none" stroke-linecap="round"/><path d="M238 392 C 296 404, 326 360, 306 326 C 292 304, 266 312, 274 332 C 280 344, 292 340, 290 332" stroke="#9A5322" stroke-width="9" fill="none" stroke-linecap="round"/></svg>';
+const String _ckLegs =
+    r'<svg xmlns="http://www.w3.org/2000/svg" viewBox="60 90 300 410"><path d="M184 408 C 176 428, 168 446, 166 462" stroke="#2A140A" stroke-width="22.0" fill="none" stroke-linecap="round"/><path d="M184 408 C 176 428, 168 446, 166 462" stroke="#B5652A" stroke-width="17" fill="none" stroke-linecap="round"/><path d="M226 408 C 234 428, 244 444, 248 458" stroke="#2A140A" stroke-width="22.0" fill="none" stroke-linecap="round"/><path d="M226 408 C 234 428, 244 444, 248 458" stroke="#B5652A" stroke-width="17" fill="none" stroke-linecap="round"/><ellipse cx="164" cy="468" rx="13" ry="8" fill="#FFE3C4" stroke="#2A140A" stroke-width="2.5" transform="rotate(-20 164 468)"/><ellipse cx="250" cy="464" rx="13" ry="8" fill="#FFE3C4" stroke="#2A140A" stroke-width="2.5" transform="rotate(25 250 464)"/></svg>';
+const String _ckBody =
+    r'<svg xmlns="http://www.w3.org/2000/svg" viewBox="60 90 300 410"><path d="M205 300 C 248 300, 262 340, 258 372 C 254 408, 232 420, 205 420 C 178 420, 152 408, 150 372 C 146 336, 166 300, 205 300 Z" fill="#B5652A" stroke="#2A140A" stroke-width="2.5"/><path d="M205 300 C 248 300, 262 340, 258 372 C 254 408, 232 420, 205 420 C 228 400, 240 360, 230 320Z" fill="#7A3A12" opacity=".35"/><path d="M205 326 C 230 326, 238 352, 236 374 C 234 398, 220 408, 205 408 C 190 408, 176 398, 174 374 C 172 352, 180 326, 205 326 Z" fill="#FFE3C4"/></svg>';
+const String _ckWave =
+    r'<svg xmlns="http://www.w3.org/2000/svg" viewBox="60 90 300 410"><path d="M156 318 C 140 338, 128 356, 120 380" stroke="#2A140A" stroke-width="20.0" fill="none" stroke-linecap="round"/><path d="M156 318 C 140 338, 128 356, 120 380" stroke="#B5652A" stroke-width="15" fill="none" stroke-linecap="round"/><circle cx="119" cy="384" r="11" fill="#FFE3C4" stroke="#2A140A" stroke-width="2.5"/></svg>';
+const String _ckEars =
+    r'<svg xmlns="http://www.w3.org/2000/svg" viewBox="60 90 300 410"><path d="M126 262 C 106 258, 98 276, 106 290 C 114 302, 132 298, 136 284" fill="#B5652A" stroke="#2A140A" stroke-width="2.5"/><path d="M246 262 C 266 258, 274 276, 266 290 C 258 302, 240 298, 236 284" fill="#B5652A" stroke="#2A140A" stroke-width="2.5"/><path d="M124 270 C 112 270 110 284 118 290 C 124 294 130 290 132 284Z M248 270 C 260 270 262 284 254 290 C 248 294 242 290 240 284Z" fill="#F7A9A0"/></svg>';
+const String _ckHead =
+    r'<svg xmlns="http://www.w3.org/2000/svg" viewBox="60 90 300 410"><path d="M186 206 C 236 206, 252 240, 250 268 C 248 302, 222 322, 186 322 C 150 322, 124 302, 122 268 C 120 240, 136 206, 186 206 Z" fill="#B5652A" stroke="#2A140A" stroke-width="2.5"/><path d="M186 206 C 236 206, 252 240, 250 268 C 249 286, 240 300, 228 310 C 236 290, 236 250, 210 228 C 200 220, 192 214, 186 206Z" fill="#7A3A12" opacity=".35"/><path d="M168 210 Q 178 196 186 210 Q 194 194 204 210" stroke="#2A140A" stroke-width="2.5" fill="#B5652A"/><path d="M186 232 C 200 222, 226 228, 228 254 C 230 272, 222 282, 220 290 C 222 306, 206 316, 186 316 C 166 316, 150 306, 152 290 C 150 282, 142 272, 144 254 C 146 228, 172 222, 186 232 Z" fill="#FFE3C4"/><path d="M186 276 C 210 276, 222 288, 220 300 C 218 312, 204 318, 186 318 C 168 318, 154 312, 152 300 C 150 288, 162 276, 186 276 Z" fill="#FFEFD9"/><path d="M154 238 Q 166 232 178 238 M194 238 Q 206 232 218 238" stroke="#2A140A" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M180 286 Q 186 282 192 286 Q 186 292 180 286Z" fill="#2A140A"/><ellipse cx="156" cy="294" rx="9" ry="5" fill="#FB7185" opacity="0.7"/><ellipse cx="216" cy="294" rx="9" ry="5" fill="#FB7185" opacity="0.7"/></svg>';
+const String _ckEyes =
+    r'<svg xmlns="http://www.w3.org/2000/svg" viewBox="60 90 300 410"><ellipse cx="168" cy="258" rx="15" ry="18" fill="#FFFFFF"/><ellipse cx="204" cy="258" rx="15" ry="18" fill="#FFFFFF"/><circle cx="170" cy="261" r="10.8" fill="#7C3AED"/><circle cx="206" cy="261" r="10.8" fill="#7C3AED"/><circle cx="170" cy="262" r="6.3" fill="#120A06"/><circle cx="206" cy="262" r="6.3" fill="#120A06"/><circle cx="174" cy="255" r="4.2" fill="#FFFFFF"/><circle cx="210" cy="255" r="4.2" fill="#FFFFFF"/><circle cx="166" cy="266" r="2.0" fill="#FFFFFF"/><circle cx="202" cy="266" r="2.0" fill="#FFFFFF"/><path d="M160 247 l3 -6 l3 6 l-3 6Z M196 247 l3 -6 l3 6 l-3 6Z" fill="#fff"/></svg>';
+const String _ckSquint =
+    r'<svg xmlns="http://www.w3.org/2000/svg" viewBox="60 90 300 410"><path d="M156 249 L 178 258 L 156 267 M216 249 L 194 258 L 216 267" stroke="#2A140A" stroke-width="4.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const String _ckSmile =
+    r'<svg xmlns="http://www.w3.org/2000/svg" viewBox="60 90 300 410"><path d="M168 298 Q 186 316 204 298 Q 186 306 168 298Z" fill="#E11D48" stroke="#2A140A" stroke-width="1.6" stroke-linejoin="round"/><path d="M181 302 L 191 302 L 190 307 L 182 307Z" fill="#FFFFFF"/></svg>';
+const String _ckMouthOpen =
+    r'<svg xmlns="http://www.w3.org/2000/svg" viewBox="60 90 300 410"><path d="M166 296 Q 186 290 206 296 Q 204 316 186 318 Q 168 316 166 296Z" fill="#7F1D1D" stroke="#2A140A" stroke-width="2.5"/><path d="M174 297 L 182 297 L 181 302 L 175 302Z M190 297 L 198 297 L 197 302 L 191 302Z" fill="#FFFFFF"/></svg>';
+const String _ckTongue =
+    r'<svg xmlns="http://www.w3.org/2000/svg" viewBox="60 90 300 410"><path d="M176 306 C 176 326, 182 338, 186 338 C 190 338, 196 326, 196 306 Z" fill="#FB7185" stroke="#2A140A" stroke-width="2.5"/><path d="M186 310 L 186 330" stroke="#E11D48" stroke-width="2" stroke-linecap="round"/><ellipse cx="181" cy="316" rx="3" ry="5" fill="#FFFFFF" opacity=".45"/></svg>';
+const String _ckGrip =
+    r'<svg xmlns="http://www.w3.org/2000/svg" viewBox="60 90 300 410"><path d="M236 318 C 262 292, 264 236, 212 198" stroke="#2A140A" stroke-width="21.0" fill="none" stroke-linecap="round"/><path d="M236 318 C 262 292, 264 236, 212 198" stroke="#B5652A" stroke-width="16" fill="none" stroke-linecap="round"/><circle cx="207" cy="192" r="13" fill="#FFE3C4" stroke="#2A140A" stroke-width="2.5"/></svg>';
 
-// Whole eyes (whites + pupils + shine) so a blink closes them fully.
-const String _chikuEyes =
-    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 160">'
-    '<ellipse cx="51" cy="64" rx="6" ry="7" fill="#FFFFFF" stroke="#3B1A08" stroke-width="1"/>'
-    '<ellipse cx="69" cy="64" rx="6" ry="7" fill="#FFFFFF" stroke="#3B1A08" stroke-width="1"/>'
-    '<ellipse cx="52" cy="65" rx="4" ry="5" fill="#1C1917"/>'
-    '<ellipse cx="70" cy="65" rx="4" ry="5" fill="#1C1917"/>'
-    '<circle cx="53.5" cy="63" r="1.6" fill="#FFFFFF"/><circle cx="71.5" cy="63" r="1.6" fill="#FFFFFF"/>'
-    '<circle cx="50.5" cy="67" r="0.8" fill="#FFFFFF"/><circle cx="68.5" cy="67" r="0.8" fill="#FFFFFF"/>'
-    '</svg>';
-
-/// Chiku drawn once, with an optional dance wiggle and blink amount.
+/// Chiku drawn once and posed: [phase] runs 0..1 through one 4.8 s swing.
 class _ChikuFigure extends StatelessWidget {
   final double size; // height
-  final double dance; // radians of body wiggle
+  final double phase; // 0..1 through one swing loop
   final double blink; // 0 open .. 1 shut
-  final double tail; // radians of tail curl
-  const _ChikuFigure(
-      {required this.size, this.dance = 0, this.blink = 0, this.tail = 0});
+  final double dance; // radians of whole-body wiggle (celebration)
+  final double tease; // 0..1: tongue out, eyes squeezed, hand at his ear
+  final double swing; // 1 = full pendulum, 0 = hanging still
+  const _ChikuFigure({
+    required this.size,
+    required this.phase,
+    this.blink = 0,
+    this.dance = 0,
+    this.tease = 0,
+    this.swing = 1,
+  });
+
+  // Keyframes [phase, value], eased between.
+  static double _kf(double p, List<List<double>> k) {
+    if (p <= k.first[0]) return k.first[1];
+    for (var i = 1; i < k.length; i++) {
+      if (p <= k[i][0]) {
+        final a = k[i - 1], b = k[i];
+        final f = (p - a[0]) / (b[0] - a[0]);
+        return a[1] + (b[1] - a[1]) * Curves.easeInOut.transform(f);
+      }
+    }
+    return k.last[1];
+  }
+
+  // Free arm: rests, then waves hello once per swing (degrees).
+  static const _waveK = [
+    [0.0, 0.0],
+    [.48, 0.0],
+    [.56, 128.0],
+    [.62, 108.0],
+    [.68, 132.0],
+    [.74, 108.0],
+    [.80, 128.0],
+    [.90, 0.0],
+    [1.0, 0.0]
+  ];
+  // Bigger grin while waving.
+  static const _grinK = [
+    [0.0, 0.0],
+    [.48, 0.0],
+    [.58, 1.0],
+    [.82, 1.0],
+    [.92, 0.0],
+    [1.0, 0.0]
+  ];
 
   @override
   Widget build(BuildContext context) {
     final w = size * _cw / _ch;
-    Widget layer(String s) => SvgPicture.string(s, width: w, height: size);
+    final a = phase * 2 * math.pi;
+    double deg(double d) => d * math.pi / 180;
+    // Pendulum and follow-through (all whole multiples of the loop).
+    final swingA = deg(13) * math.sin(a) * swing;
+    final lagA = deg(7) * math.sin(a - .5) * swing;
+    final headA = -deg(9) * math.sin(a - .15) * swing;
+    final tailA =
+        deg(15) * math.sin(a - 1.1) * swing + deg(6) * math.sin(3 * a);
+    final legsA = deg(10) * math.sin(a - .8) * swing;
+    final b = 0.5 + 0.5 * math.sin(2 * a); // breathing
+    final ear = 0.5 + 0.5 * math.sin(4 * a);
+    final waveDeg = _kf(phase, _waveK) * (1 - tease) +
+        (120 + 10 * math.sin(12 * a)) * tease; // tease: hand wiggles at his ear
+    final grin = _kf(phase, _grinK) * (1 - tease);
+    final tongueA = deg(14) * math.sin(10 * a);
+
+    Widget l(String s) => SvgPicture.string(s, width: w, height: size);
+    Widget rot(double ang, double x, double y, Widget c) =>
+        Transform.rotate(angle: ang, alignment: _pt(x, y), child: c);
+    Widget scl(double sx, double sy, double x, double y, Widget c) => Transform(
+        alignment: _pt(x, y),
+        transform: Matrix4.diagonal3Values(sx, sy, 1),
+        child: c);
+
+    final teasing = tease > 0.5;
     return SizedBox(
       width: w,
       height: size,
       child: Transform.rotate(
         angle: dance,
-        alignment: const Alignment(0, -0.6),
-        child: Stack(clipBehavior: Clip.none, children: [
-          Transform.rotate(
-              angle: tail,
-              alignment: const Alignment(0.32, 0.44), // tail base (79, 115)
-              child: layer(_chikuTail)),
-          layer(_chikuBody),
-          Transform(
-            alignment: const Alignment(0, -0.2), // eye line (y 64 of 160)
-            transform: Matrix4.diagonal3Values(1, 1 - 0.9 * blink, 1),
-            child: layer(_chikuEyes),
-          ),
-        ]),
+        alignment: _pt(205, 300),
+        child: rot(
+          swingA, 200, 34, // from the vine's knot
+          Stack(clipBehavior: Clip.none, children: [
+            l(_ckVine),
+            rot(
+              lagA, 207, 192, // body trails the gripping hand
+              Stack(clipBehavior: Clip.none, children: [
+                rot(tailA, 238, 392, l(_ckTail)),
+                rot(legsA, 204, 398, l(_ckLegs)),
+                scl(1 + .02 * b, 1 - .015 * b, 205, 400, l(_ckBody)),
+                rot(deg(waveDeg), 156, 318, l(_ckWave)),
+                rot(
+                  headA, 196, 305, // head stays level
+                  Stack(clipBehavior: Clip.none, children: [
+                    scl(1 + .03 * ear, 1 - .02 * ear, 186, 262, l(_ckEars)),
+                    l(_ckHead),
+                    if (teasing) ...[
+                      l(_ckSquint),
+                      l(_ckMouthOpen),
+                      rot(tongueA, 186, 306, l(_ckTongue)),
+                    ] else ...[
+                      scl(1, 1 - 0.9 * blink, 186, 258, l(_ckEyes)),
+                      scl(1 + .15 * grin, 1 + .35 * grin, 186, 300,
+                          l(_ckSmile)),
+                    ],
+                  ]),
+                ),
+                l(_ckGrip),
+              ]),
+            ),
+          ]),
+        ),
       ),
     );
   }
@@ -142,7 +210,7 @@ class _ChikuCornerState extends State<ChikuCorner>
   void initState() {
     super.initState();
     _idle = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 2400))
+        vsync: this, duration: const Duration(milliseconds: 4800))
       ..repeat();
     _blink = AnimationController(
         vsync: this, duration: const Duration(milliseconds: 150));
@@ -211,18 +279,11 @@ class _ChikuCornerState extends State<ChikuCorner>
             opacity: _away ? 0.0 : 1.0,
             child: AnimatedBuilder(
               animation: Listenable.merge([_idle, _blink]),
-              builder: (context, _) {
-                final t = _idle.value * 2 * math.pi;
-                return Transform.rotate(
-                  angle: math.sin(t) * 0.17, // swings from the vine top
-                  alignment: Alignment.topCenter,
-                  child: _ChikuFigure(
-                    size: widget.size,
-                    blink: _blink.value,
-                    tail: math.sin(t * 1.6) * 0.4,
-                  ),
-                );
-              },
+              builder: (context, _) => _ChikuFigure(
+                size: widget.size,
+                phase: _idle.value,
+                blink: _blink.value,
+              ),
             ),
           ),
         ),
@@ -342,8 +403,13 @@ class _ChikuFlightState extends State<_ChikuFlight>
         builder: (context, _) {
           final t = _c.value;
           final (c, scale, rot) = _at(t, screen);
+          // Closest to the screen (0.38–0.58): he teases — eyes squeezed,
+          // tongue out and wagging, a hand wiggling at his ear.
+          final tease = Curves.easeInOut.transform(
+              ((t - 0.38) / 0.04).clamp(0.0, 1.0) *
+                  ((0.58 - t) / 0.04).clamp(0.0, 1.0));
           final dancing = t > 0.36 && t < 0.62;
-          final dance = dancing ? math.sin(t * 90) * 0.25 : 0.0;
+          final dance = dancing ? math.sin(t * 90) * 0.25 * (1 - tease) : 0.0;
           final h = widget.size * scale;
           final w = h * _cw / _ch;
           return Stack(children: [
@@ -354,7 +420,12 @@ class _ChikuFlightState extends State<_ChikuFlight>
               child: Transform.rotate(
                 angle: rot,
                 child: _ChikuFigure(
-                    size: h, dance: dance, tail: math.sin(t * 40) * 0.5),
+                    size: h,
+                    // 4.2 s flight on the 4.8 s swing clock
+                    phase: (t * 4200 / 4800) % 1.0,
+                    dance: dance,
+                    tease: tease,
+                    swing: 0.5),
               ),
             ),
           ]);
