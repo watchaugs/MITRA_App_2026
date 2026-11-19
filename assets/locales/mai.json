@@ -549,5 +549,12 @@
   "terr_allow_location": "MITRA लेल स्थानक अनुमति दियौक",
   "fun_hq_tier_next": "{pct}% प्राप्त भेल · {left}% बेसीसँ {rank} धरि",
   "fun_hq_tier_max": "{pct}% अर्जित · शीर्ष रैंक!",
-  "fun_costume_full_subject": "पूर्णतया अनुकूल-सब {subject} भऽ गेल!"
+  "fun_costume_full_subject": "पूर्णतया अनुकूल-सब {subject} भऽ गेल!",
+  "txt_meet_your_superhero": "अपन सुपरहीरोसँ भेँट करू",
+  "txt_who_grows_with_you": "अहाँक संग कोन बढ़ैत अछि",
+  "txt_every_subject_has_its_own_hero_jeevak_for_biology_vidyut_for": "प्रत्येक विषयक अपन नायक होइत अछि-जीव विज्ञानक लेल जीवक, भौतिकीक लेल विद्युत आ बहुत किछु। सुनौनक कवच तक, टुकड़-टुकड़ाके, एकर अनुरूप पाठ आ इक्का प्रश्नोत्तरी देखू। अपन नायकक पावर मूव देखबाक लेल टेप करू!",
+  "txt_collect_hero_cards": "हीरो कार्ड जमा करू,",
+  "txt_show_your_family": "अपन परिवारकेँ देखाउ",
+  "txt_scan_your_textbook_pages_to_unlock_hero_cards_for_your_album": "अपन एल्बमक नायक कार्डकेँ खोलबाक लेल अपन पाठ्यपुस्तक पृष्ठकेँ स्कैन करू। हर सप्ताह अपन हीरो रिपोर्ट अपन माता-पिता के संग वॉट्सऐप, इंस्टाग्राम, फेसबुक या कोनो मैसेजिंग ऐप पर शेयर करू-अपन स्ट्रीक, सबक आ नव कार्ड एक उज्ज्वल तस्वीर मे।",
+  "onb_hero_report": "हीरो रिपोर्ट"
 }

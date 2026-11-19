@@ -550,5 +550,12 @@
   "terr_allow_location": "MITRA کے لیے مقام کی اجازت دیں",
   "fun_hq_tier_next": "{pct}% حاصل کیا گیا · {left}% زیادہ سے {rank}",
   "fun_hq_tier_max": "{pct}% حاصل کیا گیا · اعلی درجہ!",
-  "fun_costume_full_subject": "مکمل طور پر موزوں-تمام {subject} ہو چکے ہیں!"
+  "fun_costume_full_subject": "مکمل طور پر موزوں-تمام {subject} ہو چکے ہیں!",
+  "txt_meet_your_superhero": "اپنے سپر ہیرو سے ملیں،",
+  "txt_who_grows_with_you": "آپ کے ساتھ کون بڑھتا ہے",
+  "txt_every_subject_has_its_own_hero_jeevak_for_biology_vidyut_for": "ہر مضمون کا اپنا ہیرو ہوتا ہے-حیاتیات کے لیے جیوک، طبیعیات کے لیے ودیوت اور بہت کچھ۔ اسباق اور بہترین کوئز دیکھیں جو ان کے مطابق ہوں، ٹکڑے ٹکڑے کر کے، سونے کے کوچ تک۔ اپنے ہیرو کی طاقت کو دیکھنے کے لیے ٹیپ کریں!",
+  "txt_collect_hero_cards": "ہیرو کارڈ جمع کریں،",
+  "txt_show_your_family": "اپنے خاندان کو دکھائیں",
+  "txt_scan_your_textbook_pages_to_unlock_hero_cards_for_your_album": "اپنے البم کے ہیرو کارڈز کو غیر مقفل کرنے کے لیے اپنے نصابی کتابوں کے صفحات کو اسکین کریں۔ ہر ہفتے اپنے ہیرو رپورٹ کو اپنے والدین کے ساتھ وٹس ایپ، انسٹاگرام، فیس بک یا کسی بھی میسجنگ ایپ پر شیئر کریں-آپ کا سلسلہ، سبق اور نئے کارڈ ایک روشن تصویر میں۔",
+  "onb_hero_report": "ہیرو رپورٹ"
 }

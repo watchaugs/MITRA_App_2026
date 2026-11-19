@@ -541,5 +541,11 @@
   "terr_allow_location": "ꯃꯐꯝ ꯑꯗꯨ MITRA ꯒꯤꯗꯃꯛ ꯑꯌꯥꯕ ꯄꯤꯌꯨ",
   "fun_hq_tier_next": "{pct}% ꯐꯪꯂꯦ · {left}% ꯍꯦꯟꯅ {rank} ꯗ ꯌꯧꯔꯦ",
   "fun_hq_tier_max": "{pct}% ꯐꯪꯂꯦ · ꯈ ꯭ ꯋꯥꯏꯗꯒꯤ ꯋꯥꯡꯕ ꯊꯥꯛꯇ!",
-  "fun_costume_full_subject": "ꯃꯄꯨꯡꯐꯥꯅ ꯆꯨꯅꯕ-{subject} ꯄꯨꯝꯅꯃꯛ ꯂꯣꯏꯔꯦ!"
+  "fun_costume_full_subject": "ꯃꯄꯨꯡꯐꯥꯅ ꯆꯨꯅꯕ-{subject} ꯄꯨꯝꯅꯃꯛ ꯂꯣꯏꯔꯦ!",
+  "txt_meet_your_superhero": "ꯅꯍꯥꯛꯀꯤ ꯁꯨꯄꯔ ꯍꯤꯔꯣꯒ ꯎꯅꯅꯕ,",
+  "txt_who_grows_with_you": "ꯅꯍꯥꯛꯀ ꯂꯣꯏꯅꯅ ꯀꯔꯝꯕꯅ ꯆꯥꯎꯈꯠꯂꯛꯀꯗꯒꯦ",
+  "txt_collect_hero_cards": "ꯍꯤꯔꯣ ꯀꯥꯔꯗꯁꯤꯡ ꯈꯣꯝꯖꯤꯟꯕꯤꯌꯨ,",
+  "txt_show_your_family": "ꯅꯍꯥꯛꯀꯤ ꯏꯃꯨꯡ ꯃꯅꯨꯡ ꯑꯗꯨ ꯎꯠꯂꯛꯎ",
+  "txt_scan_your_textbook_pages_to_unlock_hero_cards_for_your_album": "ꯅꯍꯥꯛꯀꯤ ꯑꯦꯜꯕꯝꯒꯤ ꯍꯤꯔꯣ ꯀꯥꯔꯗꯁꯤꯡ ꯍꯥꯡꯗꯣꯛꯅꯕ ꯅꯍꯥꯛꯀꯤ ꯇꯦꯛꯁꯕꯨꯛ ꯄꯦꯖꯁꯤꯡ ꯑꯗꯨ ꯁ ꯭ ꯀꯦꯟ ꯇꯧ ꯫ ꯍꯞꯇꯥ ꯈꯨꯗꯤꯡꯒꯤ, ꯅꯍꯥꯛꯀꯤ ꯍꯤꯔꯣ ꯔꯤꯄꯣꯔꯠ ꯑꯗꯨ ꯅꯍꯥꯛꯀꯤ ꯃꯃꯥ-ꯃꯄꯥꯒ ꯋꯥꯠꯁꯑꯦꯞ, ꯏꯟꯁ ꯭ ꯇꯥꯒ ꯭ ꯔꯥꯝ, ꯐꯦꯁꯕꯨꯛ ꯅꯠꯇ ꯭ ꯔꯒ ꯃꯦꯁꯦꯖꯤꯡ ꯑꯦꯞ ꯑꯃꯍꯦꯛꯇꯗ-ꯅꯍꯥꯛꯀꯤ ꯁ ꯭ ꯇ ꯭ ꯔꯤꯛ, ꯃꯍꯩꯁꯤꯡ ꯑꯃꯁꯨꯡ ꯑꯅꯧꯕ ꯀꯥꯔꯗꯁꯤꯡ ꯑꯗꯨ ꯐꯖꯔꯕ ꯃꯃꯤ ꯑꯃꯗ ꯁꯦꯌꯔ ꯇꯧꯕꯤꯌꯨ ꯫",
+  "onb_hero_report": "ꯍꯤꯔꯣ ꯔꯤꯄꯣꯔꯠ"
 }
