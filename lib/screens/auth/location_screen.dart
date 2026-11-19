@@ -28,6 +28,7 @@ import '../../constants/colors.dart';
 import '../../stores/auth_store.dart';
 import '../../widgets/mitra_scaffold.dart';
 
+import '../../constants/india_states.dart';
 import '../../providers/tr_ext.dart';
 // ── Constants ────────────────────────────────────────────────
 
@@ -50,62 +51,9 @@ String? _canonicalIndianState(String? raw) {
   if (raw == null) return null;
   final s = raw.trim();
   if (s.isEmpty) return null;
-  const canonical = <String>[
-    'Andaman and Nicobar Islands',
-    'Andhra Pradesh',
-    'Arunachal Pradesh',
-    'Assam',
-    'Bihar',
-    'Chandigarh',
-    'Chhattisgarh',
-    'Dadra and Nagar Haveli and Daman and Diu',
-    'Delhi',
-    'Goa',
-    'Gujarat',
-    'Haryana',
-    'Himachal Pradesh',
-    'Jammu and Kashmir',
-    'Jharkhand',
-    'Karnataka',
-    'Kerala',
-    'Ladakh',
-    'Lakshadweep',
-    'Madhya Pradesh',
-    'Maharashtra',
-    'Manipur',
-    'Meghalaya',
-    'Mizoram',
-    'Nagaland',
-    'Odisha',
-    'Puducherry',
-    'Punjab',
-    'Rajasthan',
-    'Sikkim',
-    'Tamil Nadu',
-    'Telangana',
-    'Tripura',
-    'Uttar Pradesh',
-    'Uttarakhand',
-    'West Bengal',
-  ];
-  // Known OSM → canonical variants (lowercase keys).
-  const aliases = <String, String>{
-    'nct of delhi': 'Delhi',
-    'national capital territory of delhi': 'Delhi',
-    'pondicherry': 'Puducherry',
-    'orissa': 'Odisha',
-    'uttaranchal': 'Uttarakhand',
-    'jammu and kashmir union territory': 'Jammu and Kashmir',
-    'dadra and nagar haveli': 'Dadra and Nagar Haveli and Daman and Diu',
-    'daman and diu': 'Dadra and Nagar Haveli and Daman and Diu',
-    'andaman and nicobar': 'Andaman and Nicobar Islands',
-  };
-  final low = s.toLowerCase();
-  if (aliases.containsKey(low)) return aliases[low];
-  for (final c in canonical) {
-    if (c.toLowerCase() == low) return c; // exact (case-insensitive) match
-  }
-  return s; // unknown → keep as-is (trimmed) so nothing breaks
+  // One state table for the whole app (lib/constants/india_states.dart, same
+  // as the Dashboard's): "Orissa", "OR", "NCT of Delhi" … → official name.
+  return indiaStateName(s) ?? s; // unknown → keep as-is (trimmed)
 }
 
 /// Prevents absurdly long geocoded strings from hitting Firestore.
@@ -346,6 +294,8 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
           .doc(user.id)
           .update({
         'assigned_state': _state,
+        // Stage 2: the state's code next to its name ("GJ").
+        'assigned_state_code': indiaStateCode(_state),
         'assigned_district': _district,
       }).timeout(_kFirestoreTimeout);
 

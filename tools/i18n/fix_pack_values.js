@@ -26,6 +26,9 @@
 // 11. Letters from another writing system inside a pack (an Urdu word in a
 //    Santali sentence, a Hindi word in Manipuri): known words are replaced,
 //    anything else is removed so English shows until it is translated again.
+// 12. Small MT glitches: an arrow moved into the middle, a lost trailing "…",
+//    "XP·" without spaces, a space before an apostrophe (ল 'ড), stray ′ marks,
+//    Santali ᱾ used as a colon, and a lost "XXXXXXX" mask (value dropped).
 // 8. Devanagari packs (not Sanskrit): MT wrote the colon as a visarga ("सकाः {v1}"). Where the
 //    English has a colon, "ः" before a space/placeholder becomes ": " — real
 //    visarga words (पुनः, अतः, प्रातः …) are left alone.
@@ -182,7 +185,7 @@ for (const [lang, [tiers, viewed]] of Object.entries(FIX)) {
     set(k, v);
   }
 
-  for (const [k, byLang] of Object.entries(CONTEXT)) if (byLang[lang] && k in pack) set(k, byLang[lang]);
+  for (const [k, byLang] of Object.entries(CONTEXT)) if (byLang[lang] && (k in pack || k in en)) set(k, byLang[lang]);
 
   if (VISARGA_OF[lang]) {
     for (const k of Object.keys(pack)) {
@@ -198,10 +201,32 @@ for (const [lang, [tiers, viewed]] of Object.entries(FIX)) {
     let v = pack[k];
     const lead = (en[k].match(LEAD_DECOR) || [''])[0];
     if (lead && !v.startsWith(lead)) v = `${lead} ${v.replace(LEAD_DECOR, '').trim()}`;
+    // An arrow MT moved into the middle ("OTP → పంపండి") is taken out first.
+    if (/→\s*$/.test(en[k]) && (en[k].match(/→/g) || []).length === 1) {
+      v = v.replace(/\s*→\s*(?=\S)/g, ' ').trim();
+    }
     // Arrows only for left-to-right scripts (in Urdu/Kashmiri/Sindhi they would point backwards).
     if (!RTL.has(lang) && /→\s*$/.test(en[k]) && !/→\s*$/.test(v)) v = `${v.trim()} →`;
     if (!RTL.has(lang) && /^\s*←/.test(en[k]) && !/^\s*←/.test(v)) v = `← ${v.trim()}`;
+    // Trailing "…" of a status line ("Getting your missions ready…").
+    if (/(…|\.\.\.)\s*$/.test(en[k]) && !/(…|\.\.\.)\s*$/.test(v)) v = `${v.replace(TERMINATOR, '').trim()}…`;
+    // "XP· 20" → "XP · 20" when English has a spaced middle dot.
+    if (en[k].includes(' · ')) v = v.replace(/\s*·\s*/g, ' · ');
+    // A space MT put before an apostrophe inside a word ("ल 'ड" → "ल'ड").
+    if (!en[k].includes("'")) v = v.replace(/([\p{L}\p{M}]) '(?=[\p{L}\p{M}])/gu, "$1'");
+    // Stray prime marks (′ ″) MT left where an emoji or quote was.
+    if (!/[′″]/.test(en[k])) v = v.replace(/\s*[′″]+\s*/g, ' ').trim();
+    // Santali: MT wrote the full stop ᱾ where English has a colon before a value.
+    if (lang === 'sat' && en[k].includes(':') && !v.includes(':')) v = v.replace(/\s*᱾\s*(?=\{)/u, ': ');
     if (v !== pack[k]) set(k, v);
+  }
+
+  // A literal mask such as "XXXXXXX" lost by MT: drop the value so English shows.
+  for (const k of Object.keys(pack)) {
+    const keep = String(en[k] || '').match(/X{4,}/g);
+    if (typeof pack[k] !== 'string' || !keep || keep.every(t => pack[k].includes(t))) continue;
+    changes.push(`${k}: removed (lost ${keep.join(' ')}) — English shows`);
+    delete pack[k];
   }
 
   // Wrong writing system inside the pack.

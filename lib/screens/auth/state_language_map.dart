@@ -8,10 +8,13 @@
 // Language codes match the consent_<code>.json packs in assets/locales/.
 // ═══════════════════════════════════════════════════════════════════════════
 
+import '../../constants/india_states.dart';
+
 const Map<String, String> kStateToLang = {
   // ── States ──────────────────────────────────────────────────────────────
   'andhra pradesh': 'te',
-  'arunachal pradesh': 'en', // no single scheduled primary; English administrative
+  'arunachal pradesh':
+      'en', // no single scheduled primary; English administrative
   'assam': 'as',
   'bihar': 'hi',
   'chhattisgarh': 'hi',
@@ -44,7 +47,8 @@ const Map<String, String> kStateToLang = {
   'chandigarh': 'hi',
   'dadra and nagar haveli and daman and diu': 'gu',
   'delhi': 'hi',
-  'jammu and kashmir': 'ur', // Urdu + others official; Kashmiri (ks) also available
+  'jammu and kashmir':
+      'ur', // Urdu + others official; Kashmiri (ks) also available
   'ladakh': 'hi',
   'lakshadweep': 'ml',
   'puducherry': 'ta',
@@ -54,8 +58,9 @@ const Map<String, String> kStateToLang = {
 /// Returns 'en' when the state is null, empty, or unmapped.
 String consentLangForState(String? state) {
   if (state == null) return 'en';
-  // Accept both "Tamil Nadu" and "tamil_nadu" forms (the app stores either).
-  final key = state.trim().toLowerCase().replaceAll('_', ' ');
+  // Any form: "Tamil Nadu", "tamil_nadu", "TN", old spellings ("Orissa").
+  final canonical = indiaStateName(state.replaceAll('_', ' ')) ?? state;
+  final key = canonical.trim().toLowerCase().replaceAll('_', ' ');
   if (key.isEmpty) return 'en';
   return kStateToLang[key] ?? 'en';
 }
