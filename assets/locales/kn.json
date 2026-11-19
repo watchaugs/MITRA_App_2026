@@ -537,5 +537,9 @@
   "fun_locked": "ಲಾಕ್ ಮಾಡಲಾಗಿದೆ",
   "home_lesson_caps": "ಪಾಠ",
   "quiz_streak_streak": "🔥 ಸತತ {streak} ದಿನಗಳು",
-  "student_streakdays_streak": "🔥 ಸತತ {streakDays} ದಿನಗಳು"
+  "student_streakdays_streak": "🔥 ಸತತ {streakDays} ದಿನಗಳು",
+  "ar_gesture_turn_body": "ಅದನ್ನು ತಿರುಗಿಸಲು ಒಂದು ಬೆರಳಿನಿಂದ ಎಳೆಯಿರಿ.",
+  "ar_gesture_zoom_title": "ಜೂಮ್ ಇನ್ ಅಥವಾ ಔಟ್ ಮಾಡಿ",
+  "ar_gesture_zoom_body": "ಅದನ್ನು ದೊಡ್ಡದಾಗಿಸಲು ಅಥವಾ ಚಿಕ್ಕದಾಗಿಸಲು ಎರಡು ಬೆರಳುಗಳಿಂದ ಪಿಂಚ್ ಮಾಡಿ.",
+  "ar_gesture_move_body": "ಅದನ್ನು ಪರದೆಯ ಮೇಲೆ ಸರಿಸಲು ಎರಡು ಬೆರಳುಗಳಿಂದ ಎಳೆಯಿರಿ."
 }

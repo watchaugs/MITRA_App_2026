@@ -540,5 +540,9 @@
   "fun_locked": "कुलूपबंद",
   "home_lesson_caps": "धडा",
   "student_totalxp_xp": "⭐ {totalXp} XP",
-  "fun_hq_rank_next": "{rank} पर्यंत पोहोचण्यासाठी {xp} XP · {left} अधिक XP"
+  "fun_hq_rank_next": "{rank} पर्यंत पोहोचण्यासाठी {xp} XP · {left} अधिक XP",
+  "ar_gesture_turn_body": "ते फिरवण्यासाठी एका बोटाने खेचा.",
+  "ar_gesture_zoom_title": "झूम इन किंवा आउट करा",
+  "ar_gesture_zoom_body": "ते मोठे किंवा लहान करण्यासाठी दोन बोटांनी चिमटा मारा.",
+  "ar_gesture_move_body": "ते पडद्यावर हलवण्यासाठी दोन बोटांनी ओढा."
 }

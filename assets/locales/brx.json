@@ -537,5 +537,11 @@
   "txt_regional_language": "ओनसोलारि राव",
   "txt_any_subject": "जायखिजाया आयदा",
   "fun_locked": "फांथेनाय",
-  "home_lesson_caps": "सोलोंसा"
+  "home_lesson_caps": "सोलोंसा",
+  "quiz_streak_streak": "फारियै {streak} सानफोर",
+  "student_streakdays_streak": "फारियै {streakDays} सानफोर",
+  "ar_gesture_turn_body": "बेखौ फिदिंनो मोनसे आसिजों बोनाय।",
+  "ar_gesture_zoom_title": "जुम इन एबा आउट खालाम",
+  "ar_gesture_zoom_body": "बेखौ गिदिरसिन एबा फिसासिन खालामनो थाखाय मोन्नै आसिजों थुख्राव।",
+  "ar_gesture_move_body": "बेखौ फैसालियाव लांफिननो थाखाय मोन्नै आसिजों बोनाय।"
 }

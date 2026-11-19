@@ -58,6 +58,8 @@ const SOURCE_OVERRIDES = {
   student_hours_ago: '{n} hours ago',
   student_days_ago: '{n} days ago',
   student_streakdays_streak: '🔥 {streakDays} days in a row',
+  // One word alone came back as the camera/photo sense of "zoom".
+  ar_gesture_zoom_title: 'Zoom in or out',
   quiz_streak_streak: '🔥 {streak} days in a row',
   student_qs: 'Questions',
   student_avg_v1: 'average {v1}%',

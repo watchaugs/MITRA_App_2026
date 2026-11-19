@@ -540,5 +540,9 @@
   "txt_regional_language": "ప్రాంతీయ భాష",
   "txt_any_subject": "ఏదైనా విషయం",
   "fun_locked": "లాక్ చేయబడింది",
-  "home_lesson_caps": "పాఠం"
+  "home_lesson_caps": "పాఠం",
+  "ar_gesture_turn_body": "దానిని తిప్పడానికి ఒక వేలితో లాగండి.",
+  "ar_gesture_zoom_title": "జూమ్ ఇన్ లేదా అవుట్ చేయండి",
+  "ar_gesture_zoom_body": "దాన్ని పెద్దదిగా లేదా చిన్నదిగా చేయడానికి రెండు వేళ్ళతో పించ్ చేయండి.",
+  "ar_gesture_move_body": "దాన్ని తెరపైకి తరలించడానికి రెండు వేళ్ళతో లాగండి."
 }

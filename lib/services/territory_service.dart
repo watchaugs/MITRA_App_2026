@@ -181,14 +181,31 @@ class TerritoryService {
   }
 
   static Future<void> _writeResult(
-      SharedPreferences prefs, String uid, String result, String state) async {
+      SharedPreferences prefs, String uid, String result, String state,
+      {DateTime? at}) async {
     await prefs.setString(
         _resultKey(uid),
         jsonEncode({
           'r': result,
           's': norm(state),
-          't': DateTime.now().millisecondsSinceEpoch,
+          't': (at ?? DateTime.now()).millisecondsSinceEpoch,
         }));
+  }
+
+  /// Registration found the student's state from a location reading moments
+  /// ago (location screen). That reading counts as the first "confirmed in the
+  /// home state", so the app doesn't ask for location again right away; the
+  /// normal once-a-day check and the grace days start from it. Only the result
+  /// and time are kept on this phone, never the coordinates.
+  static Future<void> recordRegistrationFix({
+    required String uid,
+    required String homeState,
+    required DateTime at,
+  }) async {
+    if (uid.isEmpty || norm(homeState).isEmpty) return;
+    final prefs = await SharedPreferences.getInstance();
+    await _writeResult(prefs, uid, 'home', homeState, at: at);
+    TerritoryGate._setFor(uid, TerritoryStatus.home, homeAt: at);
   }
 
   // One check at a time per student: a second caller (e.g. the profile

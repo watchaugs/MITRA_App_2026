@@ -80,8 +80,16 @@ class _ArEntryScreenState extends ConsumerState<ArEntryScreen> {
     try {
       // Returns one of: 'supported_installed', 'supported_apk_too_old',
       // 'supported_not_installed', 'unsupported', 'unknown', 'error'.
-      final String status =
+      String status =
           await _ch.invokeMethod('checkArCore') as String? ?? 'unknown';
+      // Right after app start Google Play Services for AR often answers
+      // "still checking" (reported as 'unknown'); Google's guidance is to ask
+      // again shortly. Without this the first AR open fell back to the 3D
+      // viewer while later opens worked. Up to ~2 s, then fall back as before.
+      for (var i = 0; i < 10 && status == 'unknown' && mounted; i++) {
+        await Future<void>.delayed(const Duration(milliseconds: 200));
+        status = await _ch.invokeMethod('checkArCore') as String? ?? 'unknown';
+      }
       if (status == 'supported_installed') {
         capable = true;
       } else if (status == 'supported_not_installed' ||

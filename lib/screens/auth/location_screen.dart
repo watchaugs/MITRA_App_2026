@@ -29,6 +29,7 @@ import '../../stores/auth_store.dart';
 import '../../widgets/mitra_scaffold.dart';
 
 import '../../constants/india_states.dart';
+import '../../services/territory_service.dart';
 import '../../providers/tr_ext.dart';
 // ── Constants ────────────────────────────────────────────────
 
@@ -298,6 +299,14 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
         'assigned_state_code': indiaStateCode(_state),
         'assigned_district': _district,
       }).timeout(_kFirestoreTimeout);
+
+      // The reading that found this state counts as the first home check,
+      // so lessons open without asking for location again right away.
+      await TerritoryService.recordRegistrationFix(
+        uid: user.id,
+        homeState: _state,
+        at: _lastDetectedAt ?? DateTime.now(),
+      );
 
       // Update local auth state
       ref.read(authProvider.notifier).updateUser(

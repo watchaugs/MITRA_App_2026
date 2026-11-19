@@ -20,6 +20,8 @@
 // Route (unchanged): /student/ar/<topicId>?glb=<model>&audio=<narration>
 // With no ?glb (demo mode) a bundled model is shown so AR works offline.
 // ═══════════════════════════════════════════════════════════════════════════
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -221,6 +223,34 @@ class _ArViewerScreenState extends ConsumerState<ArViewerScreen> {
   DateTime? _arStart; // AR view duration telemetry
   TelemetryService? _telemetry; // captured in initState; safe to use in dispose
 
+  // Finger-gesture guide (turn / zoom / move). Shows by itself on the first
+  // few opens, hides after a few seconds, and the "?" button re-shows it.
+  static const String _gestureHintKey = 'ar_viewer_gesture_hint_count_v1';
+  static const int _gestureHintAutoTimes = 3;
+  bool _showGestures = false;
+  Timer? _gestureTimer;
+
+  void _showGestureGuide({bool auto = false}) {
+    if (auto) {
+      try {
+        final prefs = ref.read(sharedPreferencesProvider);
+        final n = prefs.getInt(_gestureHintKey) ?? 0;
+        if (n >= _gestureHintAutoTimes) return;
+        prefs.setInt(_gestureHintKey, n + 1);
+      } catch (_) {
+        return; // prefs unavailable → skip the hint, never block the model
+      }
+    }
+    _gestureTimer?.cancel();
+    if (mounted) setState(() => _showGestures = true);
+    _gestureTimer = Timer(const Duration(seconds: 8), _hideGestureGuide);
+  }
+
+  void _hideGestureGuide() {
+    _gestureTimer?.cancel();
+    if (mounted && _showGestures) setState(() => _showGestures = false);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -264,6 +294,8 @@ class _ArViewerScreenState extends ConsumerState<ArViewerScreen> {
     _audiosAac = widget.audiosAac ?? const {};
     _resolveLanguages();
     _startNarration();
+    WidgetsBinding.instance
+        .addPostFrameCallback((_) => _showGestureGuide(auto: true));
   }
 
   // Narration: prefer the chosen-language audio; fall back to single audioUrl.
@@ -302,6 +334,14 @@ class _ArViewerScreenState extends ConsumerState<ArViewerScreen> {
 
   @override
   void dispose() {
+    // Stop the narration FIRST — covers the close button and the phone's back
+    // button / gesture. `ref` can't be used in dispose (Riverpod throws "Cannot
+    // use ref after the widget was disposed"); that error used to abort this
+    // method before the stop, so the audio kept playing after leaving.
+    _closing = true;
+    final player = _audio;
+    player.stop().catchError((_) {});
+    _gestureTimer?.cancel();
     _pauser.dispose();
     if (_arStart != null &&
         DateTime.now().difference(_arStart!).inSeconds >= 60) {
@@ -309,22 +349,17 @@ class _ArViewerScreenState extends ConsumerState<ArViewerScreen> {
     }
     final secs =
         _arStart == null ? 0 : DateTime.now().difference(_arStart!).inSeconds;
-    ref.read(telemetryServiceProvider)?.logArEnd(
-          arId: widget.topicId,
-          topicId: widget.topicId,
-          moduleTitle: widget.topicId,
-          durationSeconds: secs,
-          completed: secs >= 10, // viewed for a meaningful duration
-          isReplay: false,
-          preModuleScore: 0,
-          postModuleScore: 0,
-          renderMode: 'interactive3d',
-        );
-    // Stop first, then release — covers the hardware back button too (it pops
-    // the route without going through the close button).
-    _closing = true;
-    final player = _audio;
-    player.stop().catchError((_) {});
+    _telemetry?.logArEnd(
+      arId: widget.topicId,
+      topicId: widget.topicId,
+      moduleTitle: widget.topicId,
+      durationSeconds: secs,
+      completed: secs >= 10, // viewed for a meaningful duration
+      isReplay: false,
+      preModuleScore: 0,
+      postModuleScore: 0,
+      renderMode: 'interactive3d',
+    );
     // Release only after any buffering play() settles, so a late-prepared
     // track can't start on a half-released player.
     (_narration ?? Future<void>.value())
@@ -466,6 +501,14 @@ class _ArViewerScreenState extends ConsumerState<ArViewerScreen> {
                           },
                         ),
                         const Spacer(),
+                        // "?" shows the finger-gesture guide again.
+                        _RoundIconButton(
+                          icon: Icons.help_outline,
+                          onTap: () => _showGestures
+                              ? _hideGestureGuide()
+                              : _showGestureGuide(),
+                        ),
+                        const SizedBox(width: 10),
                         if (_availableLangs.length >= 2) ...[
                           _languageChip(),
                           const SizedBox(width: 10),
@@ -501,9 +544,110 @@ class _ArViewerScreenState extends ConsumerState<ArViewerScreen> {
                   ),
                 ),
               ),
+
+              // ── Finger-gesture guide (bottom card, doesn't block the model) ─
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 250),
+                      child: _showGestures
+                          ? _gestureGuide(context, accent)
+                          : const SizedBox.shrink(),
+                    ),
+                  ),
+                ),
+              ),
             ],
           );
         },
+      ),
+    );
+  }
+
+  Widget _gestureGuide(BuildContext context, Color accent) {
+    Widget tip(IconData icon, String title, String body) => Expanded(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: accent.withValues(alpha: 0.18),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, color: accent, size: 22),
+              ),
+              const SizedBox(height: 6),
+              Text(title,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                      fontFamily: 'Baloo2',
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13)),
+              const SizedBox(height: 2),
+              Text(body,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                      fontFamily: 'Mukta',
+                      color: Colors.white70,
+                      fontSize: 11,
+                      height: 1.25)),
+            ],
+          ),
+        );
+
+    return Container(
+      key: const ValueKey('gesture-guide'),
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.72),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: accent.withValues(alpha: 0.45)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              tip(
+                  Icons.touch_app,
+                  context.tr(ref, 'ar_rotate', 'Rotate'),
+                  context.tr(ref, 'ar_gesture_turn_body',
+                      'Drag with one finger to turn it around.')),
+              tip(
+                  Icons.pinch,
+                  context.tr(ref, 'ar_gesture_zoom_title', 'Zoom'),
+                  context.tr(ref, 'ar_gesture_zoom_body',
+                      'Pinch with two fingers to make it bigger or smaller.')),
+              tip(
+                  Icons.open_with,
+                  context.tr(ref, 'ar_move', 'Move'),
+                  context.tr(ref, 'ar_gesture_move_body',
+                      'Drag with two fingers to move it on the screen.')),
+            ],
+          ),
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton(
+              onPressed: _hideGestureGuide,
+              child: Text(context.tr(ref, 'ar_got_it', 'Got it'),
+                  style: TextStyle(
+                      fontFamily: 'Baloo2',
+                      color: accent,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 14)),
+            ),
+          ),
+        ],
       ),
     );
   }

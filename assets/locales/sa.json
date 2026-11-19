@@ -539,5 +539,9 @@
   "txt_regional_language": "प्रादेशिकभाषा",
   "txt_any_subject": "किमपि विषयः",
   "fun_locked": "बन्धितः",
-  "home_lesson_caps": "पाठम्"
+  "home_lesson_caps": "पाठम्",
+  "ar_gesture_turn_body": "एकेन अङ्गुल्या चालयित्वा तत् परिवृत्तं करोतु।",
+  "ar_gesture_zoom_title": "ज़ूम्-इन् अथवा औट् करोतु",
+  "ar_gesture_zoom_body": "अङ्गुलिद्वयेन पिञ्च् कुर्वन्तु येन तत् बृहत्तरं वा लघुतरं वा भवेत्।",
+  "ar_gesture_move_body": "अङ्गुलिद्वयेन तान् परदायाः उपरि चालयितुं चालयतु।"
 }

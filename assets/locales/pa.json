@@ -541,5 +541,9 @@
   "txt_regional_language": "ਖੇਤਰੀ ਭਾਸ਼ਾ",
   "txt_any_subject": "ਕੋਈ ਵੀ ਵਿਸ਼ਾ",
   "fun_locked": "ਬੰਦ",
-  "home_lesson_caps": "ਸਬਕ"
+  "home_lesson_caps": "ਸਬਕ",
+  "ar_gesture_turn_body": "ਇਸ ਨੂੰ ਮੋਡ਼ਣ ਲਈ ਇੱਕ ਉਂਗਲੀ ਨਾਲ ਖਿੱਚੋ।",
+  "ar_gesture_zoom_title": "ਜ਼ੂਮ ਇਨ ਜਾਂ ਆਊਟ ਕਰੋ",
+  "ar_gesture_zoom_body": "ਇਸ ਨੂੰ ਵੱਡਾ ਜਾਂ ਛੋਟਾ ਬਣਾਉਣ ਲਈ ਦੋ ਉਂਗਲਾਂ ਨਾਲ ਪਿੰਚ ਕਰੋ।",
+  "ar_gesture_move_body": "ਇਸ ਨੂੰ ਸਕਰੀਨ ਉੱਤੇ ਲਿਜਾਣ ਲਈ ਦੋ ਉਂਗਲਾਂ ਨਾਲ ਖਿੱਚੋ।"
 }

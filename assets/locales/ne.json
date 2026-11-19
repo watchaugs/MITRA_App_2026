@@ -541,5 +541,9 @@
   "fun_locked": "बन्द",
   "home_lesson_caps": "पाठ",
   "quiz_streak_streak": "🔥 लगातार {streak} दिन",
-  "student_streakdays_streak": "🔥 लगातार {streakDays} दिन"
+  "student_streakdays_streak": "🔥 लगातार {streakDays} दिन",
+  "ar_gesture_turn_body": "यसलाई घुमाउन एउटा औँलाले तान्नुहोस्।",
+  "ar_gesture_zoom_title": "जुम इन वा आउट गर्नुहोस्",
+  "ar_gesture_zoom_body": "यसलाई ठुलो वा सानो बनाउनका लागि दुईवटा औँलाले पिन्च गर्नुहोस्।",
+  "ar_gesture_move_body": "यसलाई स्क्रिनमा सार्न दुई औँलाले तान्नुहोस्।"
 }

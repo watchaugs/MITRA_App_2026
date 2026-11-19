@@ -541,5 +541,9 @@
   "txt_regional_language": "પ્રાદેશિક ભાષા",
   "txt_any_subject": "કોઈપણ વિષય",
   "fun_locked": "બંધ કરેલું",
-  "home_lesson_caps": "પાઠ"
+  "home_lesson_caps": "પાઠ",
+  "ar_gesture_turn_body": "તેને ફરતે ફેરવવા માટે એક આંગળીથી ખેંચો.",
+  "ar_gesture_zoom_title": "ઝૂમ ઇન અથવા આઉટ કરો",
+  "ar_gesture_zoom_body": "તેને મોટું કે નાનું બનાવવા માટે બે આંગળીઓથી ચપટી કરો.",
+  "ar_gesture_move_body": "તેને સ્ક્રીન પર ખસેડવા માટે બે આંગળીઓથી ખેંચો."
 }

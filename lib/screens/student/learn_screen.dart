@@ -389,6 +389,49 @@ bool _sameClass(String contentClass, String studentClass) {
   return me.isEmpty || c.isEmpty || c == me;
 }
 
+/// Quiz id → the Curriculum Map subject it is linked under, for the student's
+/// own class. The dashboard tree is the source of truth: a quiz linked to
+/// "Class 10 › Biology › Heart Test" shows under Biology next to its AR
+/// lesson, even if the quiz record itself says "Science". Quizzes not linked
+/// in this class's tree keep their own subject.
+Map<String, String> _treeSubjectByQuiz(ArCatalog? catalog,
+    Map<String, List<ArLessonRec>> arBySubject, String myClass) {
+  final links = catalog?.quizIdsByArId ?? const <String, List<String>>{};
+  final out = <String, String>{};
+  if (links.isEmpty) return out;
+  for (final e in arBySubject.entries) {
+    for (final l in e.value) {
+      if (!_sameClass(l.classTag, myClass)) continue;
+      for (final qid in links[l.id] ?? const <String>[]) {
+        out.putIfAbsent(qid, () => e.key);
+      }
+    }
+  }
+  return out;
+}
+
+String _quizSubject(QuizSummary q, Map<String, String> treeSubject) =>
+    treeSubject[q.id] ?? q.subject;
+
+/// Home subject tiles: the Curriculum Map subjects that have an AR lesson for
+/// this student's class and language — the same rule the Learn screen uses —
+/// as `{name, emoji, ar}` maps. Empty when the catalog has nothing for them.
+List<Map<String, dynamic>> subjectTilesFor(
+    ArCatalog catalog, String myClass, String lang) {
+  final out = <Map<String, dynamic>>[];
+  for (final e in catalog.bySubject.entries) {
+    final n = e.value
+        .where((l) =>
+            !l.locked &&
+            (l.languageTag == lang || l.languageTag == 'all') &&
+            _sameClass(l.classTag, myClass))
+        .length;
+    if (n > 0) out.add({'name': e.key, 'emoji': _emojiFor(e.key), 'ar': n});
+  }
+  out.sort((a, b) => '${a['name']}'.compareTo('${b['name']}'));
+  return out;
+}
+
 /// Rule 1 dialog: tapping a quiz before the AR is watched enough opens this.
 /// Offers an "Open AR module" action that jumps straight to the AR content.
 Future<void> _showWatchArFirstDialog(
@@ -938,11 +981,12 @@ class LearnScreen extends ConsumerStatefulWidget {
   };
 
   static Map<String, List<QuizSummary>> _groupQuizzesBySubject(
-    List<QuizSummary> quizzes,
-  ) {
+    List<QuizSummary> quizzes, [
+    Map<String, String> treeSubject = const {},
+  ]) {
     final grouped = <String, List<QuizSummary>>{};
     for (final q in quizzes) {
-      grouped.putIfAbsent(q.subject, () => []).add(q);
+      grouped.putIfAbsent(_quizSubject(q, treeSubject), () => []).add(q);
     }
     return grouped;
   }
@@ -1145,14 +1189,21 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
                   // whole state's quizzes).
                   final myClass =
                       ref.watch(currentUserProvider)?.classGrade ?? '';
+                  // A quiz linked in this class's Curriculum Map counts as
+                  // this class's quiz, whatever class its own record says.
+                  final treeSubject =
+                      _treeSubjectByQuiz(arCatalog, arBySubject, myClass);
                   final filteredQuizzes = quizzes.where((q) {
                     return (q.languageTag == currentLang ||
                             q.languageTag == 'all') &&
-                        _sameClass(q.className, myClass);
+                        (treeSubject.containsKey(q.id) ||
+                            _sameClass(q.className, myClass));
                   }).toList();
 
+                  // Linked quizzes sit under their Curriculum Map subject.
                   final grouped = LearnScreen._groupQuizzesBySubject(
                     filteredQuizzes,
+                    treeSubject,
                   );
 
                   // A subject tile only when it has a lesson for this class.
@@ -1536,17 +1587,19 @@ class _LearnHeader extends ConsumerWidget {
     // The student's own class only, same as the list below (not the state).
     final myClass =
         ref.watch(currentUserProvider.select((u) => u?.classGrade ?? ''));
+    final arCatalog = ref.watch(arCatalogProvider).valueOrNull;
+    final arBySubject = arCatalog?.bySubject ?? LearnScreen._arLessonsBySubject;
+    final treeSubject = _treeSubjectByQuiz(arCatalog, arBySubject, myClass);
     final quizzes = (ref
                 .watch(quizFeedProvider(ref.watch(quizFilterParamsProvider)))
                 .valueOrNull ??
             const <QuizSummary>[])
         .where((q) =>
             (q.languageTag == lang || q.languageTag == 'all') &&
-            _sameClass(q.className, myClass) &&
-            inSubject(q.subject))
+            (treeSubject.containsKey(q.id) ||
+                _sameClass(q.className, myClass)) &&
+            inSubject(_quizSubject(q, treeSubject)))
         .toList();
-    final arCatalog = ref.watch(arCatalogProvider).valueOrNull;
-    final arBySubject = arCatalog?.bySubject ?? LearnScreen._arLessonsBySubject;
     final lessons = [
       for (final e in arBySubject.entries)
         if (inSubject(e.key))

@@ -538,5 +538,9 @@
   "fun_locked": "അടച്ചു",
   "home_lesson_caps": "പാഠം",
   "quiz_streak_streak": "🔥 തുടർച്ചയായി {streak} ദിവസം",
-  "student_streakdays_streak": "🔥 തുടർച്ചയായി {streakDays} ദിവസം"
+  "student_streakdays_streak": "🔥 തുടർച്ചയായി {streakDays} ദിവസം",
+  "ar_gesture_turn_body": "അത് തിരിക്കാൻ ഒരു വിരൽ കൊണ്ട് വലിച്ചിടുക.",
+  "ar_gesture_zoom_title": "സൂം ഇൻ ചെയ്യുകയോ ഔട്ട് ചെയ്യുകയോ ചെയ്യുക",
+  "ar_gesture_zoom_body": "അത് വലുതോ ചെറുതോ ആക്കാൻ രണ്ട് വിരലുകൾ കൊണ്ട് പിഞ്ച് ചെയ്യുക.",
+  "ar_gesture_move_body": "സ്ക്രീനിൽ നീക്കാൻ രണ്ട് വിരലുകൾ ഉപയോഗിച്ച് വലിച്ചിടുക."
 }

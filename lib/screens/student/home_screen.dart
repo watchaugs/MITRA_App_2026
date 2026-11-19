@@ -20,6 +20,8 @@ import '../../services/brain_spark_service.dart';
 import '../../services/achievement_engine.dart';
 import 'widgets/sponsor_banner.dart';
 import '../../fun/hero_power_card.dart';
+import '../../providers/translation_provider.dart';
+import 'learn_screen.dart' show arCatalogProvider, subjectTilesFor;
 
 // ═══════════════════════════════════════════════════════
 // MODELS
@@ -129,8 +131,21 @@ final subjectsProvider = FutureProvider<List<Subject>>((ref) async {
   // The old /tree endpoint read an empty legacy 'curriculum' collection, which
   // is why no tiles showed. Falls back to the profile state if GPS is pending.
   final state = ref.watch(effectiveStateProvider);
-  final res = await CurriculumAPI.subjects(state);
-  final rawSubjects = (res.data['subjects'] as List<dynamic>?) ?? [];
+  // Same source as the Learn screen: the Curriculum Map for the student's own
+  // class and language, so Home never mixes in other classes' subjects. The
+  // older all-assets list is the fallback if the catalog can't be read.
+  final myClass =
+      ref.watch(currentUserProvider.select((u) => u?.classGrade ?? ''));
+  final lang = ref.watch(translationProvider).langCode;
+  List<dynamic>? rawSubjects;
+  try {
+    final catalog = await ref.watch(arCatalogProvider.future);
+    rawSubjects = subjectTilesFor(catalog, myClass, lang);
+  } catch (_) {/* catalog unreadable → fall back below */}
+  if (rawSubjects == null) {
+    final res = await CurriculumAPI.subjects(state);
+    rawSubjects = (res.data['subjects'] as List<dynamic>?) ?? [];
+  }
 
   return [
     for (var i = 0; i < rawSubjects.length; i++)

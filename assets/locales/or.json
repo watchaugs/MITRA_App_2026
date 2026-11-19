@@ -540,5 +540,9 @@
   "txt_any_subject": "ଯେକୌଣସି ବିଷୟ",
   "fun_locked": "ବନ୍ଦ",
   "home_lesson_caps": "ପାଠ",
-  "student_totalxp_xp": "⭐ {totalXp} XP"
+  "student_totalxp_xp": "⭐ {totalXp} XP",
+  "ar_gesture_turn_body": "ଏହାକୁ ବୁଲାଇବା ପାଇଁ ଗୋଟିଏ ଆଙ୍ଗୁଠିରେ ଟାଣି ନିଅନ୍ତୁ।",
+  "ar_gesture_zoom_title": "ଜୁମ୍ ଇନ୍ କିମ୍ବା ଆଉଟ୍ କରନ୍ତୁ",
+  "ar_gesture_zoom_body": "ଏହାକୁ ବଡ଼ କିମ୍ବା ଛୋଟ କରିବା ପାଇଁ ଦୁଇଟି ଆଙ୍ଗୁଳି ସହିତ ପିଞ୍ଚ କରନ୍ତୁ |",
+  "ar_gesture_move_body": "ଏହାକୁ ପରଦାରେ ଘୁଞ୍ଚାଇବା ପାଇଁ ଦୁଇଟି ଆଙ୍ଗୁଳି ସହିତ ଟାଣି ନିଅନ୍ତୁ।"
 }

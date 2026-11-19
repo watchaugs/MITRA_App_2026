@@ -540,5 +540,9 @@
   "txt_any_subject": "যিকোনো বিষয়",
   "fun_locked": "লক কৰা হৈছে",
   "home_lesson_caps": "পাঠ",
-  "fun_hq_rank_next": "{xp} XP · {rank}লৈ আৰু {left} XP"
+  "fun_hq_rank_next": "{xp} XP · {rank}লৈ আৰু {left} XP",
+  "ar_gesture_turn_body": "ইয়াক ঘূৰাই দিবলৈ এটা আঙুলিৰে টানি আনক।",
+  "ar_gesture_zoom_title": "জুম ইন বা আউট কৰক",
+  "ar_gesture_zoom_body": "ইয়াক ডাঙৰ বা সৰু কৰিবলৈ দুটা আঙুলিৰে পিঞ্চ কৰক।",
+  "ar_gesture_move_body": "ইয়াক পৰ্দাত স্থানান্তৰ কৰিবলৈ দুটা আঙুলিৰে টানি আনক।"
 }
