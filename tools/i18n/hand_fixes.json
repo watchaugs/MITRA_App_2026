@@ -132,7 +132,8 @@
     "auth_change_number_resend_otp": "← नंबर बदलें / OTP फिर से भेजें",
     "auth_otp_sent_to_91_v1_xxxxxxx": "💬 OTP +91 {v1}XXXXXXX पर भेजा गया",
     "common_syncing_1_item": "1 आइटम सिंक हो रहा है…",
-    "common_syncing_n_items": "{count} आइटम सिंक हो रहे हैं…"
+    "common_syncing_n_items": "{count} आइटम सिंक हो रहे हैं…",
+    "ar_gesture_zoom_body": "इसे बड़ा या छोटा करने के लिए दो उंगलियों से पिंच करें।"
   },
   "as": {
     "auth_send_otp": "OTP পঠিয়াওক →",
@@ -463,7 +464,8 @@
     "teacher_class_average": "வகுப்பு சராசரி",
     "auth_step_4_of_4": "படி 4 / 4",
     "terr_checking": "உங்கள் இருப்பிடத்தைச் சரிபார்க்கிறோம்…",
-    "auth_detecting_location": "இருப்பிடத்தைக் கண்டறிகிறோம்…"
+    "auth_detecting_location": "இருப்பிடத்தைக் கண்டறிகிறோம்…",
+    "ar_gesture_zoom_title": "பெரிதாக்கு அல்லது சிறிதாக்கு"
   },
   "te": {
     "auth_send_otp": "OTP పంపండి →",
