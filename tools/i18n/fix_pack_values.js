@@ -18,6 +18,14 @@
 //    preposition, Tamil "Finish" as "hair"). Set by hand per language below.
 // 7. Labels that have no full stop in English lose the sentence terminator MT
 //    added (۔ ᱾ ꯫ । .) — Kashmiri and Santali ended almost every button with one.
+// 9. Every Indic script (not Sanskrit, not Tamil): the same colon-as-visarga
+//    fix for Bengali/Assamese ঃ, Gujarati ઃ, Kannada ಃ, Malayalam ഃ, Telugu ః,
+//    Punjabi ਃ and Odia ଃ.
+// 10. The emoji at the start ("💭 Thought for the day", "🔥 …") and the arrow
+//    at the end ("Send OTP →") are put back when MT dropped them.
+// 11. Letters from another writing system inside a pack (an Urdu word in a
+//    Santali sentence, a Hindi word in Manipuri): known words are replaced,
+//    anything else is removed so English shows until it is translated again.
 // 8. Devanagari packs (not Sanskrit): MT wrote the colon as a visarga ("सकाः {v1}"). Where the
 //    English has a colon, "ः" before a space/placeholder becomes ": " — real
 //    visarga words (पुनः, अतः, प्रातः …) are left alone.
@@ -91,25 +99,57 @@ const CONTEXT = {
   home_topics: { hi: 'टॉपिक', gu: 'ટોપિક', mai: 'टॉपिक', ne: 'टपिक', doi: 'टॉपिक', as: 'টপিক', or: 'ଟପିକ୍' },
   student_subject: { ta: 'பாடம்', ne: 'विषय' },
   txt_all: { mr: 'सर्व', as: 'সকলো', bn: 'সব' },
+  // MT returned "Step 2 – start the programme".
+  auth_step_4_of_4: { ks: 'مرحلہ 4 / 4' },
+  // School class: MT used वर्ग / ವರ್ಗ ("category"). Gujarati uses ધોરણ for a grade.
+  auth_class_number: { ne: 'कक्षा {number}', mai: 'कक्षा {number}', doi: 'कक्षा {number}', kn: 'ತರಗತಿ {number}', gu: 'ધોરણ {number}' },
+  student_select_class: { doi: 'कक्षा चुनो', kn: 'ತರಗತಿಯನ್ನು ಆಯ್ಕೆ ಮಾಡಿ', gu: 'ધોરણ પસંદ કરો' },
+  teacher_class_average: { doi: 'कक्षा औसत', kn: 'ತರಗತಿಯ ಸರಾಸರಿ' },
+  settings_change_class: { kn: 'ತರಗತಿಯನ್ನು ಬದಲಾಯಿಸಿ', gu: 'ધોરણ બદલો' },
+  settings_tap_to_select_a_new_class: { kn: 'ಹೊಸ ತರಗತಿಯನ್ನು ಆಯ್ಕೆ ಮಾಡಲು ಟ್ಯಾಪ್ ಮಾಡಿ', gu: 'નવું ધોરણ પસંદ કરવા માટે ટેપ કરો' },
+  // MT pushed MITRA to the end of the sentence.
+  auth_update_mitra_to_continue: {
+    gu: 'ચાલુ રાખવા માટે MITRA અપડેટ કરો', ne: 'जारी राख्न MITRA अद्यावधिक गर्नुहोस्',
+    mai: 'जारी रखबाक लेल MITRA अद्यतन करू', doi: 'जारी रखने आस्तै MITRA अपडेट करो',
+    ml: 'തുടരാൻ MITRA അപ്ഡേറ്റ് ചെയ്യുക', pa: 'ਜਾਰੀ ਰੱਖਣ ਲਈ MITRA ਅੱਪਡੇਟ ਕਰੋ',
+    ta: 'தொடர MITRA-வைப் புதுப்பிக்கவும்', te: 'కొనసాగడానికి MITRAను నవీకరించండి',
+  },
 };
 const TERMINATOR = /[\s]*[۔᱾꯫।॥.]+\s*$/u;
 const TRAILING_DECOR = /[\p{Extended_Pictographic}\s→←\uFE0F\u200D]+$/u;
 
 // Sanskrit left out: there a word-final visarga is usually real grammar.
-const DEVA_LANGS = new Set(['hi', 'mr', 'ne', 'mai', 'doi', 'brx']);
+// The visarga sign of each script; Sanskrit and Tamil are left out (a final
+// visarga / aytham there is usually real grammar).
+const VISARGA_OF = {
+  hi: 'ः', mr: 'ः', ne: 'ः', mai: 'ः', doi: 'ः', brx: 'ः',
+  as: 'ঃ', bn: 'ঃ', gu: 'ઃ', kn: 'ಃ', ml: 'ഃ', te: 'ః', pa: 'ਃ', or: 'ଃ',
+};
 // Words that really end in a visarga — never turned into a colon.
 const VISARGA_WORDS = new Set(['पुनः', 'अतः', 'प्रातः', 'स्वतः', 'प्रायः', 'क्रमशः', 'अंततः',
-  'संभवतः', 'सम्भवतः', 'सामान्यतः', 'मुख्यतः', 'वस्तुतः', 'पूर्णतः', 'विशेषतः', 'नमः', 'अधः', 'मनः', 'ततः', 'यतः']);
-function fixVisargaColon(src, val) {
+  'संभवतः', 'सम्भवतः', 'सामान्यतः', 'मुख्यतः', 'वस्तुतः', 'पूर्णतः', 'विशेषतः', 'नमः', 'अधः', 'मनः', 'ततः', 'यतः',
+  'পুনঃ', 'অতঃ', 'প্রাতঃ', 'স্বতঃ', 'পুনঃপুনঃ', 'પુનઃ', 'અતઃ', 'સ્વતઃ', 'ಪುನಃ', 'ಅತಃ', 'ಸ್ವತಃ',
+  'പുനഃ', 'పునః', 'అతః', 'స్వతః', 'ପୁନଃ', 'ଅତଃ']);
+function fixVisargaColon(src, val, mark = 'ः') {
   const want = (src.match(/:/g) || []).length;
-  if (!want || !val.includes('ः')) return val;
+  if (!want || !val.includes(mark)) return val;
   let done = 0;
-  return val.replace(/(\S*?)ः(?=\s|\{|$)/gu, (m, word) => {
-    if (done >= want || VISARGA_WORDS.has(word + 'ः')) return m;
+  const re = new RegExp(`(\\S*?)${mark}(?=\\s|\\{|$)`, 'gu');
+  return val.replace(re, (m, word) => {
+    if (done >= want || VISARGA_WORDS.has(word + mark)) return m;
     done++;
     return word + ':';
   });
 }
+
+const { foreignLetters } = require('./script_check');
+// Known words MT wrote in the wrong script → the pack's own spelling.
+const SCRIPT_FIX = {
+  sat: [['ماڈل', 'ᱢᱚᱰᱮᱞ']],   // "model" (spelled ᱢᱚᱰᱮᱞ elsewhere in sat.json)
+  mni: [['पाउखुम', 'ꯄꯥꯎꯈꯨꯝ']],  // "answer"
+};
+const RTL = new Set(['ur', 'ks', 'sd']);
+const LEAD_DECOR = /^[\p{Extended_Pictographic}\u{1F3FB}-\u{1F3FF}\uFE0F\u200D]+/u;
 
 const TIER_KEYS = ['tier_jigyasu', 'tier_anveshak', 'tier_vidwan', 'tier_acharya', 'tier_gyani'];
 
@@ -144,12 +184,36 @@ for (const [lang, [tiers, viewed]] of Object.entries(FIX)) {
 
   for (const [k, byLang] of Object.entries(CONTEXT)) if (byLang[lang] && k in pack) set(k, byLang[lang]);
 
-  if (DEVA_LANGS.has(lang)) {
+  if (VISARGA_OF[lang]) {
     for (const k of Object.keys(pack)) {
       if (typeof pack[k] !== 'string' || typeof en[k] !== 'string') continue;
-      const v = fixVisargaColon(en[k], pack[k]);
+      const v = fixVisargaColon(en[k], pack[k], VISARGA_OF[lang]);
       if (v !== pack[k]) set(k, v);
     }
+  }
+
+  // Put back the leading emoji and the trailing arrow MT dropped.
+  for (const k of Object.keys(pack)) {
+    if (typeof pack[k] !== 'string' || typeof en[k] !== 'string' || !pack[k].trim()) continue;
+    let v = pack[k];
+    const lead = (en[k].match(LEAD_DECOR) || [''])[0];
+    if (lead && !v.startsWith(lead)) v = `${lead} ${v.replace(LEAD_DECOR, '').trim()}`;
+    // Arrows only for left-to-right scripts (in Urdu/Kashmiri/Sindhi they would point backwards).
+    if (!RTL.has(lang) && /→\s*$/.test(en[k]) && !/→\s*$/.test(v)) v = `${v.trim()} →`;
+    if (!RTL.has(lang) && /^\s*←/.test(en[k]) && !/^\s*←/.test(v)) v = `← ${v.trim()}`;
+    if (v !== pack[k]) set(k, v);
+  }
+
+  // Wrong writing system inside the pack.
+  for (const [bad, good] of SCRIPT_FIX[lang] || []) {
+    for (const k of Object.keys(pack)) {
+      if (typeof pack[k] === 'string' && pack[k].includes(bad)) set(k, pack[k].split(bad).join(good));
+    }
+  }
+  for (const k of Object.keys(pack)) {
+    if (typeof pack[k] !== 'string' || !foreignLetters(lang, pack[k])) continue;
+    changes.push(`${k}: removed (letters from another script: ${foreignLetters(lang, pack[k])}) — English shows`);
+    delete pack[k];
   }
 
   // Strip a sentence terminator MT added to a label that has none in English.

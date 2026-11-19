@@ -106,7 +106,7 @@
     "teacher_push_lessons_quizzes_to_your": "अपनी कक्षा को पाठ और प्रश्नोत्तरी भेजें",
     "teacher_target_80": "लक्ष्य: 80 प्रतिशत",
     "terr_unsaved_title": "केवल सहेजे गए पाठ",
-    "txt_answer_quizzes_complete_ar_sessions_and_maintain_daily_strea": "प्रश्नोत्तरी का उत्तर दें, AR सत्रों को पूरा करें और एक्स. पी. अंक और बैज अर्जित करने के लिए दैनिक पंक्तियों को बनाए रखें। सहपाठियों के साथ प्रतिस्पर्धा करें!",
+    "txt_answer_quizzes_complete_ar_sessions_and_maintain_daily_strea": "XP अंक और बैज कमाने के लिए प्रश्नोत्तरी के उत्तर दें, AR सत्र पूरे करें और रोज़ लगातार सीखते रहें। सहपाठियों से मुकाबला करें!",
     "txt_any_subject": "कोई भी विषय",
     "txt_ar_session_duration_topics_viewed": "AR सत्र की अवधि और देखे गए विषय",
     "txt_biology": "जीव विज्ञान",
@@ -128,6 +128,6 @@
     "txt_sanskrit": "संस्कृत",
     "txt_science": "विज्ञान",
     "txt_social_science": "सामाजिक विज्ञान",
-    "txt_you_earn_xp_by_completing_quizzes_and_viewing_3d_ar_lessons_": "आप प्रश्नोत्तरी को पूरा करके और 3डी AR पाठ देखकर एक्स. पी. अर्जित करते हैं। आपका कुल एक्स. पी. आपकी प्रोफ़ाइल पर दिखाई देता है।"
+    "txt_you_earn_xp_by_completing_quizzes_and_viewing_3d_ar_lessons_": "प्रश्नोत्तरी पूरी करके और 3D AR पाठ देखकर आप XP कमाते हैं। आपके कुल XP आपकी प्रोफ़ाइल पर दिखते हैं।"
   }
 }

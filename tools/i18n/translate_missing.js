@@ -31,6 +31,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 const fs = require('fs');
 const path = require('path');
+const { foreignLetters } = require('./script_check');
 
 const DIR = path.join(process.cwd(), 'assets', 'locales');
 const CONFIG_URL = process.env.BHASHINI_CONFIG_URL ||
@@ -39,7 +40,8 @@ const PIPELINE_ID = process.env.BHASHINI_PIPELINE_ID || '64392f96daac500b55c543c
 const ALL_LANGS = ['as', 'bn', 'brx', 'doi', 'gu', 'hi', 'kn', 'ks', 'mai', 'ml', 'mni',
   'mr', 'ne', 'or', 'pa', 'sa', 'sat', 'sd', 'ta', 'te', 'ur'];   // kok skipped
 // Never translated or transliterated (stay exactly as written).
-const PROTECTED_TERMS = ['MITRA', 'DPDPA', 'ARCore', 'AR'];
+// OTP and XP stay in Latin letters, as in the Hindi pack ("OTP भेजें", "XP").
+const PROTECTED_TERMS = ['MITRA', 'DPDPA', 'ARCore', 'AR', 'OTP', 'XP'];
 const BATCH = 16;
 
 // Translate these keys from a plainer English phrase (literal "Thought for
@@ -217,11 +219,16 @@ async function translateBatch(texts, tgt) {
       keys.forEach((k, j) => {
         const r = results[j];
         const restored = r && r.trim() ? unmask(r.trim(), masked[j][1]) : null;
-        if (restored && restored !== en[k] && restored !== srcOf(k)) { pack[k] = restored; done++; }
+        // Rejected too if it mixes in another writing system (e.g. an Urdu
+        // word in a Santali sentence).
+        if (restored && restored !== en[k] && restored !== srcOf(k) && !foreignLetters(lang, restored)) {
+          pack[k] = restored; done++;
+        }
         else {
           // A redo that failed: drop the old (bad) text so English shows.
-          if (REDO.has(k) || termKeys.has(k)) delete pack[k];
-          keepEnglish.push(`${lang}/${k}`);
+          // A --redo-term miss keeps the old text (e.g. "एक्सपी" is still readable).
+          if (REDO.has(k)) delete pack[k];
+          if (!(k in pack)) keepEnglish.push(`${lang}/${k}`);
         }
       });
     }
