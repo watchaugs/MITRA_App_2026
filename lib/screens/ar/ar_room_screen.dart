@@ -10,6 +10,7 @@
 // Audio:  audioplayers.
 // ═══════════════════════════════════════════════════════════════════════════
 import 'dart:io';
+import 'narration_pauser.dart';
 import '../../providers/tr_ext.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
@@ -76,6 +77,12 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
   late ARAnchorManager _anchorManager;
 
   final AudioPlayer _audio = AudioPlayer();
+  // Pauses narration while the app is in the background.
+  late final NarrationPauser _pauser;
+  // Set when the screen is closing: a narration still buffering must not
+  // start after the student has left (same guard as the 3D viewer).
+  bool _closing = false;
+  Future<void>? _narration;
   final List<ARNode> _nodes = [];
   ARNode? _placedNode; // the current model, for resize buttons
   double _modelScale = 0.3; // current uniform scale (matches placement)
@@ -114,6 +121,7 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
   @override
   void initState() {
     super.initState();
+    _pauser = NarrationPauser(_audio); // watch app background/foreground
     markEngaged(ref, widget.topicId);
     _arStart = DateTime.now();
     _telemetry = ref.read(telemetryServiceProvider);
@@ -281,7 +289,16 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
     );
     _spinTimer?.cancel();
     if (_arReady) _sessionManager.dispose();
-    _audio.dispose();
+    _pauser.dispose();
+    // Stop first, then release only after any buffering play() settles —
+    // covers the close button and the phone's back gesture.
+    _closing = true;
+    final player = _audio;
+    player.stop().catchError((_) {});
+    (_narration ?? Future<void>.value())
+        .catchError((_) {})
+        .whenComplete(() => player.stop().catchError((_) {}))
+        .whenComplete(() => player.dispose());
     super.dispose();
   }
 
@@ -332,7 +349,8 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
                 child: Row(
                   children: [
                     _roundBtn(Icons.close, () {
-                      _audio.stop();
+                      _closing = true;
+                      _audio.stop().catchError((_) {});
                       if (context.canPop()) {
                         context.pop();
                       } else {
@@ -629,16 +647,19 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
 
   // Narration: a SEPARATE audio file (glTF cannot carry audio). Starts when the
   // model is placed, and again when the model is tapped.
-  Future<void> _startNarration() async {
+  Future<void> _startNarration() => _narration = _startNarrationImpl();
+
+  Future<void> _startNarrationImpl() async {
     // Prefer the chosen-language audio; fall back to the single audioUrl.
     final url =
         (_activeLang != null ? _audios[_activeLang] : null) ?? widget.audioUrl;
-    if (url == null || url.isEmpty) return;
+    if (url == null || url.isEmpty || _closing) return;
     final fallback = _activeLang != null ? _audiosAac[_activeLang] : null;
     // Log the initial language choice once narration actually starts.
     if (_activeLang != null) _logLanguageChoice(_activeLang!, switched: false);
     try {
       await _audio.stop();
+      if (_closing) return;
       if (url.startsWith('http')) {
         await _audio.play(UrlSource(url));
       } else {
@@ -646,12 +667,18 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
       }
     } catch (_) {
       // Opus unsupported on this device → try the AAC fallback.
-      if (fallback != null && fallback.isNotEmpty) {
+      if (fallback != null && fallback.isNotEmpty && !_closing) {
         try {
           await _audio.stop();
           await _audio.play(UrlSource(fallback));
         } catch (_) {/* best-effort; never block the model */}
       }
+    }
+    // The student left while the audio was still loading.
+    if (_closing) {
+      try {
+        await _audio.stop();
+      } catch (_) {}
     }
   }
 

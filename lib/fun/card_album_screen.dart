@@ -212,7 +212,7 @@ class HeroCardTile extends ConsumerWidget {
                 Column(mainAxisAlignment: MainAxisAlignment.center, children: [
               Icon(Icons.lock_outline_rounded, color: ts, size: 26 * scale),
               const SizedBox(height: 4),
-              Text(card.subject,
+              Text(context.trText(ref, card.subject),
                   textAlign: TextAlign.center,
                   maxLines: 2,
                   style: TextStyle(
@@ -223,7 +223,8 @@ class HeroCardTile extends ConsumerWidget {
       button: onTap != null,
       label: card.unlocked
           ? '${card.title}, ${card.stars} stars'
-          : '${card.subject}, locked',
+          : '${context.trText(ref, card.subject)}, '
+              '${context.tr(ref, 'fun_locked', 'locked')}',
       child: GestureDetector(
         onTap: onTap,
         child: Stack(clipBehavior: Clip.none, children: [
@@ -312,7 +313,7 @@ class _CardZoomState extends ConsumerState<_CardZoom>
               width: 210, height: 300, child: HeroCardTile(card: c, scale: 2)),
         ),
         const SizedBox(height: 14),
-        Text(c.subject,
+        Text(context.trText(ref, c.subject),
             style: const TextStyle(
                 fontFamily: 'Mukta', fontSize: 14, color: Colors.white70)),
         if (date.isNotEmpty)

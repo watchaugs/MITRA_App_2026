@@ -1774,11 +1774,11 @@ class _SubjectSection extends ConsumerWidget {
 
     return Semantics(
       header: true,
-      label: context.trp(
-          ref,
-          'student_subject_totalitems_items',
-          '{subject}, {totalItems} items',
-          {'subject': subject, 'totalItems': totalItems.toString()}),
+      label: context.trp(ref, 'student_subject_totalitems_items',
+          '{subject}, {totalItems} items', {
+        'subject': context.trText(ref, subject),
+        'totalItems': totalItems.toString()
+      }),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

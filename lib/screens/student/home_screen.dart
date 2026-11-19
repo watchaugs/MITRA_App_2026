@@ -563,9 +563,10 @@ class _ContinueLearningCard extends ConsumerWidget {
     }
 
     final pct = (last.bestPct.clamp(0, 100)) / 100.0;
-    final header =
-        (last.subject.isNotEmpty ? last.subject.toUpperCase() : 'LESSON') +
-            (last.topic.isNotEmpty ? ' · ${last.topic}' : '');
+    final header = (last.subject.isNotEmpty
+            ? context.trText(ref, last.subject).toUpperCase()
+            : context.tr(ref, 'home_lesson_caps', 'LESSON')) +
+        (last.topic.isNotEmpty ? ' · ${last.topic}' : '');
 
     return GestureDetector(
       onTap: () => context.go('/student/learn'),
@@ -707,7 +708,8 @@ class _SubjectCard extends ConsumerWidget {
                       const SizedBox(height: 8),
                       FittedBox(
                         fit: BoxFit.scaleDown,
-                        child: Text(subject.name,
+                        // Subject names come from data → translated by text.
+                        child: Text(context.trText(ref, subject.name),
                             maxLines: 1,
                             style: const TextStyle(
                                 fontFamily: 'Baloo2',
@@ -1157,14 +1159,15 @@ class _BrainSparkTile extends ConsumerWidget {
                               ? context.trp(
                                   ref,
                                   'student_next_fact_in_hoursleft_h_minsleft',
-                                  'Next fact in {hoursLeft}h {minsLeft}m', {
-                                  'hoursLeft': '$hoursLeft',
-                                  'minsLeft': '$minsLeft'
-                                })
+                                  'Next fact in {hoursLeft} hours {minsLeft} minutes',
+                                  {
+                                      'hoursLeft': '$hoursLeft',
+                                      'minsLeft': '$minsLeft'
+                                    })
                               : context.trp(
                                   ref,
                                   'student_next_fact_in_minsleft_m',
-                                  'Next fact in {minsLeft}m',
+                                  'Next fact in {minsLeft} minutes',
                                   {'minsLeft': '$minsLeft'}),
                           style: const TextStyle(
                             fontFamily: 'SpaceMono',

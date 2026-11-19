@@ -34,6 +34,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:vector_math/vector_math_64.dart' as vm;
 
+import 'narration_pauser.dart';
 import '../../constants/colors.dart';
 import '../../services/achievement_engine.dart';
 import '../../fun/fun_cards.dart';
@@ -108,6 +109,8 @@ class _ArImageAnchorScreenState extends ConsumerState<ArImageAnchorScreen> {
 
   // ── Narration (same behaviour as ArMarkerScreen) ────────────────────────
   final AudioPlayer _audio = AudioPlayer();
+  // Pauses narration while the app is in the background.
+  late final NarrationPauser _pauser;
   Duration? _audioDuration;
   bool _narrationStarted = false;
   bool _closing = false;
@@ -166,6 +169,7 @@ class _ArImageAnchorScreenState extends ConsumerState<ArImageAnchorScreen> {
   @override
   void initState() {
     super.initState();
+    _pauser = NarrationPauser(_audio); // watch app background/foreground
     try {
       _xpEngine = ref.read(achievementEngineProvider);
     } catch (_) {/* XP store unavailable → no XP, the lesson still opens */}
@@ -200,6 +204,7 @@ class _ArImageAnchorScreenState extends ConsumerState<ArImageAnchorScreen> {
 
   @override
   void dispose() {
+    _pauser.dispose();
     if (_arStart != null &&
         DateTime.now().difference(_arStart!).inSeconds >= 60) {
       _giveArXp();

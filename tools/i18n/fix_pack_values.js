@@ -18,6 +18,9 @@
 //    preposition, Tamil "Finish" as "hair"). Set by hand per language below.
 // 7. Labels that have no full stop in English lose the sentence terminator MT
 //    added (۔ ᱾ ꯫ । .) — Kashmiri and Santali ended almost every button with one.
+// 8. Devanagari packs (not Sanskrit): MT wrote the colon as a visarga ("सकाः {v1}"). Where the
+//    English has a colon, "ः" before a space/placeholder becomes ": " — real
+//    visarga words (पुनः, अतः, प्रातः …) are left alone.
 // 5. Removes student_watched_pct_quiz_unlocked / _need_for_quiz and
 //    student_highest_level_reached_gyani (replaced by shorter keys that
 //    translate_missing.js fills in next).
@@ -92,6 +95,22 @@ const CONTEXT = {
 const TERMINATOR = /[\s]*[۔᱾꯫।॥.]+\s*$/u;
 const TRAILING_DECOR = /[\p{Extended_Pictographic}\s→←\uFE0F\u200D]+$/u;
 
+// Sanskrit left out: there a word-final visarga is usually real grammar.
+const DEVA_LANGS = new Set(['hi', 'mr', 'ne', 'mai', 'doi', 'brx']);
+// Words that really end in a visarga — never turned into a colon.
+const VISARGA_WORDS = new Set(['पुनः', 'अतः', 'प्रातः', 'स्वतः', 'प्रायः', 'क्रमशः', 'अंततः',
+  'संभवतः', 'सम्भवतः', 'सामान्यतः', 'मुख्यतः', 'वस्तुतः', 'पूर्णतः', 'विशेषतः', 'नमः', 'अधः', 'मनः', 'ततः', 'यतः']);
+function fixVisargaColon(src, val) {
+  const want = (src.match(/:/g) || []).length;
+  if (!want || !val.includes('ः')) return val;
+  let done = 0;
+  return val.replace(/(\S*?)ः(?=\s|\{|$)/gu, (m, word) => {
+    if (done >= want || VISARGA_WORDS.has(word + 'ः')) return m;
+    done++;
+    return word + ':';
+  });
+}
+
 const TIER_KEYS = ['tier_jigyasu', 'tier_anveshak', 'tier_vidwan', 'tier_acharya', 'tier_gyani'];
 
 const en = JSON.parse(fs.readFileSync(path.join(DIR, 'en.json'), 'utf8'));
@@ -124,6 +143,14 @@ for (const [lang, [tiers, viewed]] of Object.entries(FIX)) {
   }
 
   for (const [k, byLang] of Object.entries(CONTEXT)) if (byLang[lang] && k in pack) set(k, byLang[lang]);
+
+  if (DEVA_LANGS.has(lang)) {
+    for (const k of Object.keys(pack)) {
+      if (typeof pack[k] !== 'string' || typeof en[k] !== 'string') continue;
+      const v = fixVisargaColon(en[k], pack[k]);
+      if (v !== pack[k]) set(k, v);
+    }
+  }
 
   // Strip a sentence terminator MT added to a label that has none in English.
   for (const k of Object.keys(pack)) {

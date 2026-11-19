@@ -24,6 +24,10 @@
 //  • --redo=key1,key2 retranslates those keys even where a pack has them
 //    (to replace bad translations). HAND_SET keys are never overwritten.
 //       node tools/i18n/translate_missing.js --redo=student_thought_for_the_day,student_brain_spark
+//  • --redo-overrides retranslates every key in SOURCE_OVERRIDES.
+//  • --redo-term=AR retranslates every key whose English contains that word
+//    (used to keep "AR" as "AR" in all languages).
+//  • Values in tools/i18n/hand_fixes.json are hand-checked and locked too.
 // ─────────────────────────────────────────────────────────────────────────────
 const fs = require('fs');
 const path = require('path');
@@ -34,7 +38,8 @@ const CONFIG_URL = process.env.BHASHINI_CONFIG_URL ||
 const PIPELINE_ID = process.env.BHASHINI_PIPELINE_ID || '64392f96daac500b55c543cd';
 const ALL_LANGS = ['as', 'bn', 'brx', 'doi', 'gu', 'hi', 'kn', 'ks', 'mai', 'ml', 'mni',
   'mr', 'ne', 'or', 'pa', 'sa', 'sat', 'sd', 'ta', 'te', 'ur'];   // kok skipped
-const PROTECTED_TERMS = ['MITRA', 'DPDPA'];
+// Never translated or transliterated (stay exactly as written).
+const PROTECTED_TERMS = ['MITRA', 'DPDPA', 'ARCore', 'AR'];
 const BATCH = 16;
 
 // Translate these keys from a plainer English phrase (literal "Thought for
@@ -42,16 +47,64 @@ const BATCH = 16;
 const SOURCE_OVERRIDES = {
   student_thought_for_the_day: "Today's wise thought",
   student_brain_spark: 'Fun Fact',
+  // Short or ambiguous English that came back mangled ("power" → electricity,
+  // "h"/"m" → letters/metres, "streak" → line, "order" → purchase order).
+  fun_power_next: '{left} more days until strength level {next}',
+  student_next_fact_in_hoursleft_h_minsleft: 'Next fact in {hoursLeft} hours {minsLeft} minutes',
+  student_next_fact_in_minsleft_m: 'Next fact in {minsLeft} minutes',
+  student_minutes_ago: '{n} minutes ago',
+  student_hours_ago: '{n} hours ago',
+  student_days_ago: '{n} days ago',
+  student_streakdays_streak: '🔥 {streakDays} days in a row',
+  quiz_streak_streak: '🔥 {streak} days in a row',
+  student_qs: 'Questions',
+  student_avg_v1: 'average {v1}%',
+  student_mastered_pct: 'Mastered {pct}%',
+  quiz_seq_ready: 'All set! Now check your sequence.',
+  quiz_seq_check: 'Check my sequence',
+  ar_keep_page_in_view: 'Keep the page in front of the camera',
+  // "Class" alone came back as category/type, not school class.
+  auth_class_number: 'School class {number}',
+  settings_change_class: 'Change school class',
+  student_select_class: 'Select school class',
+  settings_tap_to_select_a_new_class: 'Tap to select a new school class',
+  teacher_class_average: 'School class average',
+  // Short English that came back with the wrong meaning or word order.
+  auth_mobile_belongs_to: 'This mobile phone belongs to',
+  auth_resend_in_resendtimer_s: 'Resend in {resendTimer} seconds',
+  student_remaining_xp_to_title: '{remaining} more XP to reach {title}',
+  fun_hq_rank_next: '{xp} XP · {left} more XP to reach {rank}',
+  fun_hq_cards_sub: '{got} out of {all} collected',
+  fun_album_title: 'Hero cards · {got} out of {all}',
+  student_day_streak: 'Days in a row',
+  student_day_streak_2: 'Days in a row',
+  fun_parent_streak: 'days in a row',
+  student_quiz_unlocked: 'The quiz is now open',
+  terr_unsaved_title: 'Only saved lessons',
+  fun_goal_loading: 'Your missions are getting ready…',
+  quiz_read_explanation_to_continue: 'Read the explanation to continue…',
+  teacher_assign: 'Assign to class',
+  teacher_push_lessons_quizzes_to_your: 'Send lessons and quizzes to your class',
+  fun_costume_full: 'Full costume ready — a true Gyani hero!',
 };
 // Reviewed by hand — never replaced by machine translation.
 const HAND_SET = {
   hi: ['student_thought_for_the_day', 'student_brain_spark'],
 };
+try {
+  const hf = JSON.parse(fs.readFileSync(path.join(__dirname, 'hand_fixes.json'), 'utf8'));
+  for (const [lang, vals] of Object.entries(hf)) {
+    if (lang.startsWith('_') || lang === 'en') continue;
+    HAND_SET[lang] = [...new Set([...(HAND_SET[lang] || []), ...Object.keys(vals)])];
+  }
+} catch (_) { /* no hand fixes file */ }
 
 const args = process.argv.slice(2);
 const DRY = args.includes('--dry-run');
 const REDO = new Set(((args.find(a => a.startsWith('--redo=')) || '').slice(7))
   .split(',').map(k => k.trim()).filter(Boolean));
+const REDO_TERM = (args.find(a => a.startsWith('--redo-term=')) || '').slice(12).trim();
+if (args.includes('--redo-overrides')) Object.keys(SOURCE_OVERRIDES).forEach(k => REDO.add(k));
 const only = args.filter(a => !a.startsWith('--'));
 const LANGS = only.length ? ALL_LANGS.filter(l => only.includes(l)) : ALL_LANGS;
 
@@ -126,6 +179,13 @@ async function translateBatch(texts, tgt) {
     process.exit(1);
   }
   const en = readPack('en');
+  // --redo-term: keys whose English has the term; redone only in a pack
+  // where the translation lost it (e.g. "AR" → "ए. आर.").
+  const termKeys = new Set();
+  if (REDO_TERM) {
+    const re = new RegExp(`\\b${REDO_TERM}`);
+    for (const k of Object.keys(en)) if (re.test(String(en[k]))) termKeys.add(k);
+  }
   const keepEnglish = [];
   let total = 0;
   for (const lang of LANGS) {
@@ -133,7 +193,8 @@ async function translateBatch(texts, tgt) {
     const locked = new Set(HAND_SET[lang] || []);
     const todo = Object.keys(en).filter(k =>
       !locked.has(k) &&
-      (!(k in pack) || REDO.has(k)) &&
+      (!(k in pack) || REDO.has(k) ||
+        (termKeys.has(k) && !String(pack[k]).includes(REDO_TERM))) &&
       /[A-Za-z]{2,}/.test(String(en[k])));
     const srcOf = k => String(SOURCE_OVERRIDES[k] ?? en[k]);
     total += todo.length;
@@ -159,7 +220,7 @@ async function translateBatch(texts, tgt) {
         if (restored && restored !== en[k] && restored !== srcOf(k)) { pack[k] = restored; done++; }
         else {
           // A redo that failed: drop the old (bad) text so English shows.
-          if (REDO.has(k)) delete pack[k];
+          if (REDO.has(k) || termKeys.has(k)) delete pack[k];
           keepEnglish.push(`${lang}/${k}`);
         }
       });
