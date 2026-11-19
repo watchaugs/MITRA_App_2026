@@ -7,6 +7,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import '../../../constants/colors.dart';
 import '../../../providers/app_prefs.dart';
 import '../../../stores/auth_store.dart';
+import '../../../constants/india_states.dart';
 
 import '../../../providers/tr_ext.dart';
 
@@ -222,9 +223,10 @@ class _Faq extends ConsumerWidget {
 /// Subscribes/unsubscribes the SAME FCM topics auth_store uses on login,
 /// so turning notifications off in Settings actually stops pushes.
 void _applyNotificationSubscription(bool enabled, dynamic user) {
+  // Official name, as the Dashboard sends to ("GJ" / "Orissa" → gujarat / odisha).
+  final raw = user?.assignedState as String?;
   final st =
-      (user?.assignedState as String?)?.toLowerCase().replaceAll(' ', '_') ??
-          '';
+      (indiaStateName(raw) ?? raw ?? '').toLowerCase().replaceAll(' ', '_');
   final cls =
       (user?.classGrade as String?)?.toLowerCase().replaceAll(' ', '_') ?? '';
   final fcm = FirebaseMessaging.instance;

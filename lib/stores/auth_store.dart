@@ -35,6 +35,12 @@ import '../services/territory_service.dart'; // TerritoryGate (home-state rule)
 import '../theme/theme_provider.dart'; // sharedPreferencesProvider
 import 'device_owner.dart';
 import 'module_progress_store.dart'; // moduleProgressTickProvider
+import '../constants/india_states.dart';
+
+/// State part of an FCM topic: the official name, as the Dashboard sends to
+/// ("GJ", "gujarat", "Orissa" → "gujarat" / "odisha").
+String _topicState(String? s) =>
+    (indiaStateName(s) ?? s ?? '').toLowerCase().replaceAll(' ', '_');
 
 const _kCachedUserKey = 'mitra_cached_user_json';
 
@@ -244,7 +250,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   Future<void> _unsubscribeFCMTopics(MitraUser user) async {
-    final st = user.assignedState?.toLowerCase().replaceAll(' ', '_') ?? '';
+    final st = _topicState(user.assignedState);
     final cls = user.classGrade?.toLowerCase().replaceAll(' ', '_') ?? '';
     try {
       await FirebaseMessaging.instance.unsubscribeFromTopic('mitra_all');
@@ -279,7 +285,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   void _subscribeFCMTopics(MitraUser user) {
-    final state = user.assignedState?.toLowerCase().replaceAll(' ', '_') ?? '';
+    final state = _topicState(user.assignedState);
     final cls = user.classGrade?.toLowerCase().replaceAll(' ', '_') ?? '';
 
     FirebaseMessaging.instance.subscribeToTopic('mitra_all');
@@ -381,7 +387,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       } catch (_) {}
     }
     if (user != null) {
-      final st = user.assignedState?.toLowerCase().replaceAll(' ', '_') ?? '';
+      final st = _topicState(user.assignedState);
       final cls = user.classGrade?.toLowerCase().replaceAll(' ', '_') ?? '';
       FirebaseMessaging.instance.unsubscribeFromTopic('mitra_all');
       if (st.isNotEmpty) {
