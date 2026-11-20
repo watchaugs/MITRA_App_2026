@@ -131,6 +131,11 @@ class QuizSummary {
   final QuizStatus status;
   final String languageTag; // ✨ Added language tag
   final String className; // '' = for every class
+  /// Quizzes translated from one another share this ('' = no translations).
+  final String translationGroup;
+
+  /// False for a machine-translated copy (it has `translated_from`).
+  final bool isOriginal;
 
   const QuizSummary({
     required this.id,
@@ -142,7 +147,12 @@ class QuizSummary {
     required this.status,
     required this.languageTag,
     this.className = '',
+    this.translationGroup = '',
+    this.isOriginal = true,
   });
+
+  /// The set this quiz belongs to: its translations, or just itself.
+  String get groupKey => translationGroup.isEmpty ? id : translationGroup;
 
   /// Parses a single quiz map from the API response.
   ///
@@ -166,9 +176,12 @@ class QuizSummary {
       questionCount: (m['question_count'] as int?)?.clamp(0, 9999) ?? 0,
       avgScore: ((m['avg_score'] as num?)?.toDouble() ?? 0.0).clamp(0.0, 100.0),
       status: _parseQuizStatus(m['status'] as String?),
-      // ✨ Safely pulls the tag, defaults to 'all' for legacy/un-tagged dashboard content
-      languageTag: m['language_tag'] as String? ?? 'all',
+      // The dashboard saves `language` ("en", or "English" on older quizzes);
+      // `language_tag` was never sent, so every quiz used to count as 'all'.
+      languageTag: normLangTag(m['language_tag'] ?? m['language']),
       className: (m['class_name'] ?? m['class_grade'] ?? '').toString().trim(),
+      translationGroup: (m['translation_group'] ?? '').toString(),
+      isOriginal: m['translated_from'] == null,
     );
   }
 
@@ -201,6 +214,73 @@ String? _coalesce(String? value) {
   if (value == null) return null;
   final trimmed = value.trim();
   return trimmed.isEmpty ? null : trimmed;
+}
+
+const _kLangCodeByName = <String, String>{
+  'english': 'en',
+  'hindi': 'hi',
+  'bengali': 'bn',
+  'bangla': 'bn',
+  'gujarati': 'gu',
+  'marathi': 'mr',
+  'tamil': 'ta',
+  'telugu': 'te',
+  'kannada': 'kn',
+  'malayalam': 'ml',
+  'punjabi': 'pa',
+  'odia': 'or',
+  'oriya': 'or',
+  'assamese': 'as',
+  'urdu': 'ur',
+  'sanskrit': 'sa',
+  'nepali': 'ne',
+  'konkani': 'kok',
+  'manipuri': 'mni',
+  'bodo': 'brx',
+  'santali': 'sat',
+  'santhali': 'sat',
+  'dogri': 'doi',
+  'kashmiri': 'ks',
+  'maithili': 'mai',
+  'sindhi': 'sd',
+};
+
+/// "English" / "EN" / "en" → "en"; empty → "all" (any language).
+String normLangTag(Object? v) {
+  final s = (v ?? '').toString().trim().toLowerCase();
+  if (s.isEmpty || s == 'all') return 'all';
+  return _kLangCodeByName[s] ?? s;
+}
+
+/// One quiz per set of translations for this student: the one in their
+/// language, else one for any language, else English, else the original.
+/// A quiz with no translations is always kept (as before).
+List<QuizSummary> quizzesForLang(Iterable<QuizSummary> all, String lang) {
+  final want = normLangTag(lang);
+  final sets = <String, List<QuizSummary>>{};
+  for (final q in all) {
+    (sets[q.groupKey] ??= <QuizSummary>[]).add(q);
+  }
+  final keep = <String>{};
+  for (final group in sets.values) {
+    QuizSummary? first(bool Function(QuizSummary) test) {
+      for (final q in group) {
+        if (test(q)) return q;
+      }
+      return null;
+    }
+
+    final pick = first((q) => q.languageTag == want) ??
+        first((q) => q.languageTag == 'all') ??
+        first((q) => q.languageTag == 'en') ??
+        first((q) => q.isOriginal) ??
+        group.first;
+    keep.add(pick.id);
+  }
+  return [
+    for (final q in all)
+      if (keep.contains(q.id)) q
+  ];
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -463,8 +543,7 @@ StudentContent studentContentFor(
   }
   final tree = _treeSubjectByQuiz(catalog, catalog.bySubject, myClass);
   final bySubject = <String, List<QuizSummary>>{};
-  for (final q in quizzes) {
-    if (q.languageTag != lang && q.languageTag != 'all') continue;
+  for (final q in quizzesForLang(quizzes, lang)) {
     if (!tree.containsKey(q.id) && !_sameClass(q.className, myClass)) continue;
     (bySubject[_quizSubject(q, tree)] ??= <QuizSummary>[]).add(q);
   }
@@ -666,8 +745,7 @@ ArCatalog? _catalogFromManifest(dynamic data) {
             id: id,
             title: (l['title'] ?? id).toString(),
             topic: topic,
-            languageTag:
-                (l['language_tag'] ?? l['language'] ?? 'all').toString(),
+            languageTag: normLangTag(l['language_tag'] ?? l['language']),
             classTag: (l['class_name'] ?? className).toString(),
             locked: false,
           ));
@@ -846,7 +924,7 @@ final arCatalogProvider = FutureProvider<ArCatalog>((ref) async {
         id: id,
         title: (m['title'] ?? id).toString(),
         topic: (m['topic'] ?? subject).toString(),
-        languageTag: (m['language_tag'] ?? m['language'] ?? 'all').toString(),
+        languageTag: normLangTag(m['language_tag'] ?? m['language']),
         classTag: (m['class_name'] ?? m['class'] ?? '').toString(),
         locked: m['locked'] == true || m['status'] == 'scheduled',
       ));
@@ -1232,11 +1310,11 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
                   // this class's quiz, whatever class its own record says.
                   final treeSubject =
                       _treeSubjectByQuiz(arCatalog, arBySubject, myClass);
-                  final filteredQuizzes = quizzes.where((q) {
-                    return (q.languageTag == currentLang ||
-                            q.languageTag == 'all') &&
-                        (treeSubject.containsKey(q.id) ||
-                            _sameClass(q.className, myClass));
+                  // One language per quiz (theirs, else English).
+                  final filteredQuizzes =
+                      quizzesForLang(quizzes, currentLang).where((q) {
+                    return treeSubject.containsKey(q.id) ||
+                        _sameClass(q.className, myClass);
                   }).toList();
 
                   // Linked quizzes sit under their Curriculum Map subject.
@@ -1629,12 +1707,14 @@ class _LearnHeader extends ConsumerWidget {
     final arCatalog = ref.watch(arCatalogProvider).valueOrNull;
     final arBySubject = arCatalog?.bySubject ?? LearnScreen._arLessonsBySubject;
     final treeSubject = _treeSubjectByQuiz(arCatalog, arBySubject, myClass);
-    final quizzes = (ref
-                .watch(quizFeedProvider(ref.watch(quizFilterParamsProvider)))
-                .valueOrNull ??
-            const <QuizSummary>[])
+    final quizzes = quizzesForLang(
+            ref
+                    .watch(
+                        quizFeedProvider(ref.watch(quizFilterParamsProvider)))
+                    .valueOrNull ??
+                const <QuizSummary>[],
+            lang)
         .where((q) =>
-            (q.languageTag == lang || q.languageTag == 'all') &&
             (treeSubject.containsKey(q.id) ||
                 _sameClass(q.className, myClass)) &&
             inSubject(_quizSubject(q, treeSubject)))

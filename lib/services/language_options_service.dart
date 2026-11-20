@@ -4,6 +4,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'api_service.dart';
+import '../screens/auth/state_language_map.dart';
 
 class LanguageOptionsService {
   Map<String, List<String>> _regions = {};
@@ -32,6 +33,9 @@ class LanguageOptionsService {
     if (state != null && state.isNotEmpty) {
       final k = state.trim().toLowerCase().replaceAll('_', ' ');
       out.addAll(_regions[k] ?? const []);
+      // The state's own language always counts (Punjab → pa), even offline
+      // or when the server has nothing saved for this state.
+      out.add(consentLangForState(state));
     }
     return out;
   }
