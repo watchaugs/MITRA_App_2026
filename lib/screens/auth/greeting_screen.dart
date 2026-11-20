@@ -5,7 +5,7 @@ import '../../stores/auth_store.dart';
 import '../../widgets/mitra_scaffold.dart';
 import '../../constants/colors.dart';
 import '../../providers/tr_ext.dart';
-import 'package:lottie/lottie.dart'; // ✨ Added Lottie Engine
+import '../../packs/pack_lottie.dart'; // Lottie, or a pack's replacement
 
 class GreetingScreen extends ConsumerStatefulWidget {
   final String nextRoute;
@@ -138,7 +138,8 @@ class _GreetingScreenState extends ConsumerState<GreetingScreen>
                               child: ScaleTransition(
                                 scale: _namasteScale,
                                 child: Text(
-                                  context.tr(ref, 'auth_namaste', 'NAMASTE 🙏🏽'),
+                                  context.tr(
+                                      ref, 'auth_namaste', 'NAMASTE 🙏🏽'),
                                   textAlign: TextAlign.center,
                                   style: TextStyle(
                                     fontFamily: 'Mukta',
@@ -180,7 +181,7 @@ class _GreetingScreenState extends ConsumerState<GreetingScreen>
               left:
                   0, // Setting both left and right to 0 centers the asset horizontally
               right: 0,
-              child: Lottie.asset(
+              child: packLottie(
                 'assets/lotties/waving_hands.json',
                 repeat: false,
                 width: 312.5, // ✨ Increased size by 25% (250 * 1.25)

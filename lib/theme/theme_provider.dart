@@ -2,6 +2,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../packs/pack_store.dart';
+
 // 1. The Hard Drive Link (Allows main.dart to pass the memory in)
 final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
   throw UnimplementedError('Initialized in main.dart');
@@ -57,7 +59,27 @@ final themeProvider = StateNotifierProvider<ThemeNotifier, MitraTheme>((ref) {
 
 // 5. The Helper class (Untouched - your beautiful colors remain intact!)
 class ThemeHelper {
+  // "#RRGGBB" from a content pack → Color (null if malformed).
+  static Color? _packColor(Object? v) {
+    if (v is! String) return null;
+    final h = v.replaceFirst('#', '');
+    if (h.length != 6) return null;
+    final n = int.tryParse(h, radix: 16);
+    return n == null ? null : Color(0xFF000000 | n);
+  }
+
+  // A theme pack (Dashboard → App Manager → Content Packs) can recolour the
+  // dark themes or put a festival skin ('*') on all of them. Light themes are
+  // left alone so their dark text stays readable.
+  static Map<String, dynamic>? _pack(MitraTheme theme) =>
+      isLightTheme(theme) ? null : PackStore.instance.theme(theme.name);
+
   static List<Color> getBackgroundGradient(MitraTheme theme) {
+    final g = _pack(theme)?['gradient'];
+    if (g is List && g.length == 2) {
+      final a = _packColor(g[0]), b = _packColor(g[1]);
+      if (a != null && b != null) return [a, b];
+    }
     switch (theme) {
       case MitraTheme.midnightSlate:
         return [const Color(0xFF1E293B), const Color(0xFF0F172A)];
@@ -80,6 +102,8 @@ class ThemeHelper {
   }
 
   static Color getActiveHighlight(MitraTheme theme) {
+    final fromPack = _packColor(_pack(theme)?['highlight']);
+    if (fromPack != null) return fromPack;
     switch (theme) {
       case MitraTheme.midnightSlate:
         return const Color(0xFF22D3EE);

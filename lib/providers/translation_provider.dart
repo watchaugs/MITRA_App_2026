@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 
+import '../packs/pack_store.dart';
+
 // --- The State Object (Unchanged) ---
 class TranslationState {
   final String langCode;
@@ -92,6 +94,15 @@ class TranslationNotifier extends Notifier<TranslationState> {
       );
       return true;
     } catch (e) {
+      // Not in the app: a wording pack may carry this whole language.
+      final fromPack = PackStore.instance.language(langCode);
+      if (fromPack != null) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('app_lang', langCode);
+        state = state.copyWith(
+            langCode: langCode, strings: fromPack, isLoading: false);
+        return true;
+      }
       // Fallback to English if the file is missing or corrupted
       state = state.copyWith(isLoading: false, langCode: 'en', strings: {});
       return false;
@@ -100,6 +111,9 @@ class TranslationNotifier extends Notifier<TranslationState> {
 
   // Helper method to actually translate text in your UI
   String tr(String key, [String fallback = '']) {
+    // Wording packs win (any key, English too).
+    final fromPack = PackStore.instance.text(state.langCode, key);
+    if (fromPack != null) return fromPack;
     if (state.langCode == 'en') return fallback.isNotEmpty ? fallback : key;
     return state.strings[key] ?? fallback;
   }

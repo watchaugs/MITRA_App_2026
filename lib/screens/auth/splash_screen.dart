@@ -5,7 +5,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lottie/lottie.dart';
+import '../../packs/pack_lottie.dart'; // a pack can replace the splash
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -183,7 +183,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       body: SizedBox(
         width: double.infinity,
         height: double.infinity,
-        child: Lottie.asset(
+        child: packLottie(
           'assets/animations/splash_animation.json',
           controller: _lottieController,
           fit: BoxFit.cover,

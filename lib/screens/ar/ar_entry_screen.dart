@@ -20,6 +20,7 @@ import 'ar_viewer_screen.dart';
 import 'ar_marker_screen.dart';
 import 'ar_image_anchor_screen.dart';
 import 'package:lottie/lottie.dart';
+import '../../packs/pack_lottie.dart'; // a pack can replace the globe
 import '../../theme/theme_provider.dart';
 
 import '../../providers/tr_ext.dart';
@@ -271,7 +272,7 @@ class _ViewChooser extends ConsumerWidget {
                 children: [
                   SizedBox(
                     height: 160,
-                    child: Lottie.asset(
+                    child: packLottie(
                       'assets/lotties/Earth globe rotating with Seamless loop animation.lottie',
                       fit: BoxFit.contain,
                       repeat: true,

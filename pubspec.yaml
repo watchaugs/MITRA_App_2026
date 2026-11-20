@@ -1,7 +1,7 @@
 name: mitra_student
 description: MITRA — AR Learning Platform for Indian Students. Ministry of Education, Govt. of India.
 publish_to: "none"
-version: 1.0.0+1
+version: 1.0.1+2
 
 environment:
   sdk: ">=3.3.0 <4.0.0"
@@ -77,6 +77,10 @@ dependencies:
 
   # File System (expo-file-system equivalent)
   path_provider: ^2.1.6
+
+  # Content packs: SHA-256 check of each downloaded pack (already in the
+  # lockfile through other packages; listed so the app may import it).
+  crypto: ^3.0.6
 
   # Share sheet — the weekly parent card (Hero HQ). 11.x: works with the
   # current Android Gradle Plugin 8.11 (12.x+ needs AGP 8.12.1).
@@ -183,6 +187,7 @@ flutter:
     - assets/ar/lib/aframe.min.js
     - assets/ar/lib/mindar-image-aframe.prod.js
     - .env
+    - shorebird.yaml
 
 flutter_launcher_icons:
   android: true

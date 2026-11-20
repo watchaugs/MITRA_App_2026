@@ -42,6 +42,7 @@ import '../../stores/auth_store.dart';
 import '../../fun/fun_cards.dart'; // markEngaged (meets the subject hero)
 
 import '../../providers/tr_ext.dart';
+import '../../packs/pack_store.dart';
 
 class ArViewerScreen extends ConsumerStatefulWidget {
   final String topicId;
@@ -235,7 +236,12 @@ class _ArViewerScreenState extends ConsumerState<ArViewerScreen> {
       try {
         final prefs = ref.read(sharedPreferencesProvider);
         final n = prefs.getInt(_gestureHintKey) ?? 0;
-        if (n >= _gestureHintAutoTimes) return;
+        // A settings pack can change how many times it opens by itself.
+        if (n >=
+            PackStore.instance.setting<int>(
+                'ar_gesture_hint_auto_times', _gestureHintAutoTimes)) {
+          return;
+        }
         prefs.setInt(_gestureHintKey, n + 1);
       } catch (_) {
         return; // prefs unavailable → skip the hint, never block the model
@@ -243,7 +249,11 @@ class _ArViewerScreenState extends ConsumerState<ArViewerScreen> {
     }
     _gestureTimer?.cancel();
     if (mounted) setState(() => _showGestures = true);
-    _gestureTimer = Timer(const Duration(seconds: 8), _hideGestureGuide);
+    final secs = PackStore.instance
+        .setting<int>('ar_gesture_hint_seconds', 8)
+        .clamp(2, 60)
+        .toInt();
+    _gestureTimer = Timer(Duration(seconds: secs), _hideGestureGuide);
   }
 
   void _hideGestureGuide() {

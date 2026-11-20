@@ -12,7 +12,7 @@ import '../../widgets/language_alphabet_background.dart';
 import '../../constants/colors.dart';
 import '../../models/quiz_model.dart';
 import '../../stores/module_progress_store.dart';
-import 'package:lottie/lottie.dart';
+import '../../packs/pack_lottie.dart'; // Lottie, or a pack's replacement
 import 'quiz_rounds.dart'; // QuizImage for picture-round answers
 
 class QuizResultScreen extends ConsumerWidget {
@@ -304,7 +304,7 @@ class QuizResultScreen extends ConsumerWidget {
           Positioned.fill(
             child: IgnorePointer(
               // Ensures the animation doesn't block screen taps
-              child: Lottie.asset(
+              child: packLottie(
                 'assets/animations/Confetti.json', // ✨ Using your local file
                 fit: BoxFit
                     .cover, // Stretches to the edges so the cannons hit the corners

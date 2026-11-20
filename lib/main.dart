@@ -23,6 +23,7 @@ import 'router.dart';
 import 'services/api_service.dart';
 import 'services/quiz_offline_service.dart';
 import 'stores/ar_pack_store.dart';
+import 'packs/pack_store.dart';
 import 'stores/auth_store.dart';
 import 'services/geo_state_service.dart';
 import 'services/territory_service.dart'; // TerritoryGate (home-state rule)
@@ -161,6 +162,13 @@ Future<void> main() async {
     } catch (e) {
       debugPrint('⚠️ BrainSpark: $e');
     }
+    try {
+      // Content packs saved on the phone (themes, heroes, Chiku, slides,
+      // wording, settings, animations) — read before the first frame.
+      await PackStore.instance.init();
+    } catch (e) {
+      debugPrint('⚠️ PackStore: $e');
+    }
 
     runApp(ProviderScope(
       overrides: [
@@ -204,6 +212,8 @@ class _MitraAppState extends ConsumerState<MitraApp>
     _setupFCM();
     // Session start — logged once the telemetry service is ready (post-auth).
     WidgetsBinding.instance.addPostFrameCallback((_) => _beginSession());
+    // Content packs: check for new / removed ones in the background.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _refreshPacks());
   }
 
   void _beginSession() {
@@ -246,7 +256,20 @@ class _MitraAppState extends ConsumerState<MitraApp>
     if (state == AppLifecycleState.resumed && TerritoryGate.checkDue) {
       ref.invalidate(geoStateProvider);
     }
+    if (state == AppLifecycleState.resumed) {
+      _refreshPacks(); // at most every 30 min
+    }
     super.didChangeAppLifecycleState(state);
+  }
+
+  // Packs for the student's state (all-India packs until it is known).
+  void _refreshPacks() {
+    if (!mounted) return;
+    String st = '';
+    try {
+      st = ref.read(effectiveStateProvider);
+    } catch (_) {}
+    unawaited(PackStore.instance.refresh(st));
   }
 
   @override
@@ -449,6 +472,7 @@ class _MitraAppState extends ConsumerState<MitraApp>
       if (next.hasValue) {
         ref.read(authProvider.notifier).syncTopicsWithTerritory();
         ref.read(authProvider.notifier).onTerritoryResolved();
+        _refreshPacks(); // state known now → that state's packs
       }
     });
 

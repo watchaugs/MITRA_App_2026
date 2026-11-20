@@ -22,6 +22,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import 'hero_catalog.dart';
+import '../packs/pack_store.dart';
 
 const double kBioW = 400, kBioH = 600;
 
@@ -153,7 +154,38 @@ class _Chunk {
   final String layer;
   final bool Function(int t, bool girl) on;
   final String svg;
-  const _Chunk(this.layer, this.on, this.svg);
+  final List<String> subjects; // pack parts: only these subjects ([] = all)
+  const _Chunk(this.layer, this.on, this.svg, [this.subjects = const []]);
+}
+
+// Suit parts from hero-suit content packs, drawn on top of the built-in ones
+// (or instead of them with "replace_builtin_chunks"). Worked out once per run.
+List<_Chunk>? _chunkCache;
+List<_Chunk> get _activeChunks => _chunkCache ??= [
+      if (!PackStore.instance.heroReplaceBuiltIn) ..._chunks,
+      ..._packChunks(),
+    ];
+
+List<_Chunk> _packChunks() {
+  final out = <_Chunk>[];
+  for (final m in PackStore.instance.heroChunks) {
+    final layer = (m['layer'] ?? '').toString();
+    final svg = (m['svg'] ?? '').toString();
+    if (layer.isEmpty || svg.isEmpty) continue;
+    final lo = m['min_level'] is num ? (m['min_level'] as num).toInt() : 0;
+    final hi = m['max_level'] is num ? (m['max_level'] as num).toInt() : 4;
+    final g = (m['gender'] ?? 'any').toString();
+    final subj = m['subjects'] is List
+        ? [for (final x in m['subjects'] as List) x.toString().toLowerCase()]
+        : const <String>[];
+    out.add(_Chunk(
+        layer,
+        (t, girl) =>
+            t >= lo && t <= hi && (g == 'any' || (g == 'girl') == girl),
+        svg,
+        subj));
+  }
+  return out;
 }
 
 final List<_Chunk> _chunks = [
@@ -332,14 +364,21 @@ BiotechLayers buildBiotechLayers(HeroDef h,
     {required bool girl, required int level}) {
   final t = level.clamp(0, 4);
   final v = _tokens(h);
-  v['EMB'] = (_emblems[h.emblem] ?? _emblems['book']!)
-      .replaceAll('{c}', v['ACL']!)
-      .replaceAll('{bg}', v['BADGE']!);
-  v['MASK'] = _masks[h.mask] ?? _masks['domino']!;
+  final packs = PackStore.instance;
+  v['EMB'] =
+      (packs.heroEmblems[h.emblem] ?? _emblems[h.emblem] ?? _emblems['book']!)
+          .replaceAll('{c}', v['ACL']!)
+          .replaceAll('{bg}', v['BADGE']!);
+  v['MASK'] = packs.heroMasks[h.mask] ?? _masks[h.mask] ?? _masks['domino']!;
+  final subject = h.subject.toLowerCase();
   String layer(String name) {
     final b = StringBuffer();
-    for (final c in _chunks) {
-      if (c.layer == name && c.on(t, girl)) b.write(c.svg);
+    for (final c in _activeChunks) {
+      if (c.layer == name &&
+          c.on(t, girl) &&
+          (c.subjects.isEmpty || c.subjects.any(subject.contains))) {
+        b.write(c.svg);
+      }
     }
     if (b.isEmpty) return '';
     return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 600">$_defs$b</svg>'

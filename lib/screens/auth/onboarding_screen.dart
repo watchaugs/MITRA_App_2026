@@ -4,9 +4,16 @@
 // Slides 2 and 3 show the real animated heroes (tap = power move) and Chiku.
 // ═══════════════════════════════════════════════════════
 
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:lottie/lottie.dart';
+import '../../packs/pack_store.dart';
 import '../../providers/tr_ext.dart';
+import '../../providers/translation_provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../widgets/mitra_scaffold.dart';
 import '../../constants/colors.dart';
@@ -15,8 +22,8 @@ import '../../fun/hero_catalog.dart';
 import '../../fun/hero_hq_screen.dart' show kHeroRanks;
 import '../../fun/hero_view.dart';
 
-/// What the picture box on a slide shows.
-enum _Visual { emoji, heroes, cards }
+/// What the picture box on a slide shows (svg / lottie: from a slides pack).
+enum _Visual { emoji, heroes, cards, svg, lottie }
 
 class _Slide {
   final String emoji;
@@ -26,6 +33,10 @@ class _Slide {
   final List<Color> gradient;
   final _Visual visual;
   final bool ranks; // show the rank ladder under the text
+  // From a slides pack: text per language, and the picture.
+  final Map<String, String>? titleI18n, accentI18n, bodyI18n;
+  final String? svg;
+  final Uint8List? lottie;
 
   const _Slide({
     required this.emoji,
@@ -35,7 +46,108 @@ class _Slide {
     required this.gradient,
     this.visual = _Visual.emoji,
     this.ranks = false,
+    this.titleI18n,
+    this.accentI18n,
+    this.bodyI18n,
+    this.svg,
+    this.lottie,
   });
+}
+
+// The slides shown: the built-in ones, or as a slides content pack says
+// (replace them, or add before / after). Worked out once per run.
+List<_Slide>? _slideCache;
+List<_Slide> get _allSlides => _slideCache ??= _withPackSlides();
+
+List<_Slide> _withPackSlides() {
+  final pack = PackStore.instance.slides;
+  if (pack == null) return _slides;
+  final raw = pack['slides'];
+  final extra = <_Slide>[];
+  if (raw is List) {
+    for (final m in raw.whereType<Map>()) {
+      final s = _slideFromPack(m);
+      if (s != null) extra.add(s);
+    }
+  }
+  if (extra.isEmpty) return _slides;
+  switch ((pack['mode'] ?? 'replace').toString()) {
+    case 'append':
+      return [..._slides, ...extra];
+    case 'prepend':
+      return [...extra, ..._slides];
+    default:
+      return extra;
+  }
+}
+
+Map<String, String>? _i18n(Object? v) => v is Map
+    ? {
+        for (final e in v.entries)
+          if (e.value is String) e.key.toString(): e.value as String
+      }
+    : null;
+
+// Plain text, or the English (else first) entry of a per-language map.
+String _english(Object? v) {
+  if (v is String) return v;
+  final m = _i18n(v);
+  if (m == null || m.isEmpty) return '';
+  return m['en'] ?? m.values.first;
+}
+
+Color? _hexColor(Object? v) {
+  if (v is! String) return null;
+  final h = v.replaceFirst('#', '');
+  final n = h.length == 6 ? int.tryParse(h, radix: 16) : null;
+  return n == null ? null : Color(0xFF000000 | n);
+}
+
+_Slide? _slideFromPack(Map m) {
+  final title = _english(m['title']);
+  final body = _english(m['body']);
+  if (title.isEmpty || body.isEmpty) return null;
+  final g = m['gradient'];
+  final top = g is List && g.length == 2 ? _hexColor(g[0]) : null;
+  final bottom = g is List && g.length == 2 ? _hexColor(g[1]) : null;
+  final svg = m['svg'] is String ? m['svg'] as String : null;
+  final lottie = m['lottie'] is Map
+      ? Uint8List.fromList(utf8.encode(jsonEncode(m['lottie'])))
+      : null;
+  var visual = switch ((m['visual'] ?? 'emoji').toString()) {
+    'heroes' => _Visual.heroes,
+    'cards' => _Visual.cards,
+    'svg' => _Visual.svg,
+    'lottie' => _Visual.lottie,
+    _ => _Visual.emoji,
+  };
+  if (visual == _Visual.svg && svg == null) visual = _Visual.emoji;
+  if (visual == _Visual.lottie && lottie == null) visual = _Visual.emoji;
+  return _Slide(
+    emoji: (m['emoji'] ?? '✨').toString(),
+    title: title,
+    titleAccent: _english(m['title_accent']),
+    body: body,
+    gradient: (top != null && bottom != null)
+        ? [top, bottom]
+        : MitraColors.gradientIndigo,
+    visual: visual,
+    ranks: m['ranks'] == true,
+    titleI18n: _i18n(m['title']),
+    accentI18n: _i18n(m['title_accent']),
+    bodyI18n: _i18n(m['body']),
+    svg: svg,
+    lottie: lottie,
+  );
+}
+
+// Slide text in the app language: a pack's own translation when it has one,
+// else the usual data-text lookup.
+String _slideText(BuildContext context, WidgetRef ref, String english,
+    Map<String, String>? byLang) {
+  if (byLang == null) return context.trText(ref, english);
+  final lang = ref.watch(translationProvider).langCode;
+  return byLang[lang] ?? byLang['en'] ?? english;
 }
 
 const _slides = [
@@ -88,7 +200,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   int _currentIdx = 0;
 
   void _goNext() {
-    if (_currentIdx < _slides.length - 1) {
+    if (_currentIdx < _allSlides.length - 1) {
       _ctrl.nextPage(
         duration: const Duration(milliseconds: 350),
         curve: Curves.easeInOut,
@@ -111,9 +223,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         children: [
           PageView.builder(
             controller: _ctrl,
-            itemCount: _slides.length,
+            itemCount: _allSlides.length,
             onPageChanged: (i) => setState(() => _currentIdx = i),
-            itemBuilder: (ctx, i) => _SlideWidget(slide: _slides[i]),
+            itemBuilder: (ctx, i) => _SlideWidget(slide: _allSlides[i]),
           ),
 
           // Skip button
@@ -140,7 +252,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: List.generate(
-                    _slides.length,
+                    _allSlides.length,
                     (i) => AnimatedContainer(
                       duration: const Duration(milliseconds: 250),
                       margin: const EdgeInsets.symmetric(horizontal: 4),
@@ -171,7 +283,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                       ),
                       alignment: Alignment.center,
                       child: Text(
-                        _currentIdx < _slides.length - 1
+                        _currentIdx < _allSlides.length - 1
                             ? context.tr(ref, 'auth_next', 'Next →')
                             : context.tr(
                                 ref, 'auth_get_started', 'Get Started →'),
@@ -235,6 +347,14 @@ class _SlideWidget extends ConsumerWidget {
                       child: switch (slide.visual) {
                         _Visual.heroes => const _HeroesVisual(),
                         _Visual.cards => const _CardsVisual(),
+                        _Visual.svg => SvgPicture.string(slide.svg!,
+                            width: 210, height: 210),
+                        _Visual.lottie => Lottie.memory(slide.lottie!,
+                            width: 210,
+                            height: 210,
+                            repeat: true,
+                            errorBuilder: (_, __, ___) => Text(slide.emoji,
+                                style: const TextStyle(fontSize: 96))),
                         _Visual.emoji => Text(slide.emoji,
                             style: const TextStyle(fontSize: 96)),
                       },
@@ -252,9 +372,11 @@ class _SlideWidget extends ConsumerWidget {
                             color: MitraColors.textPrimary),
                         children: [
                           TextSpan(
-                              text: '${context.trText(ref, slide.title)}\n'),
+                              text:
+                                  '${_slideText(context, ref, slide.title, slide.titleI18n)}\n'),
                           TextSpan(
-                              text: context.trText(ref, slide.titleAccent),
+                              text: _slideText(context, ref, slide.titleAccent,
+                                  slide.accentI18n),
                               style:
                                   const TextStyle(color: MitraColors.saffron)),
                         ],
@@ -264,7 +386,7 @@ class _SlideWidget extends ConsumerWidget {
 
                     // Body
                     Text(
-                      context.trText(ref, slide.body),
+                      _slideText(context, ref, slide.body, slide.bodyI18n),
                       textAlign: TextAlign.center,
                       style: const TextStyle(
                         fontFamily: 'Mukta',

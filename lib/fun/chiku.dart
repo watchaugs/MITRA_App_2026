@@ -19,6 +19,8 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
+import '../packs/pack_store.dart';
+
 // Corners currently on screen, oldest first. The newest one (e.g. Hero HQ
 // pushed over Home) is the one the student is looking at.
 final List<_ChikuCornerState> _activeCorners = [];
@@ -65,6 +67,46 @@ const String _ckTongue =
     r'<svg xmlns="http://www.w3.org/2000/svg" viewBox="60 90 300 410"><path d="M176 306 C 176 326, 182 338, 186 338 C 190 338, 196 326, 196 306 Z" fill="#FB7185" stroke="#2A140A" stroke-width="2.5"/><path d="M186 310 L 186 330" stroke="#E11D48" stroke-width="2" stroke-linecap="round"/><ellipse cx="181" cy="316" rx="3" ry="5" fill="#FFFFFF" opacity=".45"/></svg>';
 const String _ckGrip =
     r'<svg xmlns="http://www.w3.org/2000/svg" viewBox="60 90 300 410"><path d="M236 318 C 262 292, 264 236, 212 198" stroke="#2A140A" stroke-width="21.0" fill="none" stroke-linecap="round"/><path d="M236 318 C 262 292, 264 236, 212 198" stroke="#B5652A" stroke-width="16" fill="none" stroke-linecap="round"/><circle cx="207" cy="192" r="13" fill="#FFE3C4" stroke="#2A140A" stroke-width="2.5"/></svg>';
+
+// Chiku's look from a content pack: a part replaced, colours swapped, a hat /
+// glasses on his head, a scarf on his body. Worked out once per run.
+final Map<String, String> _ckPartOf = {
+  _ckVine: 'vine',
+  _ckTail: 'tail',
+  _ckLegs: 'legs',
+  _ckBody: 'body',
+  _ckWave: 'wave',
+  _ckEars: 'ears',
+  _ckHead: 'head',
+  _ckEyes: 'eyes',
+  _ckSquint: 'squint',
+  _ckSmile: 'smile',
+  _ckMouthOpen: 'mouth_open',
+  _ckTongue: 'tongue',
+  _ckGrip: 'grip',
+};
+final Map<String, String> _ckLook = {};
+String _ck(String builtIn) {
+  final part = _ckPartOf[builtIn];
+  if (part == null) return builtIn;
+  return _ckLook.putIfAbsent(part, () {
+    final store = PackStore.instance;
+    var s = store.chikuParts[part] ?? builtIn;
+    final extra = part == 'head'
+        ? store.chikuExtra('head_extra')
+        : part == 'body'
+            ? store.chikuExtra('body_extra')
+            : '';
+    if (extra.isNotEmpty) {
+      final i = s.lastIndexOf('</svg>');
+      if (i > 0) s = s.substring(0, i) + extra + s.substring(i);
+    }
+    store.chikuColors.forEach((from, to) {
+      s = s.replaceAll(RegExp(RegExp.escape(from), caseSensitive: false), to);
+    });
+    return s;
+  });
+}
 
 /// Chiku drawn once and posed: [phase] runs 0..1 through one 4.8 s swing.
 class _ChikuFigure extends StatelessWidget {
@@ -137,7 +179,7 @@ class _ChikuFigure extends StatelessWidget {
     final grin = _kf(phase, _grinK) * (1 - tease);
     final tongueA = deg(14) * math.sin(10 * a);
 
-    Widget l(String s) => SvgPicture.string(s, width: w, height: size);
+    Widget l(String s) => SvgPicture.string(_ck(s), width: w, height: size);
     Widget rot(double ang, double x, double y, Widget c) =>
         Transform.rotate(angle: ang, alignment: _pt(x, y), child: c);
     Widget scl(double sx, double sy, double x, double y, Widget c) => Transform(

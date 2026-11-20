@@ -16,6 +16,7 @@
 import 'package:flutter/material.dart';
 
 import 'hero_catalog.dart';
+import '../packs/pack_store.dart';
 
 class HeroLayers {
   final String aura, back, cape, body, eyes;
@@ -46,6 +47,10 @@ String _svg(String inner) =>
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 320">$inner</svg>';
 
 String _emblem(String k, String c, String bg) {
+  final fromPack = PackStore.instance.heroEmblems[k]; // new emblem from a pack
+  if (fromPack != null) {
+    return fromPack.replaceAll('{c}', c).replaceAll('{bg}', bg);
+  }
   switch (k) {
     case 'atom':
       return '<ellipse rx="9" ry="3.4" fill="none" stroke="$c" stroke-width="1.6"/>'
