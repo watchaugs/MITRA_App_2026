@@ -25,6 +25,7 @@ import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'territory_service.dart'; // TerritoryGate (home-state rule)
+import 'topic_cache.dart'; // next / recent topics kept on the phone
 
 class ArVideoCache {
   ArVideoCache._();
@@ -65,6 +66,8 @@ class ArVideoCache {
   /// Loopback URL if [remoteUrl] is already on the phone, else null.
   Future<String?> cachedUrl(String remoteUrl) async {
     try {
+      final kept = await TopicCache.instance.pathFor(remoteUrl);
+      if (kept != null) return urlForFile(kept);
       final dir = await _cacheDir();
       final file = File('${dir.path}/${_keyFor(remoteUrl)}');
       if (!file.existsSync() || file.lengthSync() < 1000) return null;

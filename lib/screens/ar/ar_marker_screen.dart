@@ -7,12 +7,14 @@ import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_flutter_android/webview_flutter_android.dart';
 
 import 'narration_pauser.dart';
+import 'narration_source.dart'; // narration saved on the phone → starts at once
 import '../../constants/colors.dart';
 import '../../services/achievement_engine.dart';
 import '../../fun/fun_cards.dart';
 import '../../fun/new_card_banner.dart';
 import '../../theme/theme_provider.dart'; // sharedPreferencesProvider
 import '../../services/ar_video_cache.dart';
+import '../../services/topic_cache.dart'; // next / recent topics kept on the phone
 import '../../services/telemetry_service.dart';
 import '../../stores/ar_pack_store.dart';
 import '../../stores/module_progress_store.dart';
@@ -144,15 +146,9 @@ class _ArMarkerScreenState extends ConsumerState<ArMarkerScreen> {
   Future<void> _startNarration() async {
     final (url, fallback) = _pickNarration();
     if (url == null || _closing) return;
-    try {
-      await _audio.play(UrlSource(url));
-    } catch (_) {
-      if (fallback != null && fallback.isNotEmpty && !_closing) {
-        try {
-          await _audio.play(UrlSource(fallback));
-        } catch (_) {/* best-effort; never block the AR */}
-      }
-    }
+    // Saved copy (instant) → else streamed; AAC first on phones without Opus.
+    await NarrationSource.play(_audio,
+        url: url, fallback: fallback, closing: () => _closing);
     if (_closing) {
       try {
         await _audio.stop();
@@ -225,6 +221,12 @@ class _ArMarkerScreenState extends ConsumerState<ArMarkerScreen> {
   void initState() {
     super.initState();
     _pauser = NarrationPauser(_audio); // watch app background/foreground
+    // Fetch the narration now, so it starts at once when the page is found.
+    final (nUrl, nAac) = _pickNarration();
+    if (nUrl != null) {
+      NarrationSource.prefetch(
+          {'n': nUrl}, {if (nAac != null && nAac.isNotEmpty) 'n': nAac});
+    }
     try {
       _xpEngine = ref.read(achievementEngineProvider);
     } catch (_) {/* XP store unavailable → no XP, the lesson still opens */}
@@ -268,12 +270,24 @@ class _ArMarkerScreenState extends ConsumerState<ArMarkerScreen> {
     _prepareAndLoad();
   }
 
+  String? _mind; // loopback URL of the kept .mind file, else null
+
   // Model/video sources for the scanner WebView. It can't open phone files by
   // path, so saved/cached files go through the loopback server (as in AR room).
   Future<void> _prepareAndLoad() async {
     String? model = widget.modelUrl;
     if (model != null && model.startsWith('/')) {
       model = await ArVideoCache.instance.urlForFile(model);
+    } else if (model != null) {
+      final kept = await TopicCache.instance.pathFor(model);
+      if (kept != null) {
+        model = await ArVideoCache.instance.urlForFile(kept) ?? model;
+      }
+    }
+    // The page target (.mind) from the phone when the topic is kept.
+    final keptMind = await TopicCache.instance.pathFor(widget.targetsUrl);
+    if (keptMind != null) {
+      _mind = await ArVideoCache.instance.urlForFile(keptMind);
     }
     String? video;
     if (_hasVideo) {
@@ -373,7 +387,7 @@ class _ArMarkerScreenState extends ConsumerState<ArMarkerScreen> {
 
   void _initWebView(String? model, String? video) {
     final params = Uri(queryParameters: {
-      'mind': widget.targetsUrl!,
+      'mind': _mind ?? widget.targetsUrl!,
       if (model != null && model.isNotEmpty) 'model': model,
       if (_hasVideo) ...{
         // Not on the phone yet → the page waits; setVideoSrc() follows.

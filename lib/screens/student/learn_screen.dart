@@ -31,6 +31,7 @@
 // 10. Structured logging for observability.
 // ═════════════════════════════════════════════════════════════
 
+import 'dart:async';
 import 'dart:convert';
 import 'dart:developer' as developer;
 import 'dart:io';
@@ -49,6 +50,9 @@ import '../../providers/tr_ext.dart';
 import '../../widgets/orbit_explorer.dart';
 import '../../stores/module_progress_store.dart';
 import '../../stores/ar_pack_store.dart';
+import '../../services/topic_cache.dart'; // next 3 + last 3 topics on the phone
+import '../ar/narration_source.dart'; // Opus or AAC for this phone
+import '../auth/state_language_map.dart'; // consentLangForState
 import '../../models/quiz_model.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -847,6 +851,82 @@ Future<(String, dynamic)?> _readCatalogCopy(String state, String lang) async {
 }
 
 final arCatalogProvider = FutureProvider<ArCatalog>((ref) async {
+  final cat = await _loadArCatalog(ref);
+  _keepTopicsOnPhone(ref, cat);
+  return cat;
+});
+
+/// Hands the student's lessons to TopicCache: per subject, the next 3
+/// released unfinished topics + the last 3 finished ones are kept on the
+/// phone (same lessons, class and language filter as the Learn list).
+void _keepTopicsOnPhone(Ref ref, ArCatalog cat) {
+  if (kPresentationMode) return;
+  try {
+    final state = ref.read(effectiveStateProvider);
+    final lang = ref.read(translationProvider).langCode;
+    final myClass = ref.read(currentUserProvider)?.classGrade ?? '';
+    final progress = ref.read(moduleProgressStoreProvider);
+    final threshold = ref.read(arWatchThresholdProvider).valueOrNull ?? 85;
+    final langs = <String>{
+      consentLangForState(state).toLowerCase(),
+      lang.toLowerCase(),
+      'en',
+    };
+    bool isDone(String id) {
+      final watched =
+          progress.arWatchedPct(id) >= threshold || progress.arWatched(id);
+      if (!watched) return false;
+      final quizzes = cat.quizIdsByArId[id] ?? const <String>[];
+      return quizzes.isEmpty || quizzes.any(progress.isMastered);
+    }
+
+    unawaited(NarrationSource.opusOk().then((opus) {
+      final plan = <String, List<CacheTopic>>{};
+      for (final e in cat.bySubject.entries) {
+        final list = <CacheTopic>[];
+        for (final l in e.value) {
+          if (l.locked || !_sameClass(l.classTag, myClass)) continue;
+          if (l.languageTag != lang && l.languageTag != 'all') continue;
+          if (list.any((t) => t.id == l.id)) continue;
+          list.add(CacheTopic(l.id, _topicFiles(cat, l.id, langs, opus)));
+        }
+        if (list.isNotEmpty) plan[e.key] = list;
+      }
+      TopicCache.instance.plan(plan, isDone);
+    }));
+  } catch (e) {
+    debugPrint('📦 Topic cache plan skipped: $e');
+  }
+}
+
+/// Every file a lesson plays from: the model this phone uses, page video,
+/// page target + image, and the narration in [langs] (Opus or AAC).
+List<String> _topicFiles(
+    ArCatalog cat, String id, Set<String> langs, bool opus) {
+  final out = <String>[];
+  void add(String? u) {
+    final v = u?.trim();
+    if (v != null && v.startsWith('http') && !out.contains(v)) out.add(v);
+  }
+
+  final nativeGlb = cat.nativeGlbById[id] ?? '';
+  final mind = cat.mindById[id] ?? '';
+  add(nativeGlb);
+  // The Draco model is used when there is no native one, and by page scan.
+  if (nativeGlb.isEmpty || mind.isNotEmpty) add(cat.glbById[id]);
+  add(cat.videoById[id]);
+  add(mind);
+  add(cat.targetImageById[id]);
+  final o = cat.audiosByLangById[id] ?? const <String, String>{};
+  final a = cat.audiosAacByLangById[id] ?? const <String, String>{};
+  for (final l in langs) {
+    add(opus ? (o[l] ?? a[l]) : (a[l] ?? o[l]));
+  }
+  add(cat.audioById[id]);
+  return out;
+}
+
+Future<ArCatalog> _loadArCatalog(Ref ref) async {
   if (kPresentationMode) {
     return const ArCatalog(
       bySubject: LearnScreen._arLessonsBySubject,
@@ -964,11 +1044,15 @@ final arCatalogProvider = FutureProvider<ArCatalog>((ref) async {
     }
   }
 
-  // Nothing came back → keep the demo list so the screen isn't blank.
+  // Nothing for this student → an empty list: "coming soon", or "not in your
+  // area" when the state isn't open. The built-in demo lessons used to show
+  // here — so students in locked states, or in states with no lessons for
+  // their class yet, still saw lessons.
   if (bySubject.isEmpty) {
-    return const ArCatalog(
-      bySubject: LearnScreen._arLessonsBySubject,
-      glbById: {},
+    return ArCatalog(
+      bySubject: const {},
+      glbById: const {},
+      territorySupported: territorySupported,
     );
   }
   return ArCatalog(
@@ -987,7 +1071,7 @@ final arCatalogProvider = FutureProvider<ArCatalog>((ref) async {
     videoViewById: videoViewById,
     territorySupported: territorySupported,
   );
-});
+}
 
 /// Async quiz feed notifier — exposes typed errors through
 /// [LearnFailure] and supports explicit refresh that keeps
@@ -1297,8 +1381,8 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
                   // Live-or-demo AR catalog (geofenced by state when live),
                   // with the demo map as fallback so the list is never empty.
                   final arCatalog = ref.watch(arCatalogProvider).valueOrNull;
-                  final arBySubject =
-                      arCatalog?.bySubject ?? LearnScreen._arLessonsBySubject;
+                  final arBySubject = arCatalog?.bySubject ??
+                      const <String, List<ArLessonRec>>{};
                   final arGlbById =
                       arCatalog?.glbById ?? const <String, String>{};
 
@@ -1705,7 +1789,8 @@ class _LearnHeader extends ConsumerWidget {
     final myClass =
         ref.watch(currentUserProvider.select((u) => u?.classGrade ?? ''));
     final arCatalog = ref.watch(arCatalogProvider).valueOrNull;
-    final arBySubject = arCatalog?.bySubject ?? LearnScreen._arLessonsBySubject;
+    final arBySubject =
+        arCatalog?.bySubject ?? const <String, List<ArLessonRec>>{};
     final treeSubject = _treeSubjectByQuiz(arCatalog, arBySubject, myClass);
     final quizzes = quizzesForLang(
             ref

@@ -11,6 +11,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
 import 'dart:io';
 import 'narration_pauser.dart';
+import 'narration_source.dart'; // narration saved on the phone → starts at once
 import '../../providers/tr_ext.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
@@ -151,6 +152,9 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
     });
     _audios = widget.audios ?? const {};
     _audiosAac = widget.audiosAac ?? const {};
+    // Fetch every language's narration while the student finds a surface,
+    // so it starts the moment the model is placed (and on a language switch).
+    NarrationSource.prefetch(_audios, _audiosAac, single: widget.audioUrl);
     _resolveLanguages();
   }
 
@@ -657,23 +661,10 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
     final fallback = _activeLang != null ? _audiosAac[_activeLang] : null;
     // Log the initial language choice once narration actually starts.
     if (_activeLang != null) _logLanguageChoice(_activeLang!, switched: false);
-    try {
-      await _audio.stop();
-      if (_closing) return;
-      if (url.startsWith('http')) {
-        await _audio.play(UrlSource(url));
-      } else {
-        await _audio.play(AssetSource(url)); // e.g. 'ar/audio/xxx.mp3'
-      }
-    } catch (_) {
-      // Opus unsupported on this device → try the AAC fallback.
-      if (fallback != null && fallback.isNotEmpty && !_closing) {
-        try {
-          await _audio.stop();
-          await _audio.play(UrlSource(fallback));
-        } catch (_) {/* best-effort; never block the model */}
-      }
-    }
+    // Saved copy (instant) → else streamed; AAC first on phones without Opus;
+    // a bundled file ('ar/audio/xxx.mp3') plays from the app.
+    await NarrationSource.play(_audio,
+        url: url, fallback: fallback, closing: () => _closing);
     // The student left while the audio was still loading.
     if (_closing) {
       try {

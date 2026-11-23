@@ -37,6 +37,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../theme/theme_provider.dart'; // sharedPreferencesProvider
 import '../fun/fun_cards.dart'; // this week's counts for the parent card
+import '../services/topic_cache.dart'; // move the kept-topics window on
 
 String _bestKey(String id) => 'mp_best_$id';
 String _arSeenKey(String id) => 'mp_arseen_$id';
@@ -121,6 +122,7 @@ class ModuleProgressStore {
     final prev = bestPct(id);
     if (pct > prev) {
       await _prefs.setInt(_bestKey(id), pct);
+      TopicCache.instance.poke(); // a passed quiz may finish a topic
     }
   }
 
@@ -216,6 +218,7 @@ class ModuleProgressStore {
     if (_prefs.getBool(_arSeenKey(id)) == true) return;
     await _prefs.setBool(_arSeenKey(id), true);
     await WeekCounts(_prefs).addLesson(); // first full watch, this week
+    TopicCache.instance.poke(); // a watched lesson may finish a topic
   }
 
   // ── Cloud-sync export / merge ──────────────────────────────────────────────

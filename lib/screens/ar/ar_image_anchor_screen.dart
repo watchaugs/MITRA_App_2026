@@ -35,6 +35,7 @@ import 'package:go_router/go_router.dart';
 import 'package:vector_math/vector_math_64.dart' as vm;
 
 import 'narration_pauser.dart';
+import 'narration_source.dart'; // narration saved on the phone → starts at once
 import '../../constants/colors.dart';
 import '../../services/achievement_engine.dart';
 import '../../fun/fun_cards.dart';
@@ -43,6 +44,7 @@ import '../../theme/theme_provider.dart'; // sharedPreferencesProvider
 import '../../providers/tr_ext.dart';
 import '../../providers/translation_provider.dart';
 import '../../services/ar_model_cache.dart';
+import '../../services/topic_cache.dart'; // next / recent topics kept on the phone
 import '../../services/telemetry_service.dart';
 import '../../stores/module_progress_store.dart';
 
@@ -131,15 +133,9 @@ class _ArImageAnchorScreenState extends ConsumerState<ArImageAnchorScreen> {
   Future<void> _startNarration() async {
     final (url, fallback) = _pickNarration();
     if (url == null || _closing) return;
-    try {
-      await _audio.play(UrlSource(url));
-    } catch (_) {
-      if (fallback != null && fallback.isNotEmpty && !_closing) {
-        try {
-          await _audio.play(UrlSource(fallback));
-        } catch (_) {/* best-effort; never block the AR */}
-      }
-    }
+    // Saved copy (instant) → else streamed; AAC first on phones without Opus.
+    await NarrationSource.play(_audio,
+        url: url, fallback: fallback, closing: () => _closing);
     if (_closing) {
       try {
         await _audio.stop();
@@ -170,6 +166,12 @@ class _ArImageAnchorScreenState extends ConsumerState<ArImageAnchorScreen> {
   void initState() {
     super.initState();
     _pauser = NarrationPauser(_audio); // watch app background/foreground
+    // Fetch the narration now, so it starts at once when the page is found.
+    final (nUrl, nAac) = _pickNarration();
+    if (nUrl != null) {
+      NarrationSource.prefetch(
+          {'n': nUrl}, {if (nAac != null && nAac.isNotEmpty) 'n': nAac});
+    }
     try {
       _xpEngine = ref.read(achievementEngineProvider);
     } catch (_) {/* XP store unavailable → no XP, the lesson still opens */}
@@ -265,7 +267,11 @@ class _ArImageAnchorScreenState extends ConsumerState<ArImageAnchorScreen> {
   Future<void> _registerTarget() async {
     final Uint8List bytes;
     try {
-      bytes = await _download(widget.imageUrl);
+      // The page image from the phone when the topic is kept.
+      final kept = await TopicCache.instance.pathFor(widget.imageUrl);
+      bytes = kept != null
+          ? await File(kept).readAsBytes()
+          : await _download(widget.imageUrl);
     } catch (_) {
       _fail(ref.trNow('ar_could_not_load_page_image',
           'Couldn\'t load the page image. Check your connection.'));

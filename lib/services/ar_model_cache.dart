@@ -22,6 +22,8 @@ import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'territory_service.dart'; // TerritoryGate (home-state rule)
+import 'ar_video_cache.dart'; // loopback server for kept topic files
+import 'topic_cache.dart'; // next / recent topics kept on the phone
 
 class ArModelCache {
   ArModelCache._();
@@ -53,6 +55,12 @@ class ArModelCache {
   Future<String?> localUrlFor(String remoteUrl) async {
     try {
       if (remoteUrl.isEmpty || !remoteUrl.startsWith('http')) return null;
+      // A topic kept on the phone by TopicCache → serve that copy.
+      final kept = await TopicCache.instance.pathFor(remoteUrl);
+      if (kept != null) {
+        final u = await ArVideoCache.instance.urlForFile(kept);
+        if (u != null) return u;
+      }
       final dir = await _cacheDir();
       final key = _keyFor(remoteUrl);
       final file = _fileFor(dir, key);

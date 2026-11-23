@@ -28,6 +28,9 @@ import 'package:go_router/go_router.dart';
 import 'package:model_viewer_plus/model_viewer_plus.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'narration_pauser.dart';
+import 'narration_source.dart'; // narration saved on the phone → starts at once
+import '../../services/ar_video_cache.dart'; // loopback server for kept files
+import '../../services/topic_cache.dart'; // next / recent topics kept on the phone
 import '../../constants/colors.dart';
 import '../../services/achievement_engine.dart';
 import '../../theme/theme_provider.dart';
@@ -77,6 +80,27 @@ class ArViewerScreen extends ConsumerStatefulWidget {
 }
 
 class _ArViewerScreenState extends ConsumerState<ArViewerScreen> {
+  // The model from the phone when its topic is kept (loopback URL), checked
+  // once before the viewer opens so it never starts a stream first.
+  String? _localModel;
+  bool _modelChecked = false;
+
+  Future<void> _findLocalModel() async {
+    String? local;
+    try {
+      final n = widget.nativeModelUrl?.trim();
+      final d = widget.modelUrl?.trim();
+      final remote = (n != null && n.isNotEmpty) ? n : d;
+      final kept = await TopicCache.instance.pathFor(remote);
+      if (kept != null) local = await ArVideoCache.instance.urlForFile(kept);
+    } catch (_) {}
+    if (!mounted) return;
+    setState(() {
+      _localModel = local;
+      _modelChecked = true;
+    });
+  }
+
   // AR-view XP through the same achievement engine as AR room (one XP path,
   // one set of analytics). Given once: when the narration (or page video) is
   // finished, or when the student has stayed 60 seconds.
@@ -300,10 +324,17 @@ class _ArViewerScreenState extends ConsumerState<ArViewerScreen> {
           .read(moduleProgressStoreProvider)
           .recordArProgress(widget.topicId, pct);
     });
+    _findLocalModel();
     _audios = widget.audios ?? const {};
     _audiosAac = widget.audiosAac ?? const {};
-    _resolveLanguages();
-    _startNarration();
+    // Fetch every language's narration now (one small file each), so the
+    // first play and a language switch don't wait on the network.
+    NarrationSource.prefetch(_audios, _audiosAac, single: widget.audioUrl);
+    // Start once the student's language is known. It used to start at once
+    // with the lesson's default audio, before the language was picked.
+    _resolveLanguages().whenComplete(() {
+      if (mounted && !_closing) _startNarration();
+    });
     WidgetsBinding.instance
         .addPostFrameCallback((_) => _showGestureGuide(auto: true));
   }
@@ -321,19 +352,9 @@ class _ArViewerScreenState extends ConsumerState<ArViewerScreen> {
     if (_activeLang != null) _logLanguageChoice(_activeLang!, switched: false);
     final fallback =
         _activeLang != null ? _audiosAac[_activeLang]?.trim() : null;
-    try {
-      await _audio.stop();
-      if (_closing) return;
-      await _audio.play(UrlSource(url));
-    } catch (_) {
-      // Opus unsupported on this device → try the AAC fallback.
-      if (fallback != null && fallback.isNotEmpty && !_closing) {
-        try {
-          await _audio.stop();
-          await _audio.play(UrlSource(fallback));
-        } catch (_) {/* best-effort; never block the model */}
-      }
-    }
+    // Saved copy (instant) → else streamed; AAC first on phones without Opus.
+    await NarrationSource.play(_audio,
+        url: url, fallback: fallback, closing: () => _closing);
     // The student closed the viewer while the audio was still loading.
     if (_closing) {
       try {
@@ -392,11 +413,12 @@ class _ArViewerScreenState extends ConsumerState<ArViewerScreen> {
     // dependency, so prefer it here; fall back to the Draco url, then the demo.
     final nativeSrc = widget.nativeModelUrl?.trim();
     final dracoSrc = widget.modelUrl?.trim();
-    final src = (nativeSrc != null && nativeSrc.isNotEmpty)
-        ? nativeSrc
-        : (dracoSrc != null && dracoSrc.isNotEmpty
-            ? dracoSrc
-            : ArViewerScreen._bundledDemoGlb);
+    final src = _localModel ??
+        ((nativeSrc != null && nativeSrc.isNotEmpty)
+            ? nativeSrc
+            : (dracoSrc != null && dracoSrc.isNotEmpty
+                ? dracoSrc
+                : ArViewerScreen._bundledDemoGlb));
 
     final media = MediaQuery.sizeOf(context);
 
@@ -419,28 +441,30 @@ class _ArViewerScreenState extends ConsumerState<ArViewerScreen> {
             fit: StackFit.expand,
             children: [
               Positioned.fill(
-                child: ModelViewer(
-                  key: ValueKey('$src-${wPx}x$hPx'),
-                  src: src,
-                  alt: 'A 3D model for ${widget.topicId}',
-                  onWebViewCreated: (controller) {
-                    debugPrint(
-                        '🟣 ModelViewer WebView created (${wPx}x$hPx) for src=$src');
-                  },
-                  // AR is handled by the native ArRoomScreen (via the entry chooser),
-                  // NOT by model-viewer's button: its WebXR mode is unsupported in
-                  // Android WebView and crashes the app. Keep this view 3D-only.
-                  ar: false,
-                  autoRotate: true,
-                  cameraControls: true,
-                  backgroundColor: const Color(0xFF0B0B12),
-                  // ROOT CAUSE: model_viewer_plus 1.8.0 injects relatedCss INSIDE
-                  // the `model-viewer { ... }` rule. Passing full selector blocks
-                  // nested them → they matched nothing → <model-viewer> fell back
-                  // to its 150px Shadow-DOM default (the top strip). So pass ONLY
-                  // bare properties here (they land on <model-viewer> correctly),
-                  // with a fixed PIXEL height — not vh/% (which = 100% of 150px).
-                  relatedCss: '''
+                child: !_modelChecked
+                    ? const SizedBox.shrink()
+                    : ModelViewer(
+                        key: ValueKey('$src-${wPx}x$hPx'),
+                        src: src,
+                        alt: 'A 3D model for ${widget.topicId}',
+                        onWebViewCreated: (controller) {
+                          debugPrint(
+                              '🟣 ModelViewer WebView created (${wPx}x$hPx) for src=$src');
+                        },
+                        // AR is handled by the native ArRoomScreen (via the entry chooser),
+                        // NOT by model-viewer's button: its WebXR mode is unsupported in
+                        // Android WebView and crashes the app. Keep this view 3D-only.
+                        ar: false,
+                        autoRotate: true,
+                        cameraControls: true,
+                        backgroundColor: const Color(0xFF0B0B12),
+                        // ROOT CAUSE: model_viewer_plus 1.8.0 injects relatedCss INSIDE
+                        // the `model-viewer { ... }` rule. Passing full selector blocks
+                        // nested them → they matched nothing → <model-viewer> fell back
+                        // to its 150px Shadow-DOM default (the top strip). So pass ONLY
+                        // bare properties here (they land on <model-viewer> correctly),
+                        // with a fixed PIXEL height — not vh/% (which = 100% of 150px).
+                        relatedCss: '''
                     position: fixed !important;
                     top: 0 !important;
                     left: 0 !important;
@@ -449,10 +473,10 @@ class _ArViewerScreenState extends ConsumerState<ArViewerScreen> {
                     display: block !important;
                     --poster-color: transparent;
                   ''',
-                  // html & body get no height from the package → size them here in
-                  // explicit pixels via an injected top-level <style> (no nesting
-                  // trap), reinforced by direct style sets each tick.
-                  relatedJs: '''
+                        // html & body get no height from the package → size them here in
+                        // explicit pixels via an injected top-level <style> (no nesting
+                        // trap), reinforced by direct style sets each tick.
+                        relatedJs: '''
                     (function () {
                       var s = document.createElement('style');
                       s.innerHTML =
@@ -478,15 +502,15 @@ class _ArViewerScreenState extends ConsumerState<ArViewerScreen> {
                       }, 100);
                     })();
                   ''',
-                  minCameraOrbit: 'auto auto auto',
-                  maxCameraOrbit: 'auto auto auto',
-                  cameraOrbit: '0deg 75deg 105%',
-                  fieldOfView: '30deg',
-                  minFieldOfView: '25deg',
-                  maxFieldOfView: '45deg',
-                  cameraTarget: 'auto auto auto',
-                  autoPlay: true,
-                ),
+                        minCameraOrbit: 'auto auto auto',
+                        maxCameraOrbit: 'auto auto auto',
+                        cameraOrbit: '0deg 75deg 105%',
+                        fieldOfView: '30deg',
+                        minFieldOfView: '25deg',
+                        maxFieldOfView: '45deg',
+                        cameraTarget: 'auto auto auto',
+                        autoPlay: true,
+                      ),
               ),
 
               // ── Top bar: close + topic chip ──────────────────────────────
