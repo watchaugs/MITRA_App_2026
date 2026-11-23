@@ -166,7 +166,13 @@ class _ArRoomScreenState extends ConsumerState<ArRoomScreen> {
     }
     final svc = ref.read(languageOptionsServiceProvider);
     await svc.ensureLoaded();
-    final state = ref.read(effectiveStateProvider);
+    // The state the student's lessons come from: the confirmed location, else
+    // the registered state. A blank state allowed only Hindi + English, so
+    // Punjabi / Gujarati / … narration was hidden even when uploaded.
+    final eff = ref.read(effectiveStateProvider);
+    final state = eff.isNotEmpty
+        ? eff
+        : (ref.read(currentUserProvider)?.assignedState ?? '');
     final allowed = svc.allowedFor(state);
     final avail = _audios.keys.where(allowed.contains).toList();
     final list = avail.isNotEmpty ? avail : _audios.keys.toList();

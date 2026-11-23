@@ -43,6 +43,9 @@ import '../../fun/new_card_banner.dart';
 import '../../theme/theme_provider.dart'; // sharedPreferencesProvider
 import '../../providers/tr_ext.dart';
 import '../../providers/translation_provider.dart';
+import '../../services/geo_state_service.dart'; // effectiveStateProvider
+import '../../stores/auth_store.dart'; // currentUserProvider
+import '../auth/state_language_map.dart'; // consentLangForState
 import '../../services/ar_model_cache.dart';
 import '../../services/topic_cache.dart'; // next / recent topics kept on the phone
 import '../../services/telemetry_service.dart';
@@ -121,8 +124,15 @@ class _ArImageAnchorScreenState extends ConsumerState<ArImageAnchorScreen> {
   (String?, String?) _pickNarration() {
     final audios = widget.audios ?? const {};
     final aac = widget.audiosAac ?? const {};
+    // The state's own language first (Punjab → Punjabi), as in the 3D viewer
+    // and AR room; then the app's language, English, Hindi. It used to start
+    // with the app's language, so an English app never played Punjabi here.
+    final eff = ref.read(effectiveStateProvider);
+    final state = eff.isNotEmpty
+        ? eff
+        : (ref.read(currentUserProvider)?.assignedState ?? '');
     final lang = ref.read(translationProvider).langCode.toLowerCase();
-    for (final l in [lang, 'en', 'hi']) {
+    for (final l in [consentLangForState(state), lang, 'en', 'hi']) {
       final u = audios[l]?.trim();
       if (u != null && u.isNotEmpty) return (u, aac[l]?.trim());
     }
