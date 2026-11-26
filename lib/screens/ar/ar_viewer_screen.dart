@@ -92,7 +92,13 @@ class _ArViewerScreenState extends ConsumerState<ArViewerScreen> {
       final d = widget.modelUrl?.trim();
       final remote = (n != null && n.isNotEmpty) ? n : d;
       final kept = await TopicCache.instance.pathFor(remote);
-      if (kept != null) local = await ArVideoCache.instance.urlForFile(kept);
+      if (kept != null) {
+        local = await ArVideoCache.instance.urlForFile(kept);
+      } else if (remote != null && remote.startsWith('/')) {
+        // A lesson saved with "Save lessons offline" (the server refuses any
+        // path outside the app's lesson folders).
+        local = await ArVideoCache.instance.urlForFile(remote);
+      }
     } catch (_) {}
     if (!mounted) return;
     setState(() {
@@ -417,8 +423,19 @@ class _ArViewerScreenState extends ConsumerState<ArViewerScreen> {
     // school phone that fails SILENTLY and the model area is just BLACK. The
     // non-Draco native tier (_native.glb, embedded JPEG textures) has no such
     // dependency, so prefer it here; fall back to the Draco url, then the demo.
-    final nativeSrc = widget.nativeModelUrl?.trim();
-    final dracoSrc = widget.modelUrl?.trim();
+    // Only web links (or the bundled demo) may be opened here: a file:// or
+    // content:// link — e.g. from a crafted mitra:// link — would make the
+    // viewer's local server hand app files to other apps.
+    String? web(String? s) {
+      final v = s?.trim();
+      return (v != null &&
+              (v.startsWith('https://') || v.startsWith('http://')))
+          ? v
+          : null;
+    }
+
+    final nativeSrc = web(widget.nativeModelUrl);
+    final dracoSrc = web(widget.modelUrl);
     final src = _localModel ??
         ((nativeSrc != null && nativeSrc.isNotEmpty)
             ? nativeSrc

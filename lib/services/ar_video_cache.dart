@@ -20,6 +20,7 @@
 // Everything is best-effort: on any failure callers stream the remote URL.
 // ═══════════════════════════════════════════════════════════════════════════
 import 'dart:io';
+import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
@@ -37,6 +38,7 @@ class ArVideoCache {
   HttpServer? _server;
   int _port = 0;
   final Map<String, String> _served = {}; // URL token → absolute file path
+  final Map<String, String> _tokenOf = {}; // absolute file path → URL token
   final Map<String, Future<String?>> _inFlight = {}; // remote URL → download
   final Map<String, ValueNotifier<double>> _progress = {}; // 0.0–1.0
 
@@ -166,15 +168,46 @@ class ArVideoCache {
 
   /// Loopback URL that serves the file at [path] (a cached video or a file
   /// saved by "Save lessons offline"). Null if the server can't start.
+  ///
+  /// Only lesson files the app saved itself are served (saved lessons, kept
+  /// topics, cached videos). A path from anywhere else — e.g. one put in a
+  /// crafted mitra:// link — is refused, so app data (settings, databases,
+  /// sign-in) can never be handed to other apps through this local server.
+  /// Each file gets a random, unguessable URL for this app session.
   Future<String?> urlForFile(String path) async {
     if (!File(path).existsSync()) return null;
+    if (!await _isLessonFile(path)) return null;
+    path = File(path).resolveSymbolicLinksSync(); // serve the checked real file
     final port = await _ensureServer();
     if (port == 0) return null;
     final dot = path.lastIndexOf('.');
     final ext = dot > 0 ? path.substring(dot).toLowerCase() : '';
-    final token = 'f_${_hash(path)}$ext';
+    final token = _tokenOf[path] ??= 'f_${_randomToken()}$ext';
     _served[token] = path;
     return 'http://127.0.0.1:$port/$token';
+  }
+
+  static final Random _rng = Random.secure();
+  static String _randomToken() => List.generate(
+      16, (_) => _rng.nextInt(256).toRadixString(16).padLeft(2, '0')).join();
+
+  // The only folders lesson files live in (real paths, links resolved).
+  static Future<bool> _isLessonFile(String path) async {
+    try {
+      final real = File(path).resolveSymbolicLinksSync();
+      final docs =
+          (await getApplicationDocumentsDirectory()).resolveSymbolicLinksSync();
+      final sup =
+          (await getApplicationSupportDirectory()).resolveSymbolicLinksSync();
+      const sep = '/';
+      return [
+        '$docs${sep}ar_packs$sep', // "Save lessons offline"
+        '$sup${sep}topic_cache$sep', // next 3 + last 3 topics
+        '$sup${sep}ar_video_cache$sep', // streamed page videos
+      ].any(real.startsWith);
+    } catch (_) {
+      return false;
+    }
   }
 
   static ContentType _typeFor(String path) {
