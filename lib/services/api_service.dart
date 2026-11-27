@@ -18,6 +18,14 @@ const _storage = FlutterSecureStorage();
 
 // ── Dio singleton ──────────────────────────────────────
 class ApiService {
+  // True when a request goes to the MITRA API host (relative paths included).
+  static bool _isApiHost(RequestOptions o) {
+    final host = o.uri.host;
+    if (host.isEmpty) return true;
+    final apiHost = Uri.tryParse(o.baseUrl)?.host ?? '';
+    return apiHost.isNotEmpty && host == apiHost;
+  }
+
   ApiService._();
   static final ApiService _instance = ApiService._();
   static ApiService get instance => _instance;
@@ -64,7 +72,12 @@ class ApiService {
             error: 'outside_home_state',
           ));
         }
-        final token = await _storage.read(key: 'mitra_access_token');
+        // The MITRA sign-in token goes to the MITRA API only. Content packs
+        // and other files may come from another host (CDN / storage), which
+        // must never receive a student's token (SEC-022).
+        final token = _isApiHost(options)
+            ? await _storage.read(key: 'mitra_access_token')
+            : null;
         if (token != null) {
           options.headers['Authorization'] = 'Bearer $token';
         }
@@ -98,7 +111,9 @@ class ApiService {
       // ── Response interceptor: auto-refresh on 401 ──
       onError: (error, handler) async {
         final response = error.response;
-        if (response?.statusCode == 401) {
+        // A 401 from another host (a pack CDN) is that host's answer — no
+        // token renewal and no retry with the MITRA token (SEC-022).
+        if (response?.statusCode == 401 && _isApiHost(error.requestOptions)) {
           final code = response?.data?['code'];
 
           if (code == 'ACCOUNT_INACTIVE') {
