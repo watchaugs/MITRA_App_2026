@@ -59,3 +59,5 @@ package.json
 translate_gaps.js
 bhashini.js
 logger.js
+windows/flutter/generated_plugin_registrant.cc
+windows/flutter/generated_plugins.cmake
