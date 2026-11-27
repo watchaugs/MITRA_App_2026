@@ -190,6 +190,18 @@ class AuthNotifier extends StateNotifier<AuthState> {
     // screen shows it or any sync runs (stores/device_owner.dart).
     await _switchProgressOwner(user.id);
     _beginTerritory(user); // home-state rule, before any screen or sync runs
+    // Consent is per student. The saved "consent given" belongs to whoever gave
+    // it on this phone; a different student must give their own (DPDP).
+    final prefs = ref.read(sharedPreferencesProvider);
+    final consentOwner = prefs.getString('consentOwner');
+    if (consentOwner == null) {
+      if (prefs.getBool('consentGiven') ?? false) {
+        await prefs.setString(
+            'consentOwner', user.id); // saved before this rule
+      }
+    } else if (consentOwner != user.id) {
+      await prefs.remove('consentGiven');
+    }
     state = state.copyWith(user: user, isLoggedIn: true, isLoading: false);
     await _cacheUser(user); // persist so the next launch restores instantly
     await startTelemetryIfConsented(user.id);
@@ -403,6 +415,14 @@ class AuthNotifier extends StateNotifier<AuthState> {
       }
     }
     await _clearCachedUser();
+    // End the session on the server first (best effort, a few seconds at most),
+    // so a copied refresh token can't be used after sign-out.
+    try {
+      final rt = await _secureProfileStore.read(key: 'mitra_refresh_token');
+      if (rt != null && rt.isNotEmpty) {
+        await AuthAPI.logout(rt).timeout(const Duration(seconds: 4));
+      }
+    } catch (_) {}
     // Drop backend JWTs so a shared device never calls the API as the previous student.
     try {
       await _secureProfileStore.delete(key: 'mitra_access_token');

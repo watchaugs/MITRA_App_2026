@@ -110,6 +110,7 @@ class _ConsentPersistence {
       final prefs = await SharedPreferences.getInstance();
       await Future.wait([
         prefs.setBool(ConsentKeys.consentGiven, true),
+        if (uid != null) prefs.setString('consentOwner', uid),
         prefs.setString(
             ConsentKeys.consentDate, DateTime.now().toIso8601String()),
       ]);
@@ -212,6 +213,13 @@ class _ConsentScreenState extends ConsumerState<ConsentScreen> {
       final res = await ConsentAPI.status()
           .timeout(const Duration(seconds: 4)); // never hang
       final consentRequired = res.data['consent_required'] as bool? ?? true;
+      if (!consentRequired) {
+        // Already on record for this student: remember it on this phone too.
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool(ConsentKeys.consentGiven, true);
+        final uid = ref.read(currentUserProvider)?.id;
+        if (uid != null) await prefs.setString('consentOwner', uid);
+      }
       if (!consentRequired && mounted) {
         context.go(widget.nextRoute);
         return;

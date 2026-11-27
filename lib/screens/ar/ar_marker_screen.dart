@@ -418,6 +418,11 @@ class _ArMarkerScreenState extends ConsumerState<ArMarkerScreen> {
       ..addJavaScriptChannel('MitraAR',
           onMessageReceived: (m) => _onMarkerEvent(m.message))
       ..setNavigationDelegate(NavigationDelegate(
+        // The page is the bundled scanner; it never needs to go anywhere else.
+        onNavigationRequest: (req) => req.url
+                .startsWith('file:///android_asset/flutter_assets/assets/ar/')
+            ? NavigationDecision.navigate
+            : NavigationDecision.prevent,
         onWebResourceError: (err) {
           // Only a failed page load is fatal; a model/video error is not.
           if (err.isForMainFrame == false) return;
@@ -432,7 +437,13 @@ class _ArMarkerScreenState extends ConsumerState<ArMarkerScreen> {
 
     final platform = controller.platform;
     if (platform is AndroidWebViewController) {
-      platform.setOnPlatformPermissionRequest((request) => request.grant());
+      // Only the camera (to find the page); anything else is refused.
+      platform.setOnPlatformPermissionRequest((request) {
+        final cameraOnly = request.types.isNotEmpty &&
+            request.types
+                .every((t) => t == WebViewPermissionResourceType.camera);
+        cameraOnly ? request.grant() : request.deny();
+      });
       // The page video starts when the page is found — no tap needed.
       platform.setMediaPlaybackRequiresUserGesture(false);
     }

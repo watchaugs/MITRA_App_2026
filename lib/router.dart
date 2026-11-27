@@ -31,6 +31,7 @@ import '../models/quiz_model.dart';
 //import '../screens/ar/ar_room_screen.dart';
 import '../screens/ar/ar_entry_screen.dart';
 import '../stores/auth_store.dart';
+import 'theme/theme_provider.dart' show sharedPreferencesProvider;
 import '../screens/auth/consent_screen.dart';
 import '../screens/auth/location_screen.dart';
 import '../screens/auth/language_screen.dart';
@@ -145,6 +146,19 @@ class _OpenThroughLearnState extends State<_OpenThroughLearn> {
       const Scaffold(body: Center(child: CircularProgressIndicator()));
 }
 
+const _consentFreePaths = {
+  '/onboarding',
+  '/login',
+  '/setup',
+  '/consent',
+  '/location',
+  '/language',
+  '/greeting',
+  '/student/locked',
+};
+bool _openWithoutConsent(String path) =>
+    _consentFreePaths.contains(path) || path.startsWith('/legal/');
+
 Map<String, String>? _parseAudios(String? raw) {
   if (raw == null || raw.isEmpty) return null;
   try {
@@ -189,6 +203,17 @@ final routerProvider = Provider<GoRouter>((ref) {
           path != '/setup' &&
           path != '/consent') {
         return '/setup';
+      }
+
+      // ── Consent (DPDP) on every route, not only at the splash ─────────────
+      // A link straight into the app can't skip it. Sign-in, setup, the
+      // consent flow itself, the lock screen and the policies stay open.
+      if (loggedIn &&
+          user?.isStudent == true &&
+          !_openWithoutConsent(path) &&
+          !(ref.read(sharedPreferencesProvider).getBool('consentGiven') ??
+              false)) {
+        return '/location';
       }
 
       // ── Home-state rule (territory_service.dart) ──────────────────────────

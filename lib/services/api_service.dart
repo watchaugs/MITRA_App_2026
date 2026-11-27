@@ -259,7 +259,10 @@ class AuthAPI {
 
   static Future<Response> me() => api.get('/api/auth/me');
 
-  static Future<Response> logout() => api.post('/api/auth/logout');
+  /// Ends this session on the server too, so its refresh token stops working.
+  static Future<Response> logout([String? refreshToken]) =>
+      api.post('/api/auth/logout',
+          data: refreshToken == null ? null : {'refresh_token': refreshToken});
 
   static Future<Response> refresh(String refreshToken) =>
       api.post('/api/auth/refresh', data: {
