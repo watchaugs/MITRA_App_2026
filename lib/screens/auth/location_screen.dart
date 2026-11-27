@@ -114,6 +114,9 @@ String _safeErrorMessage(Object error) {
   if (msg.contains('NO_USER')) {
     return 'Session expired. Please sign in again.';
   }
+  if (msg.contains('MOCK_LOCATION')) {
+    return 'A fake-location app seems to be on. Turn it off and try again.';
+  }
   // Fallback — generic, no detail leakage
   return 'Could not detect location. Please try again.';
 }
@@ -201,6 +204,9 @@ class _LocationScreenState extends ConsumerState<LocationScreen> {
       position ??= await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.low,
       ).timeout(_kLocationTimeout);
+      // The home state is set from this reading once and then locked, so a
+      // fake-GPS position is refused (SEC-013).
+      if (position.isMocked) throw const _LocException('MOCK_LOCATION');
 
       // 4. Reverse geocode via Nominatim — works on all Android devices
       final geoUrl = Uri.parse(

@@ -322,6 +322,12 @@ class TerritoryService {
       String home, String homeState, _Boundary? boundary) async {
     final pos = await _freshPosition();
     if (pos == null) return null;
+    // A position from a fake-GPS app proves nothing about where the phone is:
+    // count it as outside the home state (SEC-013).
+    if (pos.isMocked) {
+      debugPrint('📍 Territory: mocked location — treated as outside');
+      return false;
+    }
     if (boundary != null && boundary.shapes.isNotEmpty) {
       return boundary.contains(pos.latitude, pos.longitude);
     }
