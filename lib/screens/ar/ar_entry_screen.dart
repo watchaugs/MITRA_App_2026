@@ -25,6 +25,11 @@ import '../../theme/theme_provider.dart';
 
 import '../../providers/tr_ext.dart';
 
+/// Learn passes this as `extra` when it opens a lesson. A mitra:// link from a
+/// web page or another app has no `extra`, so its media links are never
+/// loaded; the router sends it to Learn instead (SEC-021).
+const kOpenedFromLearn = 'mitra-learn';
+
 class ArEntryScreen extends ConsumerStatefulWidget {
   final String topicId;
   final String? modelUrl; // Draco _lite.glb (the 3D viewer decodes Draco)

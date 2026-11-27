@@ -52,6 +52,7 @@ import '../../stores/module_progress_store.dart';
 import '../../stores/ar_pack_store.dart';
 import '../../services/topic_cache.dart'; // next 3 + last 3 topics on the phone
 import '../ar/narration_source.dart'; // Opus or AAC for this phone
+import '../ar/ar_entry_screen.dart' show kOpenedFromLearn;
 import '../auth/state_language_map.dart'; // consentLangForState
 import '../../models/quiz_model.dart';
 import 'package:path_provider/path_provider.dart';
@@ -1736,7 +1737,8 @@ class _LearnScreenState extends ConsumerState<LearnScreen> {
                                   // student comes back (AR progress is saved
                                   // while watching, but nothing told Learn).
                                   context
-                                      .push('/student/ar/$id$query')
+                                      .push('/student/ar/$id$query',
+                                          extra: kOpenedFromLearn)
                                       .whenComplete(() {
                                     if (!mounted) return;
                                     ref

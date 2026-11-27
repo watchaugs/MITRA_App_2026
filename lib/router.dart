@@ -123,6 +123,28 @@ bool _openWhenLocked(String path, MitraUser? user) {
       (path == '/setup' || path == '/setup/class' || path == '/location');
 }
 
+/// Shown for a moment when a lesson link came from outside the app; moves to
+/// Learn, where the lesson opens with the media the server lists for it.
+class _OpenThroughLearn extends StatefulWidget {
+  const _OpenThroughLearn();
+  @override
+  State<_OpenThroughLearn> createState() => _OpenThroughLearnState();
+}
+
+class _OpenThroughLearnState extends State<_OpenThroughLearn> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) GoRouter.of(context).go('/student/learn');
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) =>
+      const Scaffold(body: Center(child: CircularProgressIndicator()));
+}
+
 Map<String, String>? _parseAudios(String? raw) {
   if (raw == null || raw.isEmpty) return null;
   try {
@@ -379,26 +401,32 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         // ✨ Updated the path to match exactly what the Learn Screen is asking for!
         path: '/student/ar/:topicId',
-        builder: (context, state) => ArEntryScreen(
-          topicId: state.pathParameters['topicId'] ?? '',
-          // Routes to native ARCore (ArRoomScreen) on capable phones, else the
-          // on-screen 3D viewer (ArViewerScreen). /student/ar/<id>?glb=&audio=
-          modelUrl: state.uri.queryParameters['glb'],
-          // Non-Draco GLB for native Filament AR (Draco glb can't render there).
-          nativeModelUrl: state.uri.queryParameters['nglb'],
-          audioUrl: state.uri.queryParameters['audio'],
-          audios: _parseAudios(state.uri.queryParameters['audios']),
-          audiosAac: _parseAudios(state.uri.queryParameters['audios_aac']),
-          targetsUrl: state.uri.queryParameters['mind'],
-          // Page image for native ARCore image tracking (Scan page).
-          targetImageUrl: state.uri.queryParameters['img'],
-          videoUrl: state.uri.queryParameters['video'],
-          // Page video: box on the page (JSON), sound mode, first view.
-          videoRegion: state.uri.queryParameters['vregion'],
-          videoSound: state.uri.queryParameters['vsound'],
-          videoView: state.uri.queryParameters['vview'],
-          chromaColor: state.uri.queryParameters['chroma'],
-        ),
+        // Only Learn opens a lesson (it passes kOpenedFromLearn). A mitra://
+        // link from outside carries model / video / audio links that could
+        // point anywhere, so it goes to Learn instead (SEC-021).
+        builder: (context, state) => state.extra != kOpenedFromLearn
+            ? const _OpenThroughLearn()
+            : ArEntryScreen(
+                topicId: state.pathParameters['topicId'] ?? '',
+                // Routes to native ARCore (ArRoomScreen) on capable phones, else the
+                // on-screen 3D viewer (ArViewerScreen). /student/ar/<id>?glb=&audio=
+                modelUrl: state.uri.queryParameters['glb'],
+                // Non-Draco GLB for native Filament AR (Draco glb can't render there).
+                nativeModelUrl: state.uri.queryParameters['nglb'],
+                audioUrl: state.uri.queryParameters['audio'],
+                audios: _parseAudios(state.uri.queryParameters['audios']),
+                audiosAac:
+                    _parseAudios(state.uri.queryParameters['audios_aac']),
+                targetsUrl: state.uri.queryParameters['mind'],
+                // Page image for native ARCore image tracking (Scan page).
+                targetImageUrl: state.uri.queryParameters['img'],
+                videoUrl: state.uri.queryParameters['video'],
+                // Page video: box on the page (JSON), sound mode, first view.
+                videoRegion: state.uri.queryParameters['vregion'],
+                videoSound: state.uri.queryParameters['vsound'],
+                videoView: state.uri.queryParameters['vview'],
+                chromaColor: state.uri.queryParameters['chroma'],
+              ),
       ),
     ],
   );
