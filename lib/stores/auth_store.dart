@@ -255,12 +255,24 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> syncTopicsWithTerritory() async {
     final user = state.user;
     if (user == null) return;
+    // The student's own channel stays on whatever the home-state lock or the
+    // notifications switch say: it carries only the legal erasure notice.
+    // Dropped at sign-out.
+    final own = _studentTopic(user.id);
+    if (own != null) {
+      FirebaseMessaging.instance.subscribeToTopic(own).catchError((_) {});
+    }
     if (!user.isStudent || TerritoryGate.contentAllowed) {
       _subscribeFCMTopics(user);
     } else {
       await _unsubscribeFCMTopics(user);
     }
   }
+
+  /// This student's own channel: the server uses it only for the 48-hour
+  /// notice before an inactive account is erased (DPDP Rules 2025, Rule 8).
+  static String? _studentTopic(String id) =>
+      RegExp(r'^[A-Za-z0-9_-]{1,128}$').hasMatch(id) ? 'student_$id' : null;
 
   Future<void> _unsubscribeFCMTopics(MitraUser user) async {
     final st = _topicState(user.assignedState);
@@ -407,6 +419,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
       final st = _topicState(user.assignedState);
       final cls = user.classGrade?.toLowerCase().replaceAll(' ', '_') ?? '';
       FirebaseMessaging.instance.unsubscribeFromTopic('mitra_all');
+      final own = _studentTopic(user.id);
+      if (own != null) FirebaseMessaging.instance.unsubscribeFromTopic(own);
       if (st.isNotEmpty) {
         FirebaseMessaging.instance.unsubscribeFromTopic('mitra_$st');
         if (cls.isNotEmpty) {
